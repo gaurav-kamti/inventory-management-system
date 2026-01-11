@@ -164,7 +164,6 @@ function Inventory() {
                 name: product.name,
                 size: '',
                 sizeUnit: 'mm',
-                sizeUnit: 'mm',
                 hsn: '8301',
                 cgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
                 sgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
