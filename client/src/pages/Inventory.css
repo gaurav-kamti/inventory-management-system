@@ -1,0 +1,467 @@
+.inventory-page {
+  color: white;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+}
+
+.form-section {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.form-group .input {
+  margin-bottom: 0;
+}
+
+.large-modal {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 90%;
+  max-width: 600px;
+  padding: 30px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  margin-bottom: 20px;
+  color: white;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* Product Selection */
+.product-select {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.product-option {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.product-stock {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Cart Items */
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-inputs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.input-small {
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 14px;
+  width: 80px;
+}
+
+.input-small::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.item-total {
+  font-weight: 700;
+  color: #86efac;
+  min-width: 80px;
+}
+
+.btn-remove {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-remove:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* Totals */
+.totals-section {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: white;
+}
+
+.total-final {
+  font-size: 20px;
+  font-weight: 700;
+  padding-top: 12px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.payment-row {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.remaining-row {
+  color: #86efac;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.credit-row {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Size Input Group */
+.size-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.size-value {
+  flex: 2;
+}
+
+.size-unit {
+  flex: 1;
+  min-width: 80px;
+}
+
+/* Invoice Modal & Table Styles */
+.invoice-modal {
+  max-width: 1200px !important;
+  width: 95% !important;
+  padding: 20px !important;
+}
+
+.invoice-header {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.invoice-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.invoice-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.invoice-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.invoice-field label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.supplier-select-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.invoice-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.invoice-table th {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px 5px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.invoice-table td {
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  vertical-align: middle;
+}
+
+/* Column Widths */
+.col-name { min-width: 200px; }
+.col-size { width: 100px; }
+.col-hsn { width: 70px; }
+.col-cgst, .col-sgst { width: 50px; }
+.col-qty { width: 60px; }
+.col-rate { width: 90px; }
+.col-disc { width: 60px; } /* Decreased */
+.col-amount { min-width: 80px; } /* Increased */
+.col-action { width: 40px; }
+
+.input-table {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.input-table:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.size-group {
+  display: flex;
+  gap: 2px;
+}
+
+.size-val { width: 45px; }
+.size-u { width: 52px; } 
+
+.btn-add-table {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: auto;
+  padding: 4px 10px;
+  height: auto;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-add-table:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-remove-small {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.invoice-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 40px;
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.footer-left, .footer-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.total-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.total-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.footer-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.round-input {
+  width: 80px;
+  text-align: right;
+}
+
+.total-amount-row {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.select-product-table {
+  width: 100%;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.footer-row-total td,
+.footer-row-light td,
+.footer-row-final td {
+  padding: 8px 5px;
+  vertical-align: middle;
+}
+
+.footer-row-total td {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-row-light td {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.footer-row-final td {
+  font-weight: 700;
+  color: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 14px;
+}
+
+.no-border {
+  border: none !important;
+  background: transparent !important;
+}
