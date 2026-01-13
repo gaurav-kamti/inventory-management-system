@@ -18,7 +18,7 @@ function Database() {
         const d = String(date.getDate()).padStart(2, '0')
         const m = String(date.getMonth() + 1).padStart(2, '0')
         const y = date.getFullYear()
-        return `${d}:${m}:${y}`
+        return `${d}-${m}-${y}`
     }
 
     useEffect(() => {
@@ -38,6 +38,10 @@ function Database() {
                 partyName: s.Customer?.name || 'Walk-in',
                 type: 'SALE',
                 total: s.total,
+                subtotal: s.subtotal,
+                tax: s.tax,
+                discount: s.discount,
+                amountDue: s.amountDue,
                 items: s.SaleItems
             })).sort((a, b) => new Date(b.date) - new Date(a.date))
             setInvoices(salesData)
@@ -179,17 +183,35 @@ function Database() {
                                 ))}
                             </tbody>
                             <tfoot>
-                                <tr>
-                                    <td colSpan="3" style={{ textAlign: 'right' }}>
-                                        {/* Changed from Total: to Total Amount: */}
-                                        <strong>Total Amount:</strong>
-                                    </td>
-                                    <td>
-                                        <strong>
-                                            ${selectedInvoice.items?.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2)}
-                                        </strong>
-                                    </td>
-                                </tr>
+                                {selectedInvoice.type === 'SALE' ? (
+                                    <>
+                                        <tr>
+                                            <td colSpan="3" style={{ textAlign: 'right' }}>Tax Amount:</td>
+                                            <td>${parseFloat(selectedInvoice.tax || 0).toFixed(2)}</td>
+                                        </tr>
+                                        {selectedInvoice.discount > 0 && (
+                                            <tr>
+                                                <td colSpan="3" style={{ textAlign: 'right' }}>Discount:</td>
+                                                <td>-${parseFloat(selectedInvoice.discount).toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                        <tr style={{ fontSize: '1.2em', color: '#86efac' }}>
+                                            <td colSpan="3" style={{ textAlign: 'right' }}><strong>Final Total:</strong></td>
+                                            <td><strong>${parseFloat(selectedInvoice.total).toFixed(2)}</strong></td>
+                                        </tr>
+                                        {selectedInvoice.amountDue > 0 && (
+                                            <tr style={{ color: '#fca5a5' }}>
+                                                <td colSpan="3" style={{ textAlign: 'right' }}>Balance Due:</td>
+                                                <td>${parseFloat(selectedInvoice.amountDue).toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                    </>
+                                ) : (
+                                    <tr>
+                                        <td colSpan="3" style={{ textAlign: 'right' }}><strong>Total Amount:</strong></td>
+                                        <td><strong>${parseFloat(selectedInvoice.total).toFixed(2)}</strong></td>
+                                    </tr>
+                                )}
                             </tfoot>
                         </table>
                         <div style={{ marginTop: '20px', textAlign: 'right' }}>

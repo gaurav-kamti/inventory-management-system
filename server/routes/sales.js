@@ -49,7 +49,7 @@ router.post("/", auth, async (req, res) => {
       notes,
     } = req.body;
 
-    // Calculate totals
+    // Calculate totals or use provided totals
     let subtotal = 0;
     for (const item of items) {
       const product = await Product.findByPk(item.productId);
@@ -61,12 +61,21 @@ router.post("/", auth, async (req, res) => {
             error: `Insufficient stock for ${product?.name || "product"}`,
           });
       }
-      subtotal += item.quantity * parseFloat(product.sellingPrice);
+      // Use item.price if provided (manual entry), else use product's default selling price
+      const itemPrice = parseFloat(item.price || product.sellingPrice);
+      subtotal += item.quantity * itemPrice;
     }
     subtotal = round2(subtotal);
 
-    const tax = round2(subtotal * 0.1);
-    const total = round2(subtotal + tax - round2(discount || 0));
+    // Prefer totals from frontend if provided to ensure UI consistency
+    const reqTax = parseFloat(req.body.tax);
+    const reqTotal = parseFloat(req.body.total);
+    const reqSubtotal = parseFloat(req.body.subtotal);
+
+    const tax = !isNaN(reqTax) ? round2(reqTax) : round2(subtotal * 0.1);
+    const total = !isNaN(reqTotal) ? round2(reqTotal) : round2(subtotal + tax - round2(discount || 0));
+    const finalSubtotal = !isNaN(reqSubtotal) ? round2(reqSubtotal) : subtotal;
+
     const paid = round2(
       parseFloat(amountPaid) || (paymentMode === "credit" ? 0 : total)
     );
@@ -105,7 +114,7 @@ router.post("/", auth, async (req, res) => {
         customerId: customerId || null,
         userId: req.user.id,
         salesChannel: salesChannel || "in-store",
-        subtotal,
+        subtotal: finalSubtotal,
         tax,
         discount: round2(discount || 0),
         total,

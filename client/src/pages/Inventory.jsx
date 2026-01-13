@@ -219,16 +219,19 @@ function Inventory() {
 
         try {
             const saleData = {
+                customerId: sellForm.customerId || null,
                 items: cartItems.map(item => ({
                     productId: item.productId,
                     quantity: item.quantity || 0,
                     price: item.rate // Pass the manually edited rate
                 })),
-                paymentMode: 'cash',
-                discount: 0,
-                amountPaid: sellTotal,
+                paymentMode: sellForm.customerId ? 'credit' : 'cash', // Default to credit if customer selected
+                subtotal: sellSubtotal,
+                tax: sellTax,
+                total: sellTotal,
+                amountPaid: sellTotal, // For now assuming full payment or credit handled by backend logic
                 salesChannel: 'in-store',
-                invoiceNumber: sellForm.invoice // Pass the invoice number
+                invoiceNumber: sellForm.invoice
             }
 
             const response = await api.post('/sales', saleData)
