@@ -14,6 +14,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const supplierRoutes = require('./routes/suppliers');
 const purchaseRoutes = require('./routes/purchases');
 
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -32,7 +33,16 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/settings', require('./routes/settings'));
-app.use('/api/purchases', require('./routes/purchases'));
+app.use('/api/purchases', purchaseRoutes);
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+});
 
 // Initialize database and start server
 console.log('Starting database sync...');
