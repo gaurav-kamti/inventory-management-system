@@ -29,6 +29,11 @@ function Layout({ children, onLogout }) {
                         </Link>
                     </li>
                     <li>
+                        <Link to="/dues" className={isActive('/dues') ? 'active' : ''}>
+                            💳 Dues
+                        </Link>
+                    </li>
+                    <li>
                         <Link to="/settings" className={isActive('/settings') ? 'active' : ''}>
                             ⚙️ Settings
                         </Link>

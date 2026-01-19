@@ -71,6 +71,10 @@ const Sale = sequelize.define('Sale', {
   trackingNumber: {
     type: DataTypes.STRING
   },
+  roundOff: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
   notes: {
     type: DataTypes.TEXT
   }

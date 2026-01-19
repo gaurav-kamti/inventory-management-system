@@ -29,6 +29,10 @@ const Supplier = sequelize.define('Supplier', {
   },
   gstNumber: {
     type: DataTypes.STRING
+  },
+  outstandingBalance: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   }
 });
 

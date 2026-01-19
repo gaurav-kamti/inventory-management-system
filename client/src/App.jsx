@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Inventory from './pages/Inventory'
 import Dashboard from './pages/Dashboard'
 import Database from './pages/Database'
+import Dues from './pages/Dues'
 import Settings from './pages/Settings'
 import Layout from './components/Layout'
 
@@ -31,6 +32,7 @@ function App() {
                     <Route path="/" element={<Inventory />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/database" element={<Database />} />
+                    <Route path="/dues" element={<Dues />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

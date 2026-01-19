@@ -32,6 +32,22 @@ const SaleItem = sequelize.define('SaleItem', {
   },
   serialNumber: {
     type: DataTypes.STRING
+  },
+  hsn: {
+    type: DataTypes.STRING,
+    defaultValue: '8301'
+  },
+  cgst: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0
+  },
+  sgst: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0
+  },
+  discount: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0
   }
 });
 

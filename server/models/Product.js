@@ -34,6 +34,14 @@ const Product = sequelize.define('Product', {
   lowStockThreshold: {
     type: DataTypes.INTEGER,
     defaultValue: 10
+  },
+  hsn: {
+    type: DataTypes.STRING,
+    defaultValue: '8301'
+  },
+  gst: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 18.00
   }
 });
 

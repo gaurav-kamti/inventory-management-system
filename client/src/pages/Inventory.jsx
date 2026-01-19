@@ -16,7 +16,7 @@ function Inventory() {
         const d = String(date.getDate()).padStart(2, '0')
         const m = String(date.getMonth() + 1).padStart(2, '0')
         const y = date.getFullYear()
-        return `${d}:${m}:${y}`
+        return `${d}-${m}-${y}`
     }
 
     // Add Item Form - Table based with multiple rows
@@ -132,6 +132,7 @@ function Inventory() {
                     rate: item.rate,
                     quantity: item.quantity,
                     amount: item.amount,
+                    hsn: item.hsn || '8301',
                     cgst: item.cgst,
                     sgst: item.sgst
                 }))
@@ -223,7 +224,11 @@ function Inventory() {
                 items: cartItems.map(item => ({
                     productId: item.productId,
                     quantity: item.quantity || 0,
-                    price: item.rate // Pass the manually edited rate
+                    price: item.rate, // Pass the manually edited rate
+                    hsn: item.hsn || '8301',
+                    cgst: parseFloat(item.cgst) || 0,
+                    sgst: parseFloat(item.sgst) || 0,
+                    discount: parseFloat(item.discount) || 0,
                 })),
                 paymentMode: sellForm.customerId ? 'credit' : 'cash', // Default to credit if customer selected
                 subtotal: sellSubtotal,
@@ -362,16 +367,21 @@ function Inventory() {
                             <div className="invoice-info-row">
                                 <div className="invoice-field">
                                     <input className="input" placeholder="Supplier Invoice" value={addForm.supplierInvoice || ''}
-                                        onChange={(e) => setAddForm({ ...addForm, supplierInvoice: e.target.value })} />
+                                        onChange={(e) => setAddForm({ ...addForm, supplierInvoice: e.target.value })}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.parentElement.nextElementSibling?.querySelector('input')?.focus(); } }} />
                                 </div>
                                 <div className="invoice-field">
                                     <input type="date" className="input" value={addForm.date}
-                                        onChange={(e) => setAddForm({ ...addForm, date: e.target.value })} required />
+                                        onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('.supplier-select-row select')?.focus(); } }}
+                                        required />
                                 </div>
                             </div>
                             <div className="supplier-select-row">
                                 <select className="input" value={addForm.supplierId}
-                                    onChange={(e) => setAddForm({ ...addForm, supplierId: e.target.value })} required>
+                                    onChange={(e) => setAddForm({ ...addForm, supplierId: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('.input-row .input-table')?.focus(); } }}
+                                    required>
                                     <option value="">Select Supplier</option>
                                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
@@ -412,11 +422,11 @@ function Inventory() {
                                         </tr>
                                     ))}
                                     <tr className="input-row">
-                                        <td><input className="input-table" placeholder="Name" value={addItemRow.name} onChange={e => setAddItemRow({ ...addItemRow, name: e.target.value })} /></td>
+                                        <td><input className="input-table" placeholder="Name" value={addItemRow.name} onChange={e => setAddItemRow({ ...addItemRow, name: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
                                         <td>
                                             <div className="size-group">
-                                                <input className="input-table size-val" placeholder="0" value={addItemRow.size} onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })} />
-                                                <select className="input-table size-u" value={addItemRow.sizeUnit} onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })}>
+                                                <input className="input-table size-val" placeholder="0" value={addItemRow.size} onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.nextElementSibling?.focus()} />
+                                                <select className="input-table size-u" value={addItemRow.sizeUnit} onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.parentElement.nextElementSibling?.querySelector('select')?.focus()}>
                                                     <option value="mm">mm</option>
                                                     <option value="cm">cm</option>
                                                     <option value="in">in</option>
@@ -424,17 +434,21 @@ function Inventory() {
                                             </div>
                                         </td>
                                         <td>
-                                            <select className="input-table" value={addItemRow.hsn} onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })}>
+                                            <select className="input-table" value={addItemRow.hsn} onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()}>
                                                 {hsnCodes.map(code => <option key={code} value={code}>{code}</option>)}
                                             </select>
                                         </td>
-                                        <td><input className="input-table" placeholder="9" type="number" value={addItemRow.cgst} onChange={e => setAddItemRow({ ...addItemRow, cgst: e.target.value })} /></td>
-                                        <td><input className="input-table" placeholder="9" type="number" value={addItemRow.sgst} onChange={e => setAddItemRow({ ...addItemRow, sgst: e.target.value })} /></td>
-                                        <td><input className="input-table" placeholder="0" type="number" value={addItemRow.quantity} onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })} /></td>
-                                        <td><input className="input-table" placeholder="0.00" type="number" value={addItemRow.rate} onChange={e => setAddItemRow({ ...addItemRow, rate: e.target.value })} /></td>
-                                        <td><input className="input-table" placeholder="%" type="number" value={addItemRow.discount} onChange={e => setAddItemRow({ ...addItemRow, discount: e.target.value })} /></td>
+                                        <td><input className="input-table" placeholder="9" type="number" value={addItemRow.cgst} onChange={e => setAddItemRow({ ...addItemRow, cgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" placeholder="9" type="number" value={addItemRow.sgst} onChange={e => setAddItemRow({ ...addItemRow, sgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" placeholder="0" type="number" value={addItemRow.quantity} onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" placeholder="0.00" type="number" value={addItemRow.rate} onChange={e => setAddItemRow({ ...addItemRow, rate: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" placeholder="%" type="number" value={addItemRow.discount} onChange={e => setAddItemRow({ ...addItemRow, discount: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItemToList(); } }} /></td>
                                         <td>
-                                            ${((parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0) * (1 - (parseFloat(addItemRow.discount) || 0) / 100)).toFixed(2)}
+                                            ${(() => {
+                                                const baseAmount = (parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0) * (1 - (parseFloat(addItemRow.discount) || 0) / 100);
+                                                const taxRate = ((parseFloat(addItemRow.cgst) || 0) + (parseFloat(addItemRow.sgst) || 0)) / 100;
+                                                return (baseAmount * (1 + taxRate)).toFixed(2);
+                                            })()}
                                         </td>
                                         <td className="no-border">
                                             <button type="button" className="btn-add-table" onClick={addItemToList}>(+)add</button>
@@ -493,16 +507,21 @@ function Inventory() {
                             <div className="invoice-info-row">
                                 <div className="invoice-field">
                                     <input className="input" placeholder="Customer Invoice" value={sellForm.invoice || ''}
-                                        onChange={(e) => setSellForm({ ...sellForm, invoice: e.target.value })} />
+                                        onChange={(e) => setSellForm({ ...sellForm, invoice: e.target.value })}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.parentElement.nextElementSibling?.querySelector('input')?.focus(); } }} />
                                 </div>
                                 <div className="invoice-field">
                                     <input type="date" className="input" value={sellForm.date}
-                                        onChange={(e) => setSellForm({ ...sellForm, date: e.target.value })} required />
+                                        onChange={(e) => setSellForm({ ...sellForm, date: e.target.value })}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelectorAll('.supplier-select-row select')[1]?.focus(); } }}
+                                        required />
                                 </div>
                             </div>
                             <div className="supplier-select-row">
                                 <select className="input" value={sellForm.customerId || ''}
-                                    onChange={(e) => setSellForm({ ...sellForm, customerId: e.target.value })} required>
+                                    onChange={(e) => setSellForm({ ...sellForm, customerId: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelectorAll('.input-row select')[1]?.focus(); } }}
+                                    required>
                                     <option value="">Walk-in Customer</option>
                                     {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
@@ -550,7 +569,11 @@ function Inventory() {
                                             <td><input className="input-table" type="number" value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
                                             <td><input className="input-table" type="number" value={item.discount} onChange={e => updateCartItem(item.productId, 'discount', e.target.value)} /></td>
                                             <td>
-                                                ${((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0) * (1 - (parseFloat(item.discount) || 0) / 100)).toFixed(2)}
+                                                ${(() => {
+                                                    const baseAmount = (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0) * (1 - (parseFloat(item.discount) || 0) / 100);
+                                                    const taxRate = ((parseFloat(item.cgst) || 0) + (parseFloat(item.sgst) || 0)) / 100;
+                                                    return (baseAmount * (1 + taxRate)).toFixed(2);
+                                                })()}
                                             </td>
                                             <td>
                                                 <button type="button" className="btn-remove-small" onClick={() => removeFromCart(item.productId)}>✕</button>
@@ -579,7 +602,7 @@ function Inventory() {
                                                 } else {
                                                     setSellItemInput({ ...sellItemInput, productId: '' })
                                                 }
-                                            }}>
+                                            }} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()}>
                                                 <option value="">Select Product...</option>
                                                 {products.map(product => (
                                                     <option key={product.id} value={product.id}>
@@ -590,22 +613,26 @@ function Inventory() {
                                         </td>
                                         <td>
                                             <div className="size-group">
-                                                <input className="input-table size-val" value={sellItemInput.size} onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })} />
-                                                <select className="input-table size-u" value={sellItemInput.sizeUnit} onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })}>
+                                                <input className="input-table size-val" value={sellItemInput.size} onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.nextElementSibling?.focus()} />
+                                                <select className="input-table size-u" value={sellItemInput.sizeUnit} onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.parentElement.nextElementSibling?.querySelector('input')?.focus()}>
                                                     <option>mm</option>
                                                     <option>cm</option>
                                                     <option>in</option>
                                                 </select>
                                             </div>
                                         </td>
-                                        <td><input className="input-table" value={sellItemInput.hsn} onChange={e => setSellItemInput({ ...sellItemInput, hsn: e.target.value })} /></td>
-                                        <td><input className="input-table" value={sellItemInput.cgst} onChange={e => setSellItemInput({ ...sellItemInput, cgst: e.target.value })} /></td>
-                                        <td><input className="input-table" value={sellItemInput.sgst} onChange={e => setSellItemInput({ ...sellItemInput, sgst: e.target.value })} /></td>
-                                        <td><input className="input-table" value={sellItemInput.quantity} onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })} /></td>
-                                        <td><input className="input-table" value={sellItemInput.rate} onChange={e => setSellItemInput({ ...sellItemInput, rate: e.target.value })} /></td>
-                                        <td><input className="input-table" value={sellItemInput.discount} onChange={e => setSellItemInput({ ...sellItemInput, discount: e.target.value })} /></td>
+                                        <td><input className="input-table" value={sellItemInput.hsn} onChange={e => setSellItemInput({ ...sellItemInput, hsn: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" value={sellItemInput.cgst} onChange={e => setSellItemInput({ ...sellItemInput, cgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" value={sellItemInput.sgst} onChange={e => setSellItemInput({ ...sellItemInput, sgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" value={sellItemInput.quantity} onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" value={sellItemInput.rate} onChange={e => setSellItemInput({ ...sellItemInput, rate: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
+                                        <td><input className="input-table" value={sellItemInput.discount} onChange={e => setSellItemInput({ ...sellItemInput, discount: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItemToSellList(); } }} /></td>
                                         <td>
-                                            ${((parseFloat(sellItemInput.quantity) || 0) * (parseFloat(sellItemInput.rate) || 0) * (1 - (parseFloat(sellItemInput.discount) || 0) / 100)).toFixed(2)}
+                                            ${(() => {
+                                                const baseAmount = (parseFloat(sellItemInput.quantity) || 0) * (parseFloat(sellItemInput.rate) || 0) * (1 - (parseFloat(sellItemInput.discount) || 0) / 100);
+                                                const taxRate = ((parseFloat(sellItemInput.cgst) || 0) + (parseFloat(sellItemInput.sgst) || 0)) / 100;
+                                                return (baseAmount * (1 + taxRate)).toFixed(2);
+                                            })()}
                                         </td>
                                         <td className="no-border"><button type="button" className="btn-add-table" onClick={addItemToSellList}>(+)add</button></td>
                                     </tr>

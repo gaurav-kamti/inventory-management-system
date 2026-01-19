@@ -166,9 +166,12 @@ function Database() {
                             <thead>
                                 <tr>
                                     <th>Item</th>
+                                    <th>HSN</th>
                                     <th>Qty</th>
                                     <th>Price</th>
-                                    {/* Changed from Total to Amount */}
+                                    <th>Disc%</th>
+                                    <th>CGST%</th>
+                                    <th>SGST%</th>
                                     <th>Amount</th>
                                 </tr>
                             </thead>
@@ -176,8 +179,12 @@ function Database() {
                                 {selectedInvoice.items?.map((item, idx) => (
                                     <tr key={idx}>
                                         <td>{item.Product?.name || 'Unknown Product'}</td>
+                                        <td>{item.hsn || '-'}</td>
                                         <td>{item.quantity}</td>
                                         <td>${parseFloat(item.price).toFixed(2)}</td>
+                                        <td>{item.discount ? `${parseFloat(item.discount).toFixed(2)}%` : '-'}</td>
+                                        <td>{item.cgst ? `${parseFloat(item.cgst).toFixed(2)}%` : '-'}</td>
+                                        <td>{item.sgst ? `${parseFloat(item.sgst).toFixed(2)}%` : '-'}</td>
                                         <td>${parseFloat(item.total).toFixed(2)}</td>
                                     </tr>
                                 ))}
@@ -186,29 +193,29 @@ function Database() {
                                 {selectedInvoice.type === 'SALE' ? (
                                     <>
                                         <tr>
-                                            <td colSpan="3" style={{ textAlign: 'right' }}>Tax Amount:</td>
+                                            <td colSpan="7" style={{ textAlign: 'right' }}>Tax Amount:</td>
                                             <td>${parseFloat(selectedInvoice.tax || 0).toFixed(2)}</td>
                                         </tr>
                                         {selectedInvoice.discount > 0 && (
                                             <tr>
-                                                <td colSpan="3" style={{ textAlign: 'right' }}>Discount:</td>
+                                                <td colSpan="7" style={{ textAlign: 'right' }}>Discount:</td>
                                                 <td>-${parseFloat(selectedInvoice.discount).toFixed(2)}</td>
                                             </tr>
                                         )}
                                         <tr style={{ fontSize: '1.2em', color: '#86efac' }}>
-                                            <td colSpan="3" style={{ textAlign: 'right' }}><strong>Final Total:</strong></td>
+                                            <td colSpan="7" style={{ textAlign: 'right' }}><strong>Final Total:</strong></td>
                                             <td><strong>${parseFloat(selectedInvoice.total).toFixed(2)}</strong></td>
                                         </tr>
                                         {selectedInvoice.amountDue > 0 && (
                                             <tr style={{ color: '#fca5a5' }}>
-                                                <td colSpan="3" style={{ textAlign: 'right' }}>Balance Due:</td>
+                                                <td colSpan="7" style={{ textAlign: 'right' }}>Balance Due:</td>
                                                 <td>${parseFloat(selectedInvoice.amountDue).toFixed(2)}</td>
                                             </tr>
                                         )}
                                     </>
                                 ) : (
                                     <tr>
-                                        <td colSpan="3" style={{ textAlign: 'right' }}><strong>Total Amount:</strong></td>
+                                        <td colSpan="7" style={{ textAlign: 'right' }}><strong>Total Amount:</strong></td>
                                         <td><strong>${parseFloat(selectedInvoice.total).toFixed(2)}</strong></td>
                                     </tr>
                                 )}

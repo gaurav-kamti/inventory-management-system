@@ -40,6 +40,7 @@ router.post("/", auth, async (req, res) => {
       paymentMode,
       amountPaid,
       discount,
+      roundOff,
       salesChannel,
       customerEmail,
       customerPhone,
@@ -117,6 +118,7 @@ router.post("/", auth, async (req, res) => {
         subtotal: finalSubtotal,
         tax,
         discount: round2(discount || 0),
+        roundOff: round2(roundOff || 0),
         total,
         amountPaid: paid,
         amountDue: due,
@@ -146,6 +148,10 @@ router.post("/", auth, async (req, res) => {
           total: itemTotal,
           batchNumber: item.batchNumber,
           serialNumber: item.serialNumber,
+          hsn: item.hsn || product.hsn || '8301',
+          cgst: round2(item.cgst || 0),
+          sgst: round2(item.sgst || 0),
+          discount: round2(item.discount || 0),
         },
         { transaction: t }
       );

@@ -64,6 +64,18 @@ const Purchase = sequelize.define('Purchase', {
     type: DataTypes.DATE,
     allowNull: false
   },
+  tax: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  discount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  roundOff: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
   notes: {
     type: DataTypes.TEXT
   }
