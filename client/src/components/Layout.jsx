@@ -19,6 +19,16 @@ function Layout({ children, onLogout }) {
                         </Link>
                     </li>
                     <li>
+                        <Link to="/sell-purchase" className={isActive('/sell-purchase') ? 'active' : ''}>
+                            💰 Sell/Purchase
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/voucher" className={isActive('/voucher') ? 'active' : ''}>
+                            🎫 Voucher
+                        </Link>
+                    </li>
+                    <li>
                         <Link to="/database" className={isActive('/database') ? 'active' : ''}>
                             🗄️ Database
                         </Link>

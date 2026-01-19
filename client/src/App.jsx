@@ -7,6 +7,10 @@ import Database from './pages/Database'
 import Dues from './pages/Dues'
 import Settings from './pages/Settings'
 import Layout from './components/Layout'
+import Voucher from './pages/Voucher'
+import Receipt from './pages/vouchers/Receipt'
+import Payment from './pages/vouchers/Payment'
+import SellPurchase from './pages/SellPurchase'
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('token'))
@@ -33,6 +37,11 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/database" element={<Database />} />
                     <Route path="/dues" element={<Dues />} />
+
+                    <Route path="/voucher" element={<Voucher />} />
+                    <Route path="/voucher/receipt" element={<Receipt />} />
+                    <Route path="/voucher/payment" element={<Payment />} />
+                    <Route path="/sell-purchase" element={<SellPurchase />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

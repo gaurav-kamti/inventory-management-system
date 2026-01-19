@@ -53,15 +53,34 @@ router.post("/", auth, async (req, res) => {
     // Calculate totals or use provided totals
     let subtotal = 0;
     for (const item of items) {
-      const product = await Product.findByPk(item.productId);
-      if (!product || product.stock < item.quantity) {
-        await t.rollback();
-        return res
-          .status(400)
-          .json({
-            error: `Insufficient stock for ${product?.name || "product"}`,
-          });
+      // Resolve Product: ID -> Name -> Create
+      let product;
+      if (item.productId) {
+        product = await Product.findByPk(item.productId, { transaction: t });
       }
+
+      // If no ID or ID not found, try by name
+      if (!product && item.name) {
+          product = await Product.findOne({ where: { name: item.name } }, { transaction: t });
+      }
+
+      // If still not found, create it (Ad-hoc sale auto-creation)
+      if (!product && item.name) {
+          product = await Product.create({
+              name: item.name,
+              stock: 0, // Starts at 0, will go negative
+              sellingPrice: parseFloat(item.price || 0),
+              purchasePrice: 0, // Unknown
+              hsn: item.hsn || '8301'
+          }, { transaction: t });
+      }
+      
+      // Stock Check REMOVED/RELAXED to allow negative stock ("Sold before purchase" scenario)
+      // if (!product || product.stock < item.quantity) { ... } // Deleted this check
+
+      // Update productId in the item object for later usage (SaleItem creation)
+      item.productId = product.id; 
+
       // Use item.price if provided (manual entry), else use product's default selling price
       const itemPrice = parseFloat(item.price || product.sellingPrice);
       subtotal += item.quantity * itemPrice;
@@ -136,7 +155,8 @@ router.post("/", auth, async (req, res) => {
 
     // Create sale items and update stock
     for (const item of items) {
-      const product = await Product.findByPk(item.productId);
+      // Product is guaranteed to exist now (or created above)
+      const product = await Product.findByPk(item.productId, { transaction: t }); 
       const itemPrice = round2(item.price || product.sellingPrice);
       const itemTotal = round2(item.quantity * itemPrice);
       await SaleItem.create(
