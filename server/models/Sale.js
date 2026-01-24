@@ -21,7 +21,7 @@ const Sale = sequelize.define('Sale', {
     references: { model: 'Users', key: 'id' }
   },
   salesChannel: {
-    type: DataTypes.ENUM('in-store', 'website', 'amazon', 'wholesale', 'other'),
+    type: DataTypes.STRING, // Changed from ENUM for validation safety
     defaultValue: 'in-store'
   },
   subtotal: {
@@ -49,11 +49,11 @@ const Sale = sequelize.define('Sale', {
     defaultValue: 0
   },
   paymentMode: {
-    type: DataTypes.ENUM('cash', 'card', 'bank-transfer', 'credit', 'partial'),
+    type: DataTypes.STRING, // Changed from ENUM
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('completed', 'pending', 'cancelled'),
+    type: DataTypes.STRING, // Changed from ENUM
     defaultValue: 'completed'
   },
   customerEmail: {

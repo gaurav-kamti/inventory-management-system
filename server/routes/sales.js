@@ -198,22 +198,48 @@ router.post("/", auth, async (req, res) => {
         { transaction: t }
       );
 
-      await CreditTransaction.create(
+      // Create main credit transaction for the sale
+      const mainCredit = await CreditTransaction.create(
         {
           customerId,
           saleId: sale.id,
           type: "credit",
-          amount: due,
+          amount: total, // The full bill amount is a credit/liability initially
+          method: "New Ref",
           notes: `Credit from sale ${invoiceNumber}`,
         },
         { transaction: t }
       );
+
+      // If there were advance adjustments, create payment transactions linking them
+      if (req.body.advanceAdjustments && req.body.advanceAdjustments.length > 0) {
+          for (const adj of req.body.advanceAdjustments) {
+              const advTrans = await CreditTransaction.findByPk(adj.id, { transaction: t });
+              if (advTrans) {
+                  const adjAmt = round2(parseFloat(adj.amount));
+                  await advTrans.update({
+                      remainingAdvance: round2(parseFloat(advTrans.remainingAdvance) - adjAmt)
+                  }, { transaction: t });
+
+                  // Link the payment to this sale
+                  await CreditTransaction.create({
+                      customerId,
+                      saleId: sale.id,
+                      type: "payment",
+                      amount: adjAmt,
+                      method: "Agst Ref",
+                      notes: `Adjusted against Advance id: ${adj.id}`
+                  }, { transaction: t });
+              }
+          }
+      }
     }
 
     await t.commit();
     res.status(201).json(sale);
   } catch (error) {
     await t.rollback();
+    console.error("Sale processing error:", error); // Log full error
     res.status(400).json({ error: error.message });
   }
 });

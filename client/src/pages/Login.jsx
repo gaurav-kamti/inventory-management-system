@@ -25,9 +25,10 @@ function Login({ onLogin }) {
 
     return (
         <div className="login-container">
-            <div className="login-box glass">
-                <h1>📦 Inventory Management</h1>
-                <p className="subtitle">Sign in to continue</p>
+            <div className="login-box">
+                <div style={{ marginBottom: '10px', fontSize: '3rem' }}>🏢</div>
+                <h1>Inventory MS</h1>
+                <p className="subtitle">Business Management Suite</p>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
@@ -52,15 +53,16 @@ function Login({ onLogin }) {
                         />
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
+                    {error && <div className="error-message">⚠️ Login Error: {error}</div>}
 
                     <button type="submit" className="btn btn-primary" disabled={loading}>
-                        {loading ? 'Signing in...' : 'Sign In'}
+                        {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
 
                 <div className="demo-credentials">
-                    <p>Demo: admin / admin123</p>
+                    <p style={{ opacity: 0.5, marginBottom: '5px' }}>ACCESS LEVEL: ADMINISTRATOR</p>
+                    <p>Demo Credentials: admin / admin123</p>
                 </div>
             </div>
         </div>

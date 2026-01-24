@@ -8,49 +8,46 @@ function Layout({ children, onLogout }) {
 
     return (
         <div className="layout">
-            <nav className="sidebar glass">
+            <nav className="sidebar">
                 <div className="logo">
-                    <h2>📦 IMS</h2>
+                    <h2><span>🏢</span> Inventory MS</h2>
+                    <span className="logo-subtitle">Business Suite v2.0</span>
                 </div>
                 <ul className="nav-links">
                     <li>
                         <Link to="/" className={isActive('/') ? 'active' : ''}>
-                            📦 Inventory
+                            <span className="nav-icon">📦</span> Inventory
                         </Link>
                     </li>
                     <li>
                         <Link to="/sell-purchase" className={isActive('/sell-purchase') ? 'active' : ''}>
-                            💰 Sell/Purchase
+                            <span className="nav-icon">💎</span> Transactions
                         </Link>
                     </li>
                     <li>
                         <Link to="/voucher" className={isActive('/voucher') ? 'active' : ''}>
-                            🎫 Voucher
+                            <span className="nav-icon">🎫</span> Vouchers
                         </Link>
                     </li>
                     <li>
                         <Link to="/database" className={isActive('/database') ? 'active' : ''}>
-                            🗄️ Database
+                            <span className="nav-icon">📂</span> Records & History
                         </Link>
                     </li>
-                    <li>
-                        <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
-                            📊 Dashboard
-                        </Link>
-                    </li>
+
                     <li>
                         <Link to="/dues" className={isActive('/dues') ? 'active' : ''}>
-                            💳 Dues
+                            <span className="nav-icon">💳</span> Outstanding
                         </Link>
                     </li>
                     <li>
                         <Link to="/settings" className={isActive('/settings') ? 'active' : ''}>
-                            ⚙️ Settings
+                            <span className="nav-icon">⚙️</span> Settings
                         </Link>
                     </li>
                 </ul>
-                <button className="btn btn-danger logout-btn" onClick={onLogout}>
-                    🚪 Logout
+                <button className="logout-btn" onClick={onLogout}>
+                    <span>🚪</span> Terminate Session
                 </button>
             </nav>
             <main className="main-content">

@@ -16,7 +16,7 @@ const CreditTransaction = sequelize.define('CreditTransaction', {
     references: { model: 'Sales', key: 'id' }
   },
   type: {
-    type: DataTypes.ENUM('credit', 'payment'),
+    type: DataTypes.STRING, // Changed from ENUM
     allowNull: false
   },
   amount: {
@@ -25,6 +25,18 @@ const CreditTransaction = sequelize.define('CreditTransaction', {
   },
   notes: {
     type: DataTypes.TEXT
+  },
+  method: {
+    type: DataTypes.STRING,
+    defaultValue: 'On Account'
+  },
+  isAdvance: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  remainingAdvance: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   }
 });
 

@@ -96,133 +96,156 @@ function Database() {
     return (
         <div className="inventory-page">
             <div className="page-header">
-                <h1 className="page-title">Database & Records</h1>
+                <h1 className="page-title">Master Records</h1>
+                <p className="page-subtitle">Centralized history of all sales and purchase vouchers</p>
             </div>
 
-            <div className="tabs glass">
-                <button
-                    className={`tab ${activeTab === 'sales' ? 'active' : ''}`}
+            <div className="stats-grid" style={{ marginBottom: '30px' }}>
+                <div
+                    className={`stat-card ${activeTab === 'sales' ? 'active' : ''}`}
                     onClick={() => setActiveTab('sales')}
                 >
-                    📤 Sales
-                </button>
-                <button
-                    className={`tab ${activeTab === 'purchases' ? 'active' : ''}`}
+                    <div className="stat-icon" style={{ background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>📊</div>
+                    <div className="stat-info">
+                        <h3>Sales Ledger</h3>
+                        <p className="stat-value">{activeTab === 'sales' ? invoices.length : '--'}</p>
+                    </div>
+                </div>
+                <div
+                    className={`stat-card ${activeTab === 'purchases' ? 'active' : ''}`}
                     onClick={() => setActiveTab('purchases')}
                 >
-                    📥 Purchases
-                </button>
+                    <div className="stat-icon" style={{ background: 'rgba(78, 205, 196, 0.1)', color: '#4ecdc4' }}>🏛️</div>
+                    <div className="stat-info">
+                        <h3>Purchase Records</h3>
+                        <p className="stat-value">{activeTab === 'purchases' ? invoices.length : '--'}</p>
+                    </div>
+                </div>
             </div>
 
             <div className="card">
                 {loading ? (
-                    <div style={{ padding: '20px', color: 'white' }}>Loading data...</div>
+                    <div style={{ padding: '60px', textAlign: 'center' }}>
+                        <div className="loader" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>Loading records...</div>
+                    </div>
                 ) : (
-                    <>
+                    <div className="table-container">
+                        <h2><span>📂</span> Transaction History</h2>
                         <table className="table">
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Invoice No</th>
-                                    <th>{activeTab === 'sales' ? 'Customer' : 'Supplier'}</th>
-                                    <th>Total Amount</th>
-                                    <th>Action</th>
+                                    <th>Voucher No.</th>
+                                    <th>Party Name</th>
+                                    <th>Amount</th>
+                                    <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {invoices.map(inv => (
                                     <tr key={inv.id}>
-                                        <td>{formatDate(inv.date)}</td>
-                                        <td>{inv.invoiceNumber}</td>
-                                        <td>{inv.partyName}</td>
-                                        <td>${parseFloat(inv.total).toFixed(2)}</td>
-                                        <td>
-                                            <button className="btn btn-sm btn-primary" onClick={() => openInvoiceDetails(inv)}>
-                                                View
+                                        <td style={{ fontSize: '0.85rem' }}>{formatDate(inv.date)}</td>
+                                        <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>{inv.invoiceNumber}</td>
+                                        <td style={{ fontWeight: '600' }}>{inv.partyName}</td>
+                                        <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(inv.total).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button className="btn" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
+                                                View Bill
                                             </button>
                                         </td>
                                     </tr>
                                 ))}
-                                {invoices.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No records found</td></tr>}
+                                {invoices.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '60px', opacity: 0.5 }}>No records found for the selected category.</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
-                    </>
+                    </div>
                 )}
             </div>
 
             {/* Invoice Details Modal */}
-            {/* Invoice Details Modal */}
             {showInvoiceModal && selectedInvoice && (
-                <div className="modal-overlay" onClick={() => setShowInvoiceModal(false)}>
-                    <div className="modal glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px' }}>
-                        <h2 style={{ color: 'white', marginBottom: '20px' }}>
-                            {selectedInvoice.type} Invoice: {selectedInvoice.invoiceNumber}
-                        </h2>
-                        <div style={{ color: 'white', marginBottom: '20px' }}>
-                            <p><strong>Date:</strong> {formatDate(selectedInvoice.date)}</p>
-                            <p><strong>{activeTab === 'sales' ? 'Customer' : 'Supplier'}:</strong> {selectedInvoice.partyName}</p>
+                <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                }} onClick={() => setShowInvoiceModal(false)}>
+                    <div className="modal glass" style={{
+                        width: '90%', maxWidth: '1000px', maxHeight: '90vh', overflow: 'auto',
+                        padding: '40px', background: 'var(--bg-dark)', borderRadius: '32px',
+                        border: '1px solid var(--glass-border)'
+                    }} onClick={e => e.stopPropagation()}>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '35px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px' }}>
+                            <div>
+                                <h2 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: '900', letterSpacing: '-1px' }}>
+                                    {selectedInvoice.type} Voucher Details
+                                </h2>
+                                <p style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.9rem' }}>Ref: {selectedInvoice.invoiceNumber}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700' }}>ENTRY DATE</p>
+                                <p style={{ fontSize: '1.1rem', fontWeight: '800' }}>{formatDate(selectedInvoice.date)}</p>
+                            </div>
                         </div>
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>HSN</th>
-                                    <th>Qty</th>
-                                    <th>Price</th>
-                                    <th>Disc%</th>
-                                    <th>CGST%</th>
-                                    <th>SGST%</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {selectedInvoice.items?.map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td>{item.Product?.name || 'Unknown Product'}</td>
-                                        <td>{item.hsn || '-'}</td>
-                                        <td>{item.quantity}</td>
-                                        <td>${parseFloat(item.price).toFixed(2)}</td>
-                                        <td>{item.discount ? `${parseFloat(item.discount).toFixed(2)}%` : '-'}</td>
-                                        <td>{item.cgst ? `${parseFloat(item.cgst).toFixed(2)}%` : '-'}</td>
-                                        <td>{item.sgst ? `${parseFloat(item.sgst).toFixed(2)}%` : '-'}</td>
-                                        <td>${parseFloat(item.total).toFixed(2)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot>
-                                {selectedInvoice.type === 'SALE' ? (
-                                    <>
-                                        <tr>
-                                            <td colSpan="7" style={{ textAlign: 'right' }}>Tax Amount:</td>
-                                            <td>${parseFloat(selectedInvoice.tax || 0).toFixed(2)}</td>
-                                        </tr>
-                                        {selectedInvoice.discount > 0 && (
-                                            <tr>
-                                                <td colSpan="7" style={{ textAlign: 'right' }}>Discount:</td>
-                                                <td>-${parseFloat(selectedInvoice.discount).toFixed(2)}</td>
-                                            </tr>
-                                        )}
-                                        <tr style={{ fontSize: '1.2em', color: '#86efac' }}>
-                                            <td colSpan="7" style={{ textAlign: 'right' }}><strong>Final Total:</strong></td>
-                                            <td><strong>${parseFloat(selectedInvoice.total).toFixed(2)}</strong></td>
-                                        </tr>
-                                        {selectedInvoice.amountDue > 0 && (
-                                            <tr style={{ color: '#fca5a5' }}>
-                                                <td colSpan="7" style={{ textAlign: 'right' }}>Balance Due:</td>
-                                                <td>${parseFloat(selectedInvoice.amountDue).toFixed(2)}</td>
-                                            </tr>
-                                        )}
-                                    </>
-                                ) : (
+
+                        <div style={{ marginBottom: '30px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', borderLeft: '4px solid var(--accent)' }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', marginBottom: '5px' }}>PARTY NAME</p>
+                            <p style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)' }}>{selectedInvoice.partyName}</p>
+                        </div>
+
+                        <div className="table-container">
+                            <table className="table">
+                                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                                     <tr>
-                                        <td colSpan="7" style={{ textAlign: 'right' }}><strong>Total Amount:</strong></td>
-                                        <td><strong>${parseFloat(selectedInvoice.total).toFixed(2)}</strong></td>
+                                        <th>Item Name</th>
+                                        <th>HSN</th>
+                                        <th>Qty</th>
+                                        <th>Rate</th>
+                                        <th>Disc</th>
+                                        <th>GST</th>
+                                        <th style={{ textAlign: 'right' }}>Amount</th>
                                     </tr>
-                                )}
-                            </tfoot>
-                        </table>
-                        <div style={{ marginTop: '20px', textAlign: 'right' }}>
-                            <button className="btn btn-secondary" onClick={() => setShowInvoiceModal(false)}>Close</button>
+                                </thead>
+                                <tbody>
+                                    {selectedInvoice.items?.map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td style={{ fontWeight: '700' }}>{item.Product?.name || 'Unknown Item'}</td>
+                                            <td>{item.hsn || '--'}</td>
+                                            <td style={{ fontWeight: '600' }}>{item.quantity}</td>
+                                            <td>${parseFloat(item.price).toFixed(2)}</td>
+                                            <td style={{ color: '#ff4757' }}>{item.discount ? `${parseFloat(item.discount)}%` : '--'}</td>
+                                            <td>{item.cgst ? `${(parseFloat(item.cgst) + parseFloat(item.sgst))}%` : '--'}</td>
+                                            <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--accent)' }}>
+                                                ${parseFloat(item.total).toFixed(2)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="6" style={{ textAlign: 'right', padding: '15px', fontWeight: '700', color: 'var(--text-secondary)' }}>Subtotal</td>
+                                        <td style={{ textAlign: 'right', padding: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
+                                    </tr>
+                                    {selectedInvoice.tax > 0 && (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>GST Component</td>
+                                            <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700' }}>${parseFloat(selectedInvoice.tax).toFixed(2)}</td>
+                                        </tr>
+                                    )}
+                                    <tr style={{ background: 'rgba(142, 182, 155, 0.05)' }}>
+                                        <td colSpan="6" style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.2rem', color: 'var(--accent)' }}>GRAND TOTAL</td>
+                                        <td style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.6rem', color: 'var(--accent)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 40px', fontWeight: '800' }} onClick={() => setShowInvoiceModal(false)}>Close</button>
                         </div>
                     </div>
                 </div>

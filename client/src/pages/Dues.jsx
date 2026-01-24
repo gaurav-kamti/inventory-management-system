@@ -35,96 +35,100 @@ function Dues() {
     const totalCreditorDues = creditors.reduce((sum, s) => sum + parseFloat(s.outstandingBalance || 0), 0)
 
     return (
-        <div className="dues-page">
+        <div className="inventory-page">
             <div className="page-header">
-                <h1>Dues Management</h1>
+                <h1 className="page-title">Outstanding Balances</h1>
+                <p className="page-subtitle">Monitor total receivables and payables</p>
             </div>
 
-            <div className="tabs">
-                <button
-                    className={`tab-btn ${activeTab === 'debtors' ? 'active' : ''}`}
+            <div className="stats-grid" style={{ marginBottom: '30px' }}>
+                <div
+                    className={`stat-card ${activeTab === 'debtors' ? 'active' : ''}`}
                     onClick={() => setActiveTab('debtors')}
                 >
-                    Debtor Dues (Receivables)
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'creditors' ? 'active' : ''}`}
+                    <div className="stat-icon" style={{ background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>📥</div>
+                    <div className="stat-info">
+                        <h3>Receivables</h3>
+                        <p className="stat-value" style={{ color: 'var(--accent)' }}>${totalDebtorDues.toLocaleString()}</p>
+                    </div>
+                </div>
+                <div
+                    className={`stat-card ${activeTab === 'creditors' ? 'active' : ''}`}
                     onClick={() => setActiveTab('creditors')}
                 >
-                    Creditor Dues (Payables)
-                </button>
+                    <div className="stat-icon" style={{ background: 'rgba(255, 71, 87, 0.1)', color: '#ff4757' }}>📤</div>
+                    <div className="stat-info">
+                        <h3>Payables</h3>
+                        <p className="stat-value" style={{ color: '#ff4757' }}>${totalCreditorDues.toLocaleString()}</p>
+                    </div>
+                </div>
             </div>
 
-            <div className="dues-summary" style={{ marginBottom: '20px', fontSize: '18px' }}>
-                Total {activeTab === 'debtors' ? 'Receivables' : 'Payables'}:
-                <span style={{
-                    fontWeight: 'bold',
-                    marginLeft: '10px',
-                    color: activeTab === 'debtors' ? '#10b981' : '#ef4444'
-                }}>
-                    ${(activeTab === 'debtors' ? totalDebtorDues : totalCreditorDues).toFixed(2)}
-                </span>
-            </div>
-
-            <div className="dues-table-container">
+            <div className="card">
                 {activeTab === 'debtors' ? (
-                    <table className="dues-table">
-                        <thead>
-                            <tr>
-                                <th>Customer Name</th>
-                                <th>Phone</th>
-                                <th>Last Follow-up</th>
-                                <th>Amount Due</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {debtors.length > 0 ? debtors.map(customer => (
-                                <tr key={customer.id}>
-                                    <td><strong>{customer.name}</strong></td>
-                                    <td>{customer.phone}</td>
-                                    <td>-</td>
-                                    <td className="amount-negative">${parseFloat(customer.outstandingBalance).toFixed(2)}</td>
-                                    <td>
-                                        <button className="action-btn">Record Payment</button>
-                                    </td>
-                                </tr>
-                            )) : (
+                    <div className="table-container">
+                        <h2><span>📥</span> Customer Dues</h2>
+                        <table className="table">
+                            <thead>
                                 <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '30px' }}>No pending dues from customers</td>
+                                    <th>Customer Name</th>
+                                    <th>Phone</th>
+                                    <th>Aging</th>
+                                    <th>Balance</th>
+                                    <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {debtors.length > 0 ? debtors.map(customer => (
+                                    <tr key={customer.id}>
+                                        <td><strong style={{ color: 'var(--text-primary)' }}>{customer.name}</strong></td>
+                                        <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
+                                        <td><span className="badge badge-warning">Active Aging</span></td>
+                                        <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(customer.outstandingBalance).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>Receive Payment</button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '60px', opacity: 0.5 }}>No pending customer dues.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 ) : (
-                    <table className="dues-table">
-                        <thead>
-                            <tr>
-                                <th>Supplier Name</th>
-                                <th>Contact Person</th>
-                                <th>Phone</th>
-                                <th>Amount To Pay</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {creditors.length > 0 ? creditors.map(supplier => (
-                                <tr key={supplier.id}>
-                                    <td><strong>{supplier.name}</strong></td>
-                                    <td>{supplier.contactPerson || '-'}</td>
-                                    <td>{supplier.phone}</td>
-                                    <td className="amount-positive">${parseFloat(supplier.outstandingBalance).toFixed(2)}</td>
-                                    <td>
-                                        <button className="action-btn">Make Payment</button>
-                                    </td>
-                                </tr>
-                            )) : (
+                    <div className="table-container">
+                        <h2><span>📤</span> Supplier Dues</h2>
+                        <table className="table">
+                            <thead>
                                 <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '30px' }}>No pending payments to suppliers</td>
+                                    <th>Supplier Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Phone</th>
+                                    <th>Balance</th>
+                                    <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {creditors.length > 0 ? creditors.map(supplier => (
+                                    <tr key={supplier.id}>
+                                        <td><strong style={{ color: 'var(--text-primary)' }}>{supplier.name}</strong></td>
+                                        <td>{supplier.contactPerson || <span style={{ opacity: 0.5 }}>N/A</span>}</td>
+                                        <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone}</td>
+                                        <td style={{ fontWeight: '800', color: '#ff4757' }}>${parseFloat(supplier.outstandingBalance).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255, 71, 87, 0.1)', color: '#ff4757' }}>Pay Supplier</button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '60px', opacity: 0.5 }}>No pending supplier dues.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         </div>

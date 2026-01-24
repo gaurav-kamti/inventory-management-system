@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState } from 'react'
 import Login from './pages/Login'
 import Inventory from './pages/Inventory'
-import Dashboard from './pages/Dashboard'
 import Database from './pages/Database'
 import Dues from './pages/Dues'
 import Settings from './pages/Settings'
@@ -34,13 +33,11 @@ function App() {
             <Layout onLogout={handleLogout}>
                 <Routes>
                     <Route path="/" element={<Inventory />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/database" element={<Database />} />
                     <Route path="/dues" element={<Dues />} />
 
                     <Route path="/voucher" element={<Voucher />} />
-                    <Route path="/voucher/receipt" element={<Receipt />} />
-                    <Route path="/voucher/payment" element={<Payment />} />
+                    <Route path="/voucher/:type" element={<Voucher />} />
                     <Route path="/sell-purchase" element={<SellPurchase />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<Navigate to="/" />} />

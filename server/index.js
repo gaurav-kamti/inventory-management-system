@@ -34,6 +34,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/vouchers', require('./routes/vouchers'));
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client/dist')));

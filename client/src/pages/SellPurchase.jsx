@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import api from '../utils/api'
 import './Inventory.css' // We might need to create a separate CSS or share it
 
@@ -8,6 +8,21 @@ function SellPurchase() {
     const [customers, setCustomers] = useState([])
     const [showPurchaseModal, setShowPurchaseModal] = useState(false) // Renamed from showAddModal
     const [showSellModal, setShowSellModal] = useState(false)
+
+    // Refs for Focus Management
+    const purchaseInvoiceRef = useRef(null)
+    const purchaseSupplierRef = useRef(null)
+    const purchaseItemNameRef = useRef(null)
+    const purchaseQtyRef = useRef(null)
+    const purchaseRateRef = useRef(null)
+    const purchaseDiscountRef = useRef(null)
+
+    const sellInvoiceRef = useRef(null)
+    const sellCustomerRef = useRef(null)
+    const sellItemNameRef = useRef(null)
+    const sellQtyRef = useRef(null)
+    const sellRateRef = useRef(null)
+    const sellDiscountRef = useRef(null)
 
     // Helper for dd:mm:yyyy date format
     const formatDate = (dateStr) => {
@@ -66,6 +81,9 @@ function SellPurchase() {
         discount: ''
     })
 
+    const [availableAdvances, setAvailableAdvances] = useState([])
+    const [selectedAdvanceIds, setSelectedAdvanceIds] = useState([])
+
     const addItemToList = () => {
         if (!addItemRow.name || !addItemRow.quantity || !addItemRow.rate) {
             return alert('Please fill required fields')
@@ -87,6 +105,7 @@ function SellPurchase() {
             rate: '',
             discount: ''
         })
+        setTimeout(() => purchaseItemNameRef.current?.focus(), 0)
     }
 
     const removeAddedItem = (index) => {
@@ -98,6 +117,19 @@ function SellPurchase() {
         fetchSuppliers()
         fetchCustomers()
     }, [])
+
+    // Initial Focus Logic
+    useEffect(() => {
+        if (showPurchaseModal) {
+            setTimeout(() => purchaseInvoiceRef.current?.focus(), 100)
+        }
+    }, [showPurchaseModal])
+
+    useEffect(() => {
+        if (showSellModal) {
+            setTimeout(() => sellCustomerRef.current?.focus(), 100)
+        }
+    }, [showSellModal])
 
     const fetchProducts = async () => {
         const response = await api.get('/products')
@@ -113,6 +145,62 @@ function SellPurchase() {
         const response = await api.get('/customers')
         setCustomers(response.data)
     }
+
+    const fetchAdvances = async (entity, id) => {
+        if (!id) {
+            setAvailableAdvances([]);
+            setSelectedAdvanceIds([]);
+            return;
+        }
+        try {
+            const res = await api.get(`/vouchers/unused-advances/${entity}/${id}`);
+            setAvailableAdvances(res.data);
+            setSelectedAdvanceIds([]); // Reset on entity change
+        } catch (err) {
+            console.error('Error fetching advances:', err);
+        }
+    }
+
+    useEffect(() => {
+        if (addForm.supplierId) fetchAdvances('supplier', addForm.supplierId);
+        else setAvailableAdvances([]);
+    }, [addForm.supplierId]);
+
+    useEffect(() => {
+        if (sellForm.customerId) fetchAdvances('customer', sellForm.customerId);
+        else setAvailableAdvances([]);
+    }, [sellForm.customerId]);
+
+    const toggleAdvance = (id) => {
+        setSelectedAdvanceIds(prev =>
+            prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+        );
+    }
+
+    const totalAdjusted = selectedAdvanceIds.reduce((sum, id) => {
+        const adv = availableAdvances.find(a => a.id === id);
+        return sum + (parseFloat(adv?.remainingAdvance) || 0);
+    }, 0);
+
+    const advanceSection = (
+        availableAdvances.length > 0 && (
+            <div className="advance-adjustment-section" style={{
+                marginTop: '15px',
+                padding: '10px',
+                backgroundColor: 'rgba(255,165,0,0.1)',
+                borderRadius: '5px',
+                border: '1px dashed orange'
+            }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9em', color: 'orange' }}>Adjust Advance</h4>
+                {availableAdvances.map(adv => (
+                    <label key={adv.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85em', color: '#eee', marginBottom: '5px' }}>
+                        <input type="checkbox" checked={selectedAdvanceIds.includes(adv.id)} onChange={() => toggleAdvance(adv.id)} />
+                        <span>Date: {formatDate(adv.date || adv.createdAt)} | Amt: ${parseFloat(adv.remainingAdvance).toFixed(2)} {adv.notes ? `(${adv.notes})` : ''}</span>
+                    </label>
+                ))}
+            </div>
+        )
+    )
 
     const handlePurchaseItem = async (e) => {
         e.preventDefault()
@@ -134,7 +222,11 @@ function SellPurchase() {
                     hsn: item.hsn || '8301',
                     cgst: item.cgst,
                     sgst: item.sgst
-                }))
+                })),
+                advanceAdjustments: selectedAdvanceIds.map(id => {
+                    const adv = availableAdvances.find(a => a.id === id);
+                    return { id, amount: adv.remainingAdvance };
+                })
             }
 
             await api.post('/purchases', purchaseData)
@@ -233,9 +325,13 @@ function SellPurchase() {
                 subtotal: sellSubtotal,
                 tax: sellTax,
                 total: sellTotal,
-                amountPaid: sellTotal,
+                amountPaid: sellForm.customerId ? 0 : sellTotal,
                 salesChannel: 'in-store',
-                invoiceNumber: sellForm.invoice
+                invoiceNumber: sellForm.invoice,
+                advanceAdjustments: selectedAdvanceIds.map(id => {
+                    const adv = availableAdvances.find(a => a.id === id);
+                    return { id, amount: adv.remainingAdvance };
+                })
             }
 
             const response = await api.post('/sales', saleData)
@@ -285,6 +381,7 @@ function SellPurchase() {
             rate: '',
             discount: ''
         })
+        setTimeout(() => sellItemNameRef.current?.focus(), 0)
     }
 
     useEffect(() => {
@@ -328,129 +425,157 @@ function SellPurchase() {
 
     return (
         <div className="inventory-page"> {/* Reusing inventory-page class for layout */}
-            <div className="page-header">
-                <h1 className="page-title">Sell & Purchase</h1>
+            <div className="page-header" style={{ marginBottom: '40px' }}>
+                <h1 className="page-title" style={{
+                    fontSize: '3rem',
+                    fontWeight: '900',
+                    color: 'var(--text-primary)',
+                    textAlign: 'center',
+                    letterSpacing: '-2px'
+                }}>
+                    Transactions
+                </h1>
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
+                    Manage Sales and Purchase Vouchers
+                </p>
             </div>
 
             {productDatalist}
 
-            <div className="actions-container" style={{ display: 'flex', gap: '20px', padding: '20px', justifyContent: 'center' }}>
-                <button className="btn btn-success" style={{ padding: '30px', fontSize: '1.2em' }} onClick={() => setShowSellModal(true)}>
-                    💰 Sell Item
+            <div className="actions-container" style={{ display: 'flex', gap: '30px', padding: '40px', justifyContent: 'center' }}>
+                <button className="btn" style={{
+                    padding: '40px 60px',
+                    fontSize: '1.4rem',
+                    background: 'linear-gradient(135deg, var(--bg-light) 0%, var(--bg-mid) 100%)',
+                    color: 'var(--text-primary)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '24px'
+                }} onClick={() => setShowSellModal(true)}>
+                    <span style={{ fontSize: '2rem' }}>💰</span> Sales Voucher
                 </button>
-                <button className="btn btn-primary" style={{ padding: '30px', fontSize: '1.2em' }} onClick={() => setShowPurchaseModal(true)}>
-                    🛒 Purchase Item
+                <button className="btn" style={{
+                    padding: '40px 60px',
+                    fontSize: '1.4rem',
+                    background: 'rgba(255,255,255,0.03)',
+                    color: 'var(--text-primary)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '24px'
+                }} onClick={() => setShowPurchaseModal(true)}>
+                    <span style={{ fontSize: '2rem' }}>🛒</span> Purchase Voucher
                 </button>
             </div>
 
-            {/* Purchase Item Modal (formerly Add Item) */}
+            {/* Purchase Item Modal */}
             {showPurchaseModal && (
-                <div className="modal-overlay" onClick={() => setShowPurchaseModal(false)}>
-                    <div className="modal glass invoice-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="invoice-header">
-                            <div className="invoice-info-row">
-                                <div className="invoice-field">
-                                    <input className="input" placeholder="Supplier Invoice" value={addForm.supplierInvoice || ''}
-                                        onChange={(e) => setAddForm({ ...addForm, supplierInvoice: e.target.value })}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.parentElement.nextElementSibling?.querySelector('input')?.focus(); } }} />
+                <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+                    animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }} onClick={() => setShowPurchaseModal(false)}>
+                    <div className="modal glass" style={{
+                        width: '95%', maxWidth: '1200px', maxHeight: '92vh', overflow: 'auto',
+                        padding: '45px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
+                        borderRadius: '32px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+                        position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+
+                        <div className="modal-close" onClick={() => setShowPurchaseModal(false)} style={{
+                            position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
+                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s'
+                        }}>✕</div>
+
+                        <div className="invoice-header" style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px' }}>
+                                <div>
+                                    <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Purchase Bill</h2>
+                                    <p style={{ color: 'var(--accent)', fontWeight: '600', fontSize: '0.9rem' }}>Entry of inward goods/services</p>
                                 </div>
-                                <div className="invoice-field">
-                                    <input type="date" className="input" value={addForm.date}
-                                        onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('.supplier-select-row select')?.focus(); } }}
-                                        required />
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{new Date().toLocaleDateString('en-GB')}</p>
                                 </div>
                             </div>
-                            <div className="supplier-select-row">
-                                <select className="input" value={addForm.supplierId}
-                                    onChange={(e) => setAddForm({ ...addForm, supplierId: e.target.value })}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('.input-row .input-table')?.focus(); } }}
-                                    required>
-                                    <option value="">Select Supplier</option>
-                                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
+
+                            <div className="invoice-info-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '25px' }}>
+                                <div className="invoice-field">
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Supplier Invoice #</label>
+                                    <input className="input" placeholder="e.g. SUP/2024/001" value={addForm.supplierInvoice || ''}
+                                        ref={purchaseInvoiceRef}
+                                        onChange={(e) => setAddForm({ ...addForm, supplierInvoice: e.target.value })}
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
+                                    />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Invoice Date</label>
+                                    <input type="date" className="input" value={addForm.date}
+                                        onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
+                                        required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px', colorScheme: 'dark' }}
+                                    />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Party Name (Supplier)</label>
+                                    <select className="input" value={addForm.supplierId}
+                                        ref={purchaseSupplierRef}
+                                        onChange={(e) => setAddForm({ ...addForm, supplierId: e.target.value })}
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
+                                        required>
+                                        <option value="" style={{ background: 'var(--bg-deep)' }}>-- Select Registered Supplier --</option>
+                                        {suppliers.map(s => <option key={s.id} value={s.id} style={{ background: 'var(--bg-deep)' }}>{s.name}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="invoice-table-wrapper">
-                            <table className="invoice-table">
-                                <thead>
+                        <div className="invoice-table-wrapper" style={{ marginBottom: '40px' }}>
+                            <table className="table" style={{ width: '100%' }}>
+                                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                                     <tr>
-                                        <th className="col-name">Item description(name)</th>
-                                        <th className="col-size">size</th>
-                                        <th className="col-hsn">HSN*</th>
-                                        <th className="col-cgst">CGST</th>
-                                        <th className="col-sgst">SGST</th>
-                                        <th className="col-qty">Quantity</th>
-                                        <th className="col-rate">rate</th>
-                                        <th className="col-disc">discount</th>
-                                        <th className="col-amount">Amount*</th>
-                                        <th className="col-action no-border"></th>
+                                        <th>Product / Description</th>
+                                        <th>Size</th>
+                                        <th>HSN</th>
+                                        <th>Gst(%)</th>
+                                        <th>Qty</th>
+                                        <th>Rate</th>
+                                        <th>Disc</th>
+                                        <th>Amount</th>
+                                        <th style={{ width: '60px' }}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {addedItems.map((item, index) => (
                                         <tr key={index}>
-                                            <td>{item.name}</td>
-                                            <td>{item.size}{item.sizeUnit}</td>
+                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.name}</td>
+                                            <td><span style={{ background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '6px' }}>{item.size}{item.sizeUnit}</span></td>
                                             <td>{item.hsn}</td>
-                                            <td>{item.cgst}%</td>
-                                            <td>{item.sgst}%</td>
-                                            <td>{item.quantity} pcs</td>
-                                            <td>{item.rate}</td>
-                                            <td>{item.discount}%</td>
-                                            <td>${item.amount.toFixed(2)}</td>
-                                            <td className="no-border">
-                                                <button type="button" className="btn-remove-small" onClick={() => removeAddedItem(index)}>✕</button>
+                                            <td>{parseFloat(item.cgst) + parseFloat(item.sgst)}%</td>
+                                            <td style={{ fontWeight: '600' }}>{item.quantity} pcs</td>
+                                            <td style={{ fontWeight: '600' }}>${parseFloat(item.rate).toFixed(2)}</td>
+                                            <td style={{ color: '#ff4757' }}>{item.discount}%</td>
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem' }}>${item.amount.toFixed(2)}</td>
+                                            <td>
+                                                <button type="button" className="btn" style={{ minWidth: 'auto', padding: '8px', background: 'rgba(255,71,87,0.1)', color: '#ff4757', border: '1px solid rgba(255,71,87,0.2)' }} onClick={() => removeAddedItem(index)}>✕</button>
                                             </td>
                                         </tr>
                                     ))}
-                                    <tr className="input-row">
+                                    <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
                                         <td>
-                                            <input
-                                                className="input-table"
+                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem' }}
+                                                ref={purchaseItemNameRef}
                                                 list="product-suggestions"
-                                                placeholder="Name"
+                                                placeholder="Search or enter name..."
                                                 value={addItemRow.name}
                                                 onChange={e => setAddItemRow({ ...addItemRow, name: e.target.value })}
-                                                onKeyDown={e => {
-                                                    // Handle Enter or Tab for autocomplete
-                                                    if (e.key === 'Enter' || e.key === 'Tab') {
-                                                        const val = e.target.value
-                                                        const product = products.find(p => p.name === val)
-
-                                                        // If no exact match, try partial match (starts with)
-                                                        if (!product && val) {
-                                                            const match = products.find(p => p.name.toLowerCase().startsWith(val.toLowerCase()))
-                                                            if (match) {
-                                                                setAddItemRow({
-                                                                    ...addItemRow,
-                                                                    name: match.name,
-                                                                    size: '', // Reset size or could fetch if stored
-                                                                    sizeUnit: 'mm',
-                                                                    hsn: match.hsn || '8301',
-                                                                    cgst: match.gst ? (parseFloat(match.gst) / 2).toString() : '9',
-                                                                    sgst: match.gst ? (parseFloat(match.gst) / 2).toString() : '9',
-                                                                    quantity: addItemRow.quantity,
-                                                                    rate: match.purchasePrice || match.sellingPrice || '', // Use purchase price if available
-                                                                    discount: addItemRow.discount
-                                                                })
-                                                                // Prevent default only if we want to stop tab navigation (unlikely we want to stop tab, just update state before move)
-                                                                // But for Enter we want to move focus explicitly
-                                                            }
-                                                        }
-
-                                                        if (e.key === 'Enter') {
-                                                            e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()
-                                                        }
-                                                    }
-                                                }}
                                             />
                                         </td>
                                         <td>
-                                            <div className="size-group">
-                                                <input className="input-table size-val" placeholder="0" value={addItemRow.size} onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.nextElementSibling?.focus()} />
-                                                <select className="input-table size-u" value={addItemRow.sizeUnit} onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.parentElement.nextElementSibling?.querySelector('select')?.focus()}>
+                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                <input className="input" style={{ padding: '12px', width: '55px', fontSize: '0.9rem' }} placeholder="0" value={addItemRow.size}
+                                                    onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })} />
+                                                <select className="input" style={{ padding: '12px', width: '65px', fontSize: '0.9rem' }} value={addItemRow.sizeUnit}
+                                                    onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })}>
                                                     <option value="mm">mm</option>
                                                     <option value="cm">cm</option>
                                                     <option value="in">in</option>
@@ -458,66 +583,82 @@ function SellPurchase() {
                                             </div>
                                         </td>
                                         <td>
-                                            <select className="input-table" value={addItemRow.hsn} onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()}>
-                                                {hsnCodes.map(code => <option key={code} value={code}>{code}</option>)}
+                                            <select className="input" style={{ padding: '12px', width: '80px', fontSize: '0.9rem' }} value={addItemRow.hsn}
+                                                onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })}>
+                                                {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                             </select>
                                         </td>
-                                        <td><input className="input-table" placeholder="9" type="number" value={addItemRow.cgst} onChange={e => setAddItemRow({ ...addItemRow, cgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" placeholder="9" type="number" value={addItemRow.sgst} onChange={e => setAddItemRow({ ...addItemRow, sgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" placeholder="0" type="number" value={addItemRow.quantity} onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" placeholder="0.00" type="number" value={addItemRow.rate} onChange={e => setAddItemRow({ ...addItemRow, rate: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" placeholder="%" type="number" value={addItemRow.discount} onChange={e => setAddItemRow({ ...addItemRow, discount: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItemToList(); } }} /></td>
+                                        <td style={{ display: 'flex', gap: '2px' }}>
+                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="CGST" type="number" value={addItemRow.cgst}
+                                                onChange={e => setAddItemRow({ ...addItemRow, cgst: e.target.value })} />
+                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="SGST" type="number" value={addItemRow.sgst}
+                                                onChange={e => setAddItemRow({ ...addItemRow, sgst: e.target.value })} />
+                                        </td>
                                         <td>
+                                            <input className="input" style={{ padding: '12px', width: '70px', fontSize: '0.9rem' }} placeholder="0" type="number"
+                                                ref={purchaseQtyRef}
+                                                value={addItemRow.quantity}
+                                                onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input className="input" style={{ padding: '12px', width: '100px', fontSize: '0.9rem' }} placeholder="0.00" type="number"
+                                                ref={purchaseRateRef}
+                                                value={addItemRow.rate}
+                                                onChange={e => setAddItemRow({ ...addItemRow, rate: e.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input className="input" style={{ padding: '12px', width: '60px', fontSize: '0.9rem' }} placeholder="%" type="number"
+                                                ref={purchaseDiscountRef}
+                                                value={addItemRow.discount}
+                                                onChange={e => setAddItemRow({ ...addItemRow, discount: e.target.value })}
+                                            />
+                                        </td>
+                                        <td style={{ fontWeight: '800', fontSize: '1.1rem' }}>
                                             ${(() => {
                                                 const baseAmount = (parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0) * (1 - (parseFloat(addItemRow.discount) || 0) / 100);
                                                 const taxRate = ((parseFloat(addItemRow.cgst) || 0) + (parseFloat(addItemRow.sgst) || 0)) / 100;
                                                 return (baseAmount * (1 + taxRate)).toFixed(2);
                                             })()}
                                         </td>
-                                        <td className="no-border">
-                                            <button type="button" className="btn-add-table" onClick={addItemToList}>(+)add</button>
+                                        <td>
+                                            <button type="button" className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToList}>+</button>
                                         </td>
-                                    </tr>
-                                    <tr className="footer-row-total">
-                                        <td colSpan="2">Total Amount</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>${(addSubtotal + addTax).toFixed(2)}</td>
-                                        <td className="no-border"></td>
-                                    </tr>
-                                    <tr className="footer-row-light">
-                                        <td colSpan="2">Rounded off</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>{addRoundOff >= 0 ? '+' : '-'}{Math.abs(addRoundOff).toFixed(2)}</td>
-                                        <td className="no-border"></td>
-                                    </tr>
-                                    <tr className="footer-row-final">
-                                        <td colSpan="2">Total Invoice Value</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>{addedItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)} pcs</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>${addTotal.toFixed(0)}</td>
-                                        <td className="no-border"></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div className="modal-actions">
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowPurchaseModal(false)}>Cancel</button>
-                            <button type="submit" className="btn btn-primary" onClick={handlePurchaseItem}>Complete Purchase</button>
+                        <div className="invoice-total-overview" style={{
+                            display: 'flex', justifyContent: 'flex-end', gap: '80px', padding: '30px',
+                            background: 'rgba(0,0,0,0.3)', borderRadius: '24px', border: '1px solid var(--glass-border)'
+                        }}>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Subtotal</p>
+                                <p style={{ fontSize: '1.6rem', fontWeight: '800' }}>${addSubtotal.toFixed(2)}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Total TAX (GST)</p>
+                                <p style={{ fontSize: '1.6rem', fontWeight: '800' }}>${addTax.toFixed(2)}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--accent)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '900', textTransform: 'uppercase' }}>Grand Total</p>
+                                <p style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>${addTotal.toFixed(0)}</p>
+                                {totalAdjusted > 0 && (
+                                    <div style={{ marginTop: '10px', color: 'orange', fontSize: '0.9rem', fontWeight: '700' }}>
+                                        Adjusted: -${totalAdjusted.toFixed(2)}
+                                        <p style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Net Due: ${Math.max(0, addTotal - totalAdjusted).toFixed(0)}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {advanceSection}
+
+                        <div className="modal-actions" style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '20px' }}>
+                            <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '18px 40px', color: 'var(--text-secondary)' }} onClick={() => setShowPurchaseModal(false)}>Cancel</button>
+                            <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handlePurchaseItem}>Save Bill</button>
                         </div>
                     </div>
                 </div>
@@ -525,57 +666,88 @@ function SellPurchase() {
 
             {/* Sell Item Modal */}
             {showSellModal && (
-                <div className="modal-overlay" onClick={() => setShowSellModal(false)}>
-                    <div className="modal glass invoice-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="invoice-header">
-                            <div className="invoice-info-row">
-                                <div className="invoice-field">
-                                    <input className="input" placeholder="Customer Invoice" value={sellForm.invoice || ''}
-                                        onChange={(e) => setSellForm({ ...sellForm, invoice: e.target.value })}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.parentElement.nextElementSibling?.querySelector('input')?.focus(); } }} />
+                <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+                    animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }} onClick={() => setShowSellModal(false)}>
+                    <div className="modal glass" style={{
+                        width: '95%', maxWidth: '1200px', maxHeight: '92vh', overflow: 'auto',
+                        padding: '45px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
+                        borderRadius: '32px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+                        position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+
+                        <div className="modal-close" onClick={() => setShowSellModal(false)} style={{
+                            position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
+                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s'
+                        }}>✕</div>
+
+                        <div className="invoice-header" style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px' }}>
+                                <div>
+                                    <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Sales Invoice</h2>
+                                    <p style={{ color: 'var(--accent)', fontWeight: '600', fontSize: '0.9rem' }}>Record of outward goods/services</p>
                                 </div>
-                                <div className="invoice-field">
-                                    <input type="date" className="input" value={sellForm.date}
-                                        onChange={(e) => setSellForm({ ...sellForm, date: e.target.value })}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelectorAll('.supplier-select-row select')[1]?.focus(); } }}
-                                        required />
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{new Date().toLocaleDateString('en-GB')}</p>
                                 </div>
                             </div>
-                            <div className="supplier-select-row">
-                                <select className="input" value={sellForm.customerId || ''}
-                                    onChange={(e) => setSellForm({ ...sellForm, customerId: e.target.value })}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.querySelectorAll('.input-row select')[1]?.focus(); } }}
-                                    required>
-                                    <option value="">Walk-in Customer</option>
-                                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+
+                            <div className="invoice-info-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '25px' }}>
+                                <div className="invoice-field">
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Invoice Number</label>
+                                    <input className="input" placeholder="INV/001" value={sellForm.invoice || ''}
+                                        ref={sellInvoiceRef}
+                                        onChange={(e) => setSellForm({ ...sellForm, invoice: e.target.value })}
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
+                                    />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date of Issue</label>
+                                    <input type="date" className="input" value={sellForm.date}
+                                        onChange={(e) => setSellForm({ ...sellForm, date: e.target.value })}
+                                        required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px', colorScheme: 'dark' }}
+                                    />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Party Name (Customer)</label>
+                                    <select className="input" value={sellForm.customerId || ''}
+                                        ref={sellCustomerRef}
+                                        onChange={(e) => setSellForm({ ...sellForm, customerId: e.target.value })}
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}>
+                                        <option value="">Walk-in Customer (Cash)</option>
+                                        {customers.map(c => <option key={c.id} value={c.id} style={{ background: 'var(--bg-deep)' }}>{c.name}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="invoice-table-wrapper">
-                            <table className="invoice-table">
-                                <thead>
+                        <div className="invoice-table-wrapper" style={{ marginBottom: '40px' }}>
+                            <table className="table" style={{ width: '100%' }}>
+                                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                                     <tr>
-                                        <th className="col-name">Item description(name)</th>
-                                        <th className="col-size">size</th>
-                                        <th className="col-hsn">HSN*</th>
-                                        <th className="col-cgst">CGST</th>
-                                        <th className="col-sgst">SGST</th>
-                                        <th className="col-qty">Quantity</th>
-                                        <th className="col-rate">rate</th>
-                                        <th className="col-disc">discount</th>
-                                        <th className="col-amount">Amount*</th>
-                                        <th className="col-action no-border"></th>
+                                        <th>Product / Description</th>
+                                        <th>Size</th>
+                                        <th>HSN</th>
+                                        <th>Gst(%)</th>
+                                        <th>Qty</th>
+                                        <th>Rate</th>
+                                        <th>Disc</th>
+                                        <th>Amount</th>
+                                        <th style={{ width: '60px' }}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {cartItems.map((item, index) => (
-                                        <tr key={item.productId}>
-                                            <td>{item.name}</td>
+                                        <tr key={item.productId || index}>
+                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.name}</td>
                                             <td>
-                                                <div className="size-group">
-                                                    <input className="input-table size-val" value={item.size} onChange={e => updateCartItem(item.productId, 'size', e.target.value)} />
-                                                    <select className="input-table size-u" value={item.sizeUnit} onChange={e => updateCartItem(item.productId, 'sizeUnit', e.target.value)}>
+                                                <div style={{ display: 'flex', gap: '4px' }}>
+                                                    <input className="input" style={{ padding: '8px', width: '50px', fontSize: '0.8rem' }} value={item.size} onChange={e => updateCartItem(item.productId, 'size', e.target.value)} />
+                                                    <select className="input" style={{ padding: '8px', width: '60px', fontSize: '0.8rem' }} value={item.sizeUnit} onChange={e => updateCartItem(item.productId, 'sizeUnit', e.target.value)}>
                                                         <option value="mm">mm</option>
                                                         <option value="cm">cm</option>
                                                         <option value="in">in</option>
@@ -583,16 +755,15 @@ function SellPurchase() {
                                                 </div>
                                             </td>
                                             <td>
-                                                <select className="input-table" value={item.hsn} onChange={e => updateCartItem(item.productId, 'hsn', e.target.value)}>
-                                                    {hsnCodes.map(code => <option key={code} value={code}>{code}</option>)}
+                                                <select className="input" style={{ padding: '8px', width: '70px', fontSize: '0.8rem' }} value={item.hsn} onChange={e => updateCartItem(item.productId, 'hsn', e.target.value)}>
+                                                    {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                                 </select>
                                             </td>
-                                            <td><input className="input-table" type="number" value={item.cgst} onChange={e => updateCartItem(item.productId, 'cgst', e.target.value)} /></td>
-                                            <td><input className="input-table" type="number" value={item.sgst} onChange={e => updateCartItem(item.productId, 'sgst', e.target.value)} /></td>
-                                            <td><input className="input-table" type="number" value={item.quantity} onChange={e => updateCartItem(item.productId, 'quantity', e.target.value)} /></td>
-                                            <td><input className="input-table" type="number" value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
-                                            <td><input className="input-table" type="number" value={item.discount} onChange={e => updateCartItem(item.productId, 'discount', e.target.value)} /></td>
-                                            <td>
+                                            <td>{parseFloat(item.cgst) + parseFloat(item.sgst)}%</td>
+                                            <td><input type="number" className="input" style={{ padding: '8px', width: '60px', fontSize: '0.8rem' }} value={item.quantity} onChange={e => updateCartItem(item.productId, 'quantity', e.target.value)} /></td>
+                                            <td><input type="number" className="input" style={{ padding: '8px', width: '80px', fontSize: '0.8rem' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
+                                            <td><input type="number" className="input" style={{ padding: '8px', width: '50px', fontSize: '0.8rem' }} value={item.discount} onChange={e => updateCartItem(item.productId, 'discount', e.target.value)} /></td>
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem' }}>
                                                 ${(() => {
                                                     const baseAmount = (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0) * (1 - (parseFloat(item.discount) || 0) / 100);
                                                     const taxRate = ((parseFloat(item.cgst) || 0) + (parseFloat(item.sgst) || 0)) / 100;
@@ -600,146 +771,127 @@ function SellPurchase() {
                                                 })()}
                                             </td>
                                             <td>
-                                                <button type="button" className="btn-remove-small" onClick={() => removeFromCart(item.productId)}>✕</button>
+                                                <button type="button" className="btn" style={{ minWidth: 'auto', padding: '8px', background: 'rgba(255,71,87,0.1)', color: '#ff4757' }} onClick={() => removeFromCart(item.productId)}>✕</button>
                                             </td>
                                         </tr>
                                     ))}
-                                    {/* Product Selection Row - Manual Entry Enabled */}
-                                    <tr className="input-row">
+                                    <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
                                         <td>
-                                            <input
-                                                className="input-table"
+                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem' }}
+                                                ref={sellItemNameRef}
                                                 list="product-suggestions"
-                                                placeholder="Type to search..."
+                                                placeholder="Search or enter name..."
                                                 value={sellItemInput.name}
                                                 onChange={(e) => {
                                                     const val = e.target.value
                                                     const product = products.find(p => p.name === val)
-
                                                     if (product) {
-                                                        // Exact match found - auto fill
-                                                        setSellItemInput({
-                                                            ...sellItemInput,
+                                                        setSellItemInput(prev => ({
+                                                            ...prev,
                                                             productId: String(product.id),
                                                             name: product.name,
                                                             rate: product.sellingPrice || '',
                                                             hsn: product.hsn || '8301',
                                                             cgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
                                                             sgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
-                                                            size: '',
-                                                            sizeUnit: 'mm',
-                                                            quantity: sellItemInput.quantity,
-                                                            discount: sellItemInput.discount
-                                                        })
+                                                        }))
                                                     } else {
-                                                        // No match - allow free typing but clear ID
-                                                        setSellItemInput({
-                                                            ...sellItemInput,
-                                                            name: val,
-                                                            productId: ''
-                                                        })
-                                                    }
-                                                }}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter' || e.key === 'Tab') {
-                                                        const val = e.target.value
-                                                        const product = products.find(p => p.name === val)
-
-                                                        if (!product && val) {
-                                                            const match = products.find(p => p.name.toLowerCase().startsWith(val.toLowerCase()))
-                                                            if (match) {
-                                                                setSellItemInput({
-                                                                    ...sellItemInput,
-                                                                    productId: String(match.id),
-                                                                    name: match.name,
-                                                                    rate: match.sellingPrice || '',
-                                                                    hsn: match.hsn || '8301',
-                                                                    cgst: match.gst ? (parseFloat(match.gst) / 2).toString() : '9',
-                                                                    sgst: match.gst ? (parseFloat(match.gst) / 2).toString() : '9',
-                                                                    size: '',
-                                                                    sizeUnit: 'mm',
-                                                                    quantity: sellItemInput.quantity,
-                                                                    discount: sellItemInput.discount
-                                                                })
-                                                            }
-                                                        }
-
-                                                        if (e.key === 'Enter') {
-                                                            e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()
-                                                        }
+                                                        setSellItemInput(prev => ({ ...prev, name: val, productId: '' }))
                                                     }
                                                 }}
                                             />
                                         </td>
                                         <td>
-                                            <div className="size-group">
-                                                <input className="input-table size-val" value={sellItemInput.size} onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.nextElementSibling?.focus()} />
-                                                <select className="input-table size-u" value={sellItemInput.sizeUnit} onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.parentElement.nextElementSibling?.querySelector('input')?.focus()}>
+                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                <input className="input" style={{ padding: '12px', width: '55px', fontSize: '0.9rem' }} placeholder="0" value={sellItemInput.size}
+                                                    onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })} />
+                                                <select className="input" style={{ padding: '12px', width: '65px', fontSize: '0.9rem' }} value={sellItemInput.sizeUnit}
+                                                    onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })}>
                                                     <option>mm</option>
                                                     <option>cm</option>
                                                     <option>in</option>
                                                 </select>
                                             </div>
                                         </td>
-                                        <td><input className="input-table" value={sellItemInput.hsn} onChange={e => setSellItemInput({ ...sellItemInput, hsn: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" value={sellItemInput.cgst} onChange={e => setSellItemInput({ ...sellItemInput, cgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" value={sellItemInput.sgst} onChange={e => setSellItemInput({ ...sellItemInput, sgst: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" value={sellItemInput.quantity} onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" value={sellItemInput.rate} onChange={e => setSellItemInput({ ...sellItemInput, rate: e.target.value })} onKeyDown={e => e.key === 'Enter' && e.target.parentElement.nextElementSibling?.querySelector('input')?.focus()} /></td>
-                                        <td><input className="input-table" value={sellItemInput.discount} onChange={e => setSellItemInput({ ...sellItemInput, discount: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItemToSellList(); } }} /></td>
                                         <td>
+                                            <input className="input" style={{ padding: '12px', width: '80px', fontSize: '0.9rem' }} value={sellItemInput.hsn}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, hsn: e.target.value })} />
+                                        </td>
+                                        <td style={{ display: 'flex', gap: '2px' }}>
+                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="CGST" value={sellItemInput.cgst}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, cgst: e.target.value })} />
+                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="SGST" value={sellItemInput.sgst}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, sgst: e.target.value })} />
+                                        </td>
+                                        <td>
+                                            <input className="input" style={{ padding: '12px', width: '70px', fontSize: '0.9rem' }} placeholder="0" type="number"
+                                                ref={sellQtyRef}
+                                                value={sellItemInput.quantity}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input className="input" style={{ padding: '12px', width: '90px', fontSize: '0.9rem' }} placeholder="0.00" type="number"
+                                                ref={sellRateRef}
+                                                value={sellItemInput.rate}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, rate: e.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input className="input" style={{ padding: '12px', width: '60px', fontSize: '0.9rem' }} placeholder="%" type="number"
+                                                ref={sellDiscountRef}
+                                                value={sellItemInput.discount}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, discount: e.target.value })}
+                                            />
+                                        </td>
+                                        <td style={{ fontWeight: '800', fontSize: '1.1rem' }}>
                                             ${(() => {
                                                 const baseAmount = (parseFloat(sellItemInput.quantity) || 0) * (parseFloat(sellItemInput.rate) || 0) * (1 - (parseFloat(sellItemInput.discount) || 0) / 100);
                                                 const taxRate = ((parseFloat(sellItemInput.cgst) || 0) + (parseFloat(sellItemInput.sgst) || 0)) / 100;
                                                 return (baseAmount * (1 + taxRate)).toFixed(2);
                                             })()}
                                         </td>
-                                        <td className="no-border"><button type="button" className="btn-add-table" onClick={addItemToSellList}>(+)add</button></td>
-                                    </tr>
-                                    <tr className="footer-row-total">
-                                        <td colSpan="2">Total Amount</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>${(sellSubtotal + sellTax).toFixed(2)}</td>
-                                        <td className="no-border"></td>
-                                    </tr>
-                                    <tr className="footer-row-light">
-                                        <td colSpan="2">Rounded off</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>{sellRoundOff >= 0 ? '+' : '-'}{Math.abs(sellRoundOff).toFixed(2)}</td>
-                                        <td className="no-border"></td>
-                                    </tr>
-                                    <tr className="footer-row-final">
-                                        <td colSpan="2">Total Invoice Value</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>{cartItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)} pcs</td>
-                                        <td></td>
-                                        <td></td>
-                                        <td>${sellTotal.toFixed(0)}</td>
-                                        <td className="no-border"></td>
+                                        <td>
+                                            <button type="button" className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToSellList}>+</button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div className="modal-actions">
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowSellModal(false)}>Cancel</button>
-                            <button type="submit" className="btn btn-primary" onClick={handleSellItem}>Complete Sale</button>
+                        <div className="invoice-total-overview" style={{
+                            display: 'flex', justifyContent: 'flex-end', gap: '80px', padding: '30px',
+                            background: 'rgba(0,0,0,0.3)', borderRadius: '24px', border: '1px solid var(--glass-border)'
+                        }}>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Sales</p>
+                                <p style={{ fontSize: '1.6rem', fontWeight: '800' }}>${sellSubtotal.toFixed(2)}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST Collection</p>
+                                <p style={{ fontSize: '1.6rem', fontWeight: '800' }}>${sellTax.toFixed(2)}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: 'var(--accent)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '900', textTransform: 'uppercase' }}>Grand Total</p>
+                                <p style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>${sellTotal.toFixed(0)}</p>
+                                {totalAdjusted > 0 && (
+                                    <div style={{ marginTop: '10px', color: 'orange', fontSize: '0.9rem', fontWeight: '700' }}>
+                                        Adjusted: -${totalAdjusted.toFixed(2)}
+                                        <p style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Net Collectible: ${Math.max(0, sellTotal - totalAdjusted).toFixed(0)}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {advanceSection}
+
+                        <div className="modal-actions" style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '20px' }}>
+                            <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '18px 40px', color: 'var(--text-secondary)' }} onClick={() => setShowSellModal(false)}>Discard Action</button>
+                            <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handleSellItem}>Issue Tax Invoice</button>
                         </div>
                     </div>
                 </div>
-            )}
+            )}\
         </div>
     )
 }

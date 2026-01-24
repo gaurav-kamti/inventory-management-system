@@ -1,5 +1,5 @@
 const express = require("express");
-const { Purchase, Product, Supplier, sequelize } = require("../models");
+const { Purchase, Product, Supplier, SupplierTransaction, sequelize } = require("../models");
 const { auth } = require("../middleware/auth");
 const router = express.Router();
 
@@ -91,12 +91,65 @@ router.post("/", auth, async (req, res) => {
       const taxAmount = amount * (gstPercent / 100);
       return sum + amount + taxAmount;
     }, 0);
+
     if (supplierId && totalBillAmount > 0) {
       const supplier = await Supplier.findByPk(supplierId, { transaction: t });
       if (supplier) {
         await supplier.update({
           outstandingBalance: parseFloat(supplier.outstandingBalance || 0) + totalBillAmount
         }, { transaction: t });
+
+        // Create Supplier Transaction (Bill)
+        const mainBill = await SupplierTransaction.create({
+          supplierId,
+          type: 'bill',
+          amount: totalBillAmount,
+          amountPaid: 0,
+          amountDue: totalBillAmount,
+          status: 'pending',
+          invoiceNumber: invoiceNumber,
+          date: date,
+          method: 'New Ref',
+          notes: `Bill for Invoice: ${invoiceNumber}`
+        }, { transaction: t });
+
+        // If there were advance adjustments
+        if (req.body.advanceAdjustments && req.body.advanceAdjustments.length > 0) {
+            let totalAdj = 0;
+            for (const adj of req.body.advanceAdjustments) {
+                const advTrans = await SupplierTransaction.findByPk(adj.id, { transaction: t });
+                if (advTrans) {
+                    const adjAmt = round2(parseFloat(adj.amount));
+                    await advTrans.update({
+                        remainingAdvance: round2(parseFloat(advTrans.remainingAdvance) - adjAmt)
+                    }, { transaction: t });
+                    totalAdj += adjAmt;
+
+                    // Link the payment
+                    await SupplierTransaction.create({
+                        supplierId,
+                        type: 'payment',
+                        amount: adjAmt,
+                        date: date,
+                        method: 'Agst Ref',
+                        purchaseId: mainBill.id,
+                        notes: `Adjusted against Advance id: ${adj.id}`
+                    }, { transaction: t });
+                }
+            }
+            
+            // Update the bill balances after adjustments
+            await mainBill.update({
+                amountPaid: round2(totalAdj),
+                amountDue: round2(totalBillAmount - totalAdj),
+                status: (totalBillAmount - totalAdj) <= 0 ? 'completed' : 'partial'
+            }, { transaction: t });
+
+            // Reduce overall balance update by totalAdj
+            await supplier.update({
+                outstandingBalance: round2(parseFloat(supplier.outstandingBalance) - totalAdj)
+            }, { transaction: t });
+        }
       }
     }
 

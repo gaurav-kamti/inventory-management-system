@@ -12,6 +12,8 @@ const Supplier = require('./Supplier');
 const Purchase = require('./Purchase');
 const Settings = require('./Settings');
 
+const SupplierTransaction = require('./SupplierTransaction');
+
 // Associations
 Product.belongsTo(Category, { foreignKey: 'categoryId' });
 Product.belongsTo(Brand, { foreignKey: 'brandId' });
@@ -39,6 +41,11 @@ Purchase.belongsTo(Supplier, { foreignKey: 'supplierId' });
 Product.hasMany(Purchase, { foreignKey: 'productId' });
 Supplier.hasMany(Purchase, { foreignKey: 'supplierId' });
 
+Supplier.hasMany(SupplierTransaction, { foreignKey: 'supplierId' });
+SupplierTransaction.belongsTo(Supplier, { foreignKey: 'supplierId' });
+Purchase.hasOne(SupplierTransaction, { foreignKey: 'purchaseId' });
+SupplierTransaction.belongsTo(Purchase, { foreignKey: 'purchaseId' });
+
 module.exports = {
   sequelize,
   User,
@@ -52,5 +59,6 @@ module.exports = {
   StockMovement,
   Supplier,
   Purchase,
-  Settings
+  Settings,
+  SupplierTransaction
 };

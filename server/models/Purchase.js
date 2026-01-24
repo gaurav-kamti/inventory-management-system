@@ -78,6 +78,18 @@ const Purchase = sequelize.define('Purchase', {
   },
   notes: {
     type: DataTypes.TEXT
+  },
+  amountPaid: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  amountDue: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0 // Will be set to totalCost on create usually
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'pending' // pending, partial, completed
   }
 });
 

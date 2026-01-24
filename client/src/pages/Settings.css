@@ -1,105 +1,124 @@
+/* Settings Page Design System - Professional Green Theme */
+
 .settings-page {
-  color: white;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeIn 0.6s ease-out;
 }
 
-.tabs {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  margin-bottom: 20px;
+.settings-page .page-title {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    letter-spacing: -1.5px;
+    margin-bottom: 40px;
+    text-align: center;
 }
 
-.tab {
-  padding: 12px 24px;
-  border: none;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.tab:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transform: translateY(-2px);
-}
-
+/* Section Styling */
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
 }
 
 .section-header h2 {
-  color: white;
-  margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.btn-icon {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 5px;
-  transition: transform 0.2s ease;
-}
-
-.btn-icon:hover {
-  transform: scale(1.2);
+/* Individual Form Styling */
+.settings-form {
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .form-group {
-  margin-bottom: 15px;
+    margin-bottom: 25px;
 }
 
 .form-group label {
-  display: block;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 600;
-  margin-bottom: 5px;
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+.form-group .input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 16px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: 0.3s;
 }
 
-.modal {
-  width: 90%;
-  max-width: 600px;
-  padding: 30px;
-  max-height: 90vh;
-  overflow-y: auto;
+.form-group .input:focus {
+    border-color: var(--accent);
+    background: rgba(142, 182, 155, 0.05);
+    outline: none;
+    box-shadow: 0 0 20px rgba(142, 182, 155, 0.1);
 }
 
-.modal h2 {
-  margin-bottom: 20px;
-  color: white;
+/* Tab Overrides */
+.settings-page .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 40px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    justify-content: center;
 }
 
-.modal .input {
-  margin-bottom: 15px;
+.settings-page .tab {
+    padding: 14px 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: 0.3s;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
+.settings-page .tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.settings-page .tab.active {
+    background: var(--accent);
+    color: var(--bg-deep);
+}
+
+/* Modal Enhancements for Settings */
+.settings-modal {
+    max-width: 600px !important;
+}
+
+.settings-grid-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.settings-grid-form .full-width {
+    grid-column: span 2;
 }

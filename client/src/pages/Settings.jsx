@@ -146,95 +146,104 @@ function Settings() {
         <div className="settings-page">
             <h1 className="page-title">Settings</h1>
 
-            <div className="tabs glass">
+            <div className="tabs">
                 <button
                     className={`tab ${activeTab === 'customers' ? 'active' : ''}`}
                     onClick={() => setActiveTab('customers')}
                 >
-                    👥 Customers
+                    <span>👥</span> Customers
                 </button>
                 <button
                     className={`tab ${activeTab === 'suppliers' ? 'active' : ''}`}
                     onClick={() => setActiveTab('suppliers')}
                 >
-                    🏢 Suppliers
+                    <span>🏢</span> Suppliers
                 </button>
                 <button
                     className={`tab ${activeTab === 'invoice' ? 'active' : ''}`}
                     onClick={() => setActiveTab('invoice')}
                 >
-                    🧾 Invoice
+                    <span>🧾</span> Invoice Config
                 </button>
                 <button
                     className={`tab ${activeTab === 'password' ? 'active' : ''}`}
                     onClick={() => setActiveTab('password')}
                 >
-                    🔒 Change Password
+                    <span>🔒</span> Security
                 </button>
             </div>
 
             {activeTab === 'customers' && (
                 <div className="card">
                     <div className="section-header">
-                        <h2>Customer List</h2>
-                        <button className="btn btn-primary" onClick={() => {
+                        <h2><span>👥</span> Customer List ({customers.length})</h2>
+                        <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={() => {
                             setEditingCustomer(null)
                             setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', creditLimit: 0 })
                             setShowCustomerModal(true)
                         }}>
-                            + Add Customer
+                            + Add New Customer
                         </button>
                     </div>
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Address</th>
-                                <th>PIN Code</th>
-                                <th>GST Number</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {customers.map(customer => (
-                                <tr key={customer.id}>
-                                    <td>{customer.name}</td>
-                                    <td>{customer.phone}</td>
-                                    <td>{customer.address || '-'}</td>
-                                    <td>{customer.pinCode || '-'}</td>
-                                    <td>{customer.gstNumber || '-'}</td>
-                                    <td>
-                                        <button className="btn-icon" onClick={() => editCustomer(customer)}>✏️</button>
-                                    </td>
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>GST Number</th>
+                                    <th>Credit Limit</th>
+                                    <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {customers.map(customer => (
+                                    <tr key={customer.id}>
+                                        <td><strong style={{ color: 'var(--text-primary)' }}>{customer.name}</strong></td>
+                                        <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
+                                        <td>{customer.address ? `${customer.address}, ${customer.pinCode}` : <span style={{ opacity: 0.5 }}>Unrecorded</span>}</td>
+                                        <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{customer.gstNumber || '--'}</span></td>
+                                        <td style={{ fontWeight: '700', color: 'var(--accent)' }}>${parseFloat(customer.creditLimit || 0).toLocaleString()}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => editCustomer(customer)}>
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
             {activeTab === 'invoice' && (
                 <div className="card">
-                    <h2 style={{ color: 'white', marginBottom: '20px' }}>Invoice Configuration</h2>
-                    <form onSubmit={handleInvoiceSettingsSubmit} style={{ maxWidth: '500px' }}>
+                    <div className="section-header">
+                        <h2><span>🧾</span> Invoice Configuration</h2>
+                    </div>
+                    <form onSubmit={handleInvoiceSettingsSubmit} className="settings-form">
                         <div className="form-group">
-                            <label>Invoice Prefix (e.g., RM/)</label>
+                            <label>Invoice Prefix (e.g. INV/)</label>
                             <input className="input" value={invoiceForm.prefix}
                                 onChange={(e) => setInvoiceForm({ ...invoiceForm, prefix: e.target.value })} />
                         </div>
                         <div className="form-group">
-                            <label>Next Sequence Number</label>
+                            <label>Starting Voucher No.</label>
                             <input type="number" className="input" value={invoiceForm.sequence}
                                 onChange={(e) => setInvoiceForm({ ...invoiceForm, sequence: e.target.value })} />
-                            <small style={{ color: '#ccc' }}>Generated: {invoiceForm.prefix}{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}</small>
+                            <p style={{ marginTop: '12px', padding: '15px', background: 'rgba(142,182,155,0.05)', borderRadius: '12px', fontSize: '0.9rem', border: '1px solid var(--glass-border)' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>Preview: </span>
+                                <strong style={{ color: 'var(--accent)' }}>{invoiceForm.prefix}{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}</strong>
+                            </p>
                         </div>
                         <div className="form-group">
-                            <label>Fiscal Year (e.g., 25-26)</label>
+                            <label>Fiscal Year</label>
                             <input className="input" value={invoiceForm.fiscalYear}
                                 onChange={(e) => setInvoiceForm({ ...invoiceForm, fiscalYear: e.target.value })} />
                         </div>
-                        <button type="submit" className="btn btn-primary">Save Settings</button>
+                        <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Save Configuration</button>
                     </form>
                 </div>
             )}
@@ -242,50 +251,52 @@ function Settings() {
             {activeTab === 'suppliers' && (
                 <div className="card">
                     <div className="section-header">
-                        <h2>Supplier List</h2>
-                        <button className="btn btn-primary" onClick={() => {
+                        <h2><span>🏢</span> Supplier List ({suppliers.length})</h2>
+                        <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={() => {
                             setEditingSupplier(null)
                             setSupplierForm({ name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
                             setShowSupplierModal(true)
                         }}>
-                            + Add Supplier
+                            + Add New Supplier
                         </button>
                     </div>
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Contact Person</th>
-                                <th>Phone</th>
-                                <th>Address</th>
-                                <th>PIN Code</th>
-                                <th>GST Number</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {suppliers.map(supplier => (
-                                <tr key={supplier.id}>
-                                    <td>{supplier.name}</td>
-                                    <td>{supplier.contactPerson || '-'}</td>
-                                    <td>{supplier.phone || '-'}</td>
-                                    <td>{supplier.address || '-'}</td>
-                                    <td>{supplier.pinCode || '-'}</td>
-                                    <td>{supplier.gstNumber || '-'}</td>
-                                    <td>
-                                        <button className="btn-icon" onClick={() => editSupplier(supplier)}>✏️</button>
-                                    </td>
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Supplier Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Contact Detail</th>
+                                    <th>GST Number</th>
+                                    <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {suppliers.map(supplier => (
+                                    <tr key={supplier.id}>
+                                        <td><strong style={{ color: 'var(--text-primary)' }}>{supplier.name}</strong></td>
+                                        <td>{supplier.contactPerson || '--'}</td>
+                                        <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone || supplier.email || '--'}</td>
+                                        <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{supplier.gstNumber || '--'}</span></td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => editSupplier(supplier)}>
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
             {activeTab === 'password' && (
                 <div className="card">
-                    <h2 style={{ color: 'white', marginBottom: '20px' }}>Change Password</h2>
-                    <form onSubmit={handlePasswordChange} style={{ maxWidth: '500px' }}>
+                    <div className="section-header">
+                        <h2><span>🔒</span> Change Password</h2>
+                    </div>
+                    <form onSubmit={handlePasswordChange} className="settings-form">
                         <div className="form-group">
                             <label>Current Password</label>
                             <input type="password" className="input" value={passwordForm.currentPassword}
@@ -297,65 +308,84 @@ function Settings() {
                                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required />
                         </div>
                         <div className="form-group">
-                            <label>Confirm New Password</label>
+                            <label>Confirm Password</label>
                             <input type="password" className="input" value={passwordForm.confirmPassword}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required />
                         </div>
-                        <button type="submit" className="btn btn-primary">Change Password</button>
+                        <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Update Password</button>
                     </form>
                 </div>
             )}
 
-            {showCustomerModal && (
-                <div className="modal-overlay" onClick={() => setShowCustomerModal(false)}>
-                    <div className="modal glass" onClick={(e) => e.stopPropagation()}>
-                        <h2>{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</h2>
-                        <form onSubmit={handleCustomerSubmit}>
-                            <input className="input" placeholder="Name *" value={customerForm.name}
-                                onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} required />
-                            <input className="input" placeholder="Phone *" value={customerForm.phone}
-                                onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })} required />
-                            <input className="input" placeholder="Email" value={customerForm.email}
-                                onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
-                            <textarea className="input" placeholder="Address" value={customerForm.address}
-                                onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
-                            <input className="input" placeholder="PIN Code" value={customerForm.pinCode}
-                                onChange={(e) => setCustomerForm({ ...customerForm, pinCode: e.target.value })} />
-                            <input className="input" placeholder="GST Number" value={customerForm.gstNumber}
-                                onChange={(e) => setCustomerForm({ ...customerForm, gstNumber: e.target.value })} />
-                            <input type="number" className="input" placeholder="Credit Limit" value={customerForm.creditLimit}
-                                onChange={(e) => setCustomerForm({ ...customerForm, creditLimit: e.target.value })} />
-                            <div className="modal-actions">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowCustomerModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">{editingCustomer ? 'Update' : 'Add'}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* Entity Modals */}
+            {(showCustomerModal || showSupplierModal) && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>
+                    <div className="modal glass settings-modal" style={{
+                        width: '90%', maxWidth: '700px', padding: '45px', background: 'var(--bg-dark)',
+                        borderRadius: '32px', border: '1px solid var(--glass-border)'
+                    }} onClick={(e) => e.stopPropagation()}>
 
-            {showSupplierModal && (
-                <div className="modal-overlay" onClick={() => setShowSupplierModal(false)}>
-                    <div className="modal glass" onClick={(e) => e.stopPropagation()}>
-                        <h2>{editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}</h2>
-                        <form onSubmit={handleSupplierSubmit}>
-                            <input className="input" placeholder="Supplier Name *" value={supplierForm.name}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })} required />
-                            <input className="input" placeholder="Contact Person" value={supplierForm.contactPerson}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
-                            <input className="input" placeholder="Phone" value={supplierForm.phone}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })} />
-                            <input className="input" placeholder="Email" value={supplierForm.email}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })} />
-                            <textarea className="input" placeholder="Address" value={supplierForm.address}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} />
-                            <input className="input" placeholder="PIN Code" value={supplierForm.pinCode}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, pinCode: e.target.value })} />
-                            <input className="input" placeholder="GST Number" value={supplierForm.gstNumber}
-                                onChange={(e) => setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} />
-                            <div className="modal-actions">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowSupplierModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">{editingSupplier ? 'Update' : 'Add'}</button>
+                        <h2 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '35px', color: 'var(--text-primary)' }}>
+                            {showCustomerModal ? (editingCustomer ? 'Edit Customer' : 'Add Customer') : (editingSupplier ? 'Edit Supplier' : 'Add Supplier')}
+                        </h2>
+
+                        <form onSubmit={showCustomerModal ? handleCustomerSubmit : handleSupplierSubmit}>
+                            <div className="settings-grid-form">
+                                <div className="form-group full-width">
+                                    <label>Name *</label>
+                                    <input className="input" value={showCustomerModal ? customerForm.name : supplierForm.name}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })} required />
+                                </div>
+                                <div className="form-group">
+                                    <label>Phone Number *</label>
+                                    <input className="input" value={showCustomerModal ? customerForm.phone : supplierForm.phone}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} required />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email Address</label>
+                                    <input className="input" value={showCustomerModal ? customerForm.email : supplierForm.email}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} />
+                                </div>
+                                {showCustomerModal && (
+                                    <div className="form-group full-width">
+                                        <label>Credit Limit ($)</label>
+                                        <input type="number" className="input" value={customerForm.creditLimit}
+                                            onChange={(e) => setCustomerForm({ ...customerForm, creditLimit: e.target.value })} />
+                                    </div>
+                                )}
+                                {showSupplierModal && (
+                                    <div className="form-group full-width">
+                                        <label>Contact Person</label>
+                                        <input className="input" value={supplierForm.contactPerson}
+                                            onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
+                                    </div>
+                                )}
+                                <div className="form-group full-width">
+                                    <label>Address / Location</label>
+                                    <textarea className="input" rows="3" value={showCustomerModal ? customerForm.address : supplierForm.address}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, address: e.target.value }) : setSupplierForm({ ...supplierForm, address: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>PIN Code / Zip</label>
+                                    <input className="input" value={showCustomerModal ? customerForm.pinCode : supplierForm.pinCode}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pinCode: e.target.value }) : setSupplierForm({ ...supplierForm, pinCode: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>GSTIN / Tax ID</label>
+                                    <input className="input" value={showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstNumber: e.target.value }) : setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="modal-actions" style={{ marginTop: '40px', display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>
+                                <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>Cancel</button>
+                                <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 40px' }}>
+                                    {showCustomerModal ? (editingCustomer ? 'Update' : 'Create') : (editingSupplier ? 'Update' : 'Create')}
+                                </button>
                             </div>
                         </form>
                     </div>
