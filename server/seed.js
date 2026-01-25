@@ -82,7 +82,7 @@ async function seed() {
     console.log('Products created');
 
     // Create customers
-    await Customer.create({
+    const john = await Customer.create({
       name: 'John Doe',
       phone: '555-0101',
       email: 'john@example.com',
@@ -90,6 +90,7 @@ async function seed() {
       creditLimit: 1000,
       outstandingBalance: 0
     });
+
 
     await Customer.create({
       name: 'Jane Smith',
@@ -118,7 +119,7 @@ async function seed() {
       address: '321 Trade Center'
     });
 
-    await Supplier.create({
+    const LocalWholesale = await Supplier.create({
       name: 'Local Wholesale Co.',
       contactPerson: 'Tom Brown',
       phone: '555-1003',
@@ -127,7 +128,51 @@ async function seed() {
     });
     console.log('Suppliers created');
 
+    // --- NEW: Create Sales and Purchases for Analytics demo ---
+    const { Sale, SaleItem, Purchase } = require('./models');
+    
+    // 1. Create Sample Sale for John Doe
+    const sale1 = await Sale.create({
+        invoiceNumber: 'INV-001',
+        customerId: john.id,
+        userId: 1, // Admin
+        subtotal: 758.00,
+        tax: 75.80,
+        total: 833.80,
+        amountPaid: 833.80,
+        amountDue: 0,
+        paymentMode: 'cash',
+        status: 'completed'
+    });
+    
+    await SaleItem.create({
+        saleId: sale1.id,
+        productId: 1, // Samsung Phone
+        quantity: 1,
+        price: 699,
+        total: 699,
+        hsn: '8301'
+    });
+
+    // 2. Create Sample Purchase from Tech Distributors
+    await Purchase.create({
+        productId: 1,
+        supplierId: 1,
+        invoiceNumber: 'PUR-101',
+        quantityReceived: 10,
+        unitCost: 500,
+        landingCost: 500,
+        totalCost: 5000,
+        receivedDate: new Date(),
+        unitOfMeasure: 'pcs',
+        amountPaid: 5000,
+        amountDue: 0
+    });
+
+    console.log('Sample Sales and Purchases created');
+
     console.log('\n✅ Database seeded successfully!');
+
     console.log('\nLogin credentials:');
     console.log('Username: admin');
     console.log('Password: admin123');

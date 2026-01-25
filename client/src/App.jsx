@@ -10,6 +10,8 @@ import Voucher from './pages/Voucher'
 import Receipt from './pages/vouchers/Receipt'
 import Payment from './pages/vouchers/Payment'
 import SellPurchase from './pages/SellPurchase'
+import Analytics from './pages/Analytics'
+
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('token'))
@@ -41,6 +43,8 @@ function App() {
                     <Route path="/sell-purchase" element={<SellPurchase />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<Navigate to="/" />} />
+
+
                 </Routes>
             </Layout>
         </Router>

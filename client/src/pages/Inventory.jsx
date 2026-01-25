@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import Analytics from './Analytics'
 import './Inventory.css'
+
 
 function Inventory() {
     const [products, setProducts] = useState([])
@@ -14,7 +16,8 @@ function Inventory() {
     })
     const [customers, setCustomers] = useState([])
     const [sales, setSales] = useState([])
-    const [activeView, setActiveView] = useState('inventory') // 'inventory', 'customers', 'sales'
+    const [activeView, setActiveView] = useState('inventory') // 'inventory', 'customers', 'sales', 'analytics'
+
 
     useEffect(() => {
         fetchProducts()
@@ -82,10 +85,10 @@ function Inventory() {
                 >
                     <div className="stat-icon" style={{ background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>📦</div>
                     <div className="stat-info">
-                        <h3>Inventory Assets</h3>
-                        <p className="stat-value">{stats.totalItems}</p>
-                        <p className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px', fontWeight: '600' }}>
-                            Valuation: <span style={{ color: 'var(--accent)' }}>${stats.totalItemsWorth.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <h3>Inventory</h3>
+                        <p className="stat-value" style={{ fontSize: '1.2rem' }}>{stats.totalItems}</p>
+                        <p className="stat-label" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: '600' }}>
+                            Value: <span style={{ color: 'var(--accent)' }}>${stats.totalItemsWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                         </p>
                     </div>
                 </div>
@@ -97,10 +100,11 @@ function Inventory() {
                     <div className="stat-icon" style={{ background: 'rgba(78, 205, 196, 0.1)', color: '#4ecdc4' }}>👥</div>
                     <div className="stat-info">
                         <h3>Customers</h3>
-                        <p className="stat-value">{stats.totalCustomers}</p>
-                        <p className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px', fontWeight: '600' }}>Active Accounts</p>
+                        <p className="stat-value" style={{ fontSize: '1.2rem' }}>{stats.totalCustomers}</p>
+                        <p className="stat-label" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: '600' }}>Active Accounts</p>
                     </div>
                 </div>
+
 
                 <div
                     className={`stat-card ${activeView === 'sales' ? 'active' : ''}`}
@@ -109,16 +113,28 @@ function Inventory() {
                     <div className="stat-icon" style={{ background: 'rgba(255, 159, 67, 0.1)', color: '#ff9f43' }}>📈</div>
                     <div className="stat-info">
                         <h3>Total Sales</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <p className="stat-value" style={{ fontSize: '1.6rem' }}>${stats.totalSold.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                            <div style={{ display: 'flex', gap: '15px' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700' }}>Rec: ${stats.paymentReceived.toFixed(0)}</span>
-                                <span style={{ fontSize: '0.75rem', color: '#fca5a5', fontWeight: '700' }}>Due: ${stats.paymentRemaining.toFixed(0)}</span>
-                            </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                            <p className="stat-value" style={{ fontSize: '1.2rem' }}>${stats.totalSold.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                            <span style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700' }}>R:${stats.paymentReceived.toFixed(0)}</span>
+                            <span style={{ fontSize: '0.65rem', color: '#fca5a5', fontWeight: '700' }}>D:${stats.paymentRemaining.toFixed(0)}</span>
                         </div>
                     </div>
                 </div>
+
+                <div
+                    className={`stat-card ${activeView === 'analytics' ? 'active' : ''}`}
+                    onClick={() => setActiveView('analytics')}
+                >
+                    <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>📊</div>
+                    <div className="stat-info">
+                        <h3>Analytics</h3>
+                        <p className="stat-value" style={{ fontSize: '1.2rem' }}>Review</p>
+                        <p className="stat-label" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: '600' }}>Insights</p>
+                    </div>
+                </div>
+
             </div>
+
 
             <div className="dashboard-content">
                 {activeView === 'inventory' && (
@@ -244,7 +260,12 @@ function Inventory() {
                         </div>
                     </div>
                 )}
+
+                {activeView === 'analytics' && (
+                    <Analytics />
+                )}
             </div>
+
         </div>
     )
 }
