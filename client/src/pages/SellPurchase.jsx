@@ -16,6 +16,7 @@ function SellPurchase() {
     const purchaseQtyRef = useRef(null)
     const purchaseRateRef = useRef(null)
     const purchaseDiscountRef = useRef(null)
+    const purchaseAddBtnRef = useRef(null)
 
     const sellInvoiceRef = useRef(null)
     const sellCustomerRef = useRef(null)
@@ -23,6 +24,7 @@ function SellPurchase() {
     const sellQtyRef = useRef(null)
     const sellRateRef = useRef(null)
     const sellDiscountRef = useRef(null)
+    const sellAddBtnRef = useRef(null)
 
     // Helper for dd:mm:yyyy date format
     const formatDate = (dateStr) => {
@@ -49,8 +51,7 @@ function SellPurchase() {
         size: '',
         sizeUnit: 'mm',
         hsn: '8301',
-        cgst: '9',
-        sgst: '9',
+        gst: '18',
         quantity: '',
         rate: '',
         discount: ''
@@ -74,8 +75,7 @@ function SellPurchase() {
         size: '',
         sizeUnit: 'mm',
         hsn: '8301',
-        cgst: '0',
-        sgst: '0',
+        gst: '18',
         quantity: '',
         rate: '',
         discount: ''
@@ -99,8 +99,7 @@ function SellPurchase() {
             size: '',
             sizeUnit: 'mm',
             hsn: '8301',
-            cgst: '9',
-            sgst: '9',
+            gst: '18',
             quantity: '',
             rate: '',
             discount: ''
@@ -220,8 +219,7 @@ function SellPurchase() {
                     quantity: item.quantity,
                     amount: item.amount,
                     hsn: item.hsn || '8301',
-                    cgst: item.cgst,
-                    sgst: item.sgst
+                    gst: item.gst || 18
                 })),
                 advanceAdjustments: selectedAdvanceIds.map(id => {
                     const adv = availableAdvances.find(a => a.id === id);
@@ -257,8 +255,7 @@ function SellPurchase() {
                 size: '',
                 sizeUnit: 'mm',
                 hsn: '8301',
-                cgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
-                sgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
+                gst: product.gst || 18,
                 quantity: 1,
                 rate: product.sellingPrice,
                 discount: 0,
@@ -288,7 +285,7 @@ function SellPurchase() {
         const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
         const discountAmt = itemTotal * ((parseFloat(item.discount) || 0) / 100)
         const taxable = itemTotal - discountAmt
-        return sum + (taxable * (((parseFloat(item.cgst) || 0) + (parseFloat(item.sgst) || 0)) / 100))
+        return sum + (taxable * ((parseFloat(item.gst) || 18) / 100))
     }, 0)
 
     const sellRoundOff = Math.round(sellSubtotal + sellTax) - (sellSubtotal + sellTax)
@@ -296,9 +293,8 @@ function SellPurchase() {
 
     const addSubtotal = addedItems.reduce((sum, item) => sum + item.amount, 0)
     const addTax = addedItems.reduce((sum, item) => {
-        const cgst = (parseFloat(item.cgst) || 0) / 100
-        const sgst = (parseFloat(item.sgst) || 0) / 100
-        return sum + (item.amount * (cgst + sgst))
+        const gst = (parseFloat(item.gst) || 18) / 100
+        return sum + (item.amount * gst)
     }, 0)
     const addRoundOff = Math.round(addSubtotal + addTax) - (addSubtotal + addTax)
     const addTotal = addSubtotal + addTax + addRoundOff
@@ -317,8 +313,7 @@ function SellPurchase() {
                     quantity: item.quantity || 0,
                     price: item.rate,
                     hsn: item.hsn || '8301',
-                    cgst: parseFloat(item.cgst) || 0,
-                    sgst: parseFloat(item.sgst) || 0,
+                    gst: parseFloat(item.gst) || 18,
                     discount: parseFloat(item.discount) || 0,
                 })),
                 paymentMode: sellForm.customerId ? 'credit' : 'cash',
@@ -375,8 +370,7 @@ function SellPurchase() {
             size: '',
             sizeUnit: 'mm',
             hsn: '8301',
-            cgst: '0',
-            sgst: '0',
+            gst: '18',
             quantity: '',
             rate: '',
             discount: ''
@@ -476,19 +470,19 @@ function SellPurchase() {
                     animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }} onClick={() => setShowPurchaseModal(false)}>
                     <div className="modal glass" style={{
-                        width: '95%', maxWidth: '1200px', maxHeight: '92vh', overflow: 'auto',
-                        padding: '45px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
-                        borderRadius: '32px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+                        width: '98%', maxWidth: '1600px', height: '95vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                        padding: '30px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
+                        borderRadius: '24px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
                         position: 'relative'
                     }} onClick={(e) => e.stopPropagation()}>
 
                         <div className="modal-close" onClick={() => setShowPurchaseModal(false)} style={{
                             position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
-                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s'
+                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s', zIndex: 10
                         }}>✕</div>
 
-                        <div className="invoice-header" style={{ marginBottom: '40px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px' }}>
+                        <div className="invoice-header" style={{ marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '15px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                                 <div>
                                     <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Purchase Bill</h2>
                                     <p style={{ color: 'var(--accent)', fontWeight: '600', fontSize: '0.9rem' }}>Entry of inward goods/services</p>
@@ -520,6 +514,12 @@ function SellPurchase() {
                                     <select className="input" value={addForm.supplierId}
                                         ref={purchaseSupplierRef}
                                         onChange={(e) => setAddForm({ ...addForm, supplierId: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault()
+                                                purchaseItemNameRef.current?.focus()
+                                            }
+                                        }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
                                         required>
                                         <option value="" style={{ background: 'var(--bg-deep)' }}>-- Select Registered Supplier --</option>
@@ -529,52 +529,72 @@ function SellPurchase() {
                             </div>
                         </div>
 
-                        <div className="invoice-table-wrapper" style={{ marginBottom: '40px' }}>
-                            <table className="table" style={{ width: '100%' }}>
-                                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="invoice-table-wrapper" style={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
+                            <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
+                                <thead style={{ background: 'rgba(255,255,255,0.02)', position: 'sticky', top: 0, zIndex: 5, backdropFilter: 'blur(5px)' }}>
                                     <tr>
-                                        <th>Product / Description</th>
-                                        <th>Size</th>
-                                        <th>HSN</th>
-                                        <th>Gst(%)</th>
-                                        <th>Qty</th>
-                                        <th>Rate</th>
-                                        <th>Disc</th>
-                                        <th>Amount</th>
-                                        <th style={{ width: '60px' }}></th>
+                                        <th style={{ textAlign: 'center', width: '33%' }}>Product / Description</th>
+                                        <th style={{ textAlign: 'center', width: '7%' }}>Size</th>
+                                        <th style={{ textAlign: 'center', width: '8%' }}>HSN</th>
+                                        <th style={{ textAlign: 'center', width: '6%' }}>Gst(%)</th>
+                                        <th style={{ textAlign: 'center', width: '6%' }}>Qty</th>
+                                        <th style={{ textAlign: 'center', width: '12%' }}>Rate</th>
+                                        <th style={{ textAlign: 'center', width: '6%' }}>Disc</th>
+                                        <th style={{ textAlign: 'center', width: '15%' }}>Amount</th>
+                                        <th style={{ width: '50px', textAlign: 'center' }}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {addedItems.map((item, index) => (
                                         <tr key={index}>
-                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.name}</td>
-                                            <td><span style={{ background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '6px' }}>{item.size}{item.sizeUnit}</span></td>
-                                            <td>{item.hsn}</td>
-                                            <td>{parseFloat(item.cgst) + parseFloat(item.sgst)}%</td>
-                                            <td style={{ fontWeight: '600' }}>{item.quantity} pcs</td>
-                                            <td style={{ fontWeight: '600' }}>${parseFloat(item.rate).toFixed(2)}</td>
-                                            <td style={{ color: '#ff4757' }}>{item.discount}%</td>
-                                            <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem' }}>${item.amount.toFixed(2)}</td>
-                                            <td>
+                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)', textAlign: 'center' }}>{item.name}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
+                                                    <input className="input" style={{ flex: 1, minWidth: '0', padding: '8px 4px 8px 8px', fontSize: '0.8rem', border: 'none', background: 'transparent', textAlign: 'right' }} value={item.size} readOnly />
+                                                    <span className="input" style={{ width: 'auto', padding: '8px 8px 8px 0', fontSize: '0.8rem', border: 'none', background: 'transparent', textAlign: 'left', color: 'var(--text-primary)' }}>{item.sizeUnit}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>{item.hsn}</td>
+                                            <td style={{ textAlign: 'center' }}>{item.gst}%</td>
+                                            <td style={{ fontWeight: '600', textAlign: 'center' }}>{item.quantity}</td>
+                                            <td style={{ fontWeight: '600', textAlign: 'center' }}>${parseFloat(item.rate).toFixed(2)}</td>
+                                            <td style={{ color: '#ff4757', textAlign: 'center' }}>{item.discount}%</td>
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>${item.amount.toFixed(2)}</td>
+                                            <td style={{ textAlign: 'center' }}>
                                                 <button type="button" className="btn" style={{ minWidth: 'auto', padding: '8px', background: 'rgba(255,71,87,0.1)', color: '#ff4757', border: '1px solid rgba(255,71,87,0.2)' }} onClick={() => removeAddedItem(index)}>✕</button>
                                             </td>
                                         </tr>
                                     ))}
                                     <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem' }}
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem', width: '100%' }}
                                                 ref={purchaseItemNameRef}
                                                 list="product-suggestions"
-                                                placeholder="Search or enter name..."
+                                                placeholder="Search"
                                                 value={addItemRow.name}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Tab') {
+                                                        const val = e.target.value.toLowerCase()
+                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
+                                                        if (match) {
+                                                            e.preventDefault()
+                                                            setAddItemRow(prev => ({ ...prev, name: match.name, size: match.size || '', sizeUnit: match.sizeUnit || 'mm', hsn: match.hsn || '', gst: match.gst || 18, rate: match.purchasePrice || '' }))
+                                                        }
+                                                    }
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        if (e.shiftKey) addItemToList()
+                                                        else purchaseQtyRef.current?.focus()
+                                                    }
+                                                }}
                                                 onChange={e => setAddItemRow({ ...addItemRow, name: e.target.value })}
                                             />
                                         </td>
-                                        <td>
-                                            <div style={{ display: 'flex', gap: '4px' }}>
-                                                <input className="input" style={{ padding: '12px', width: '55px', fontSize: '0.9rem' }} placeholder="0" value={addItemRow.size}
+                                        <td style={{ textAlign: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
+                                                <input className="input" style={{ flex: 1, minWidth: '0', padding: '12px 4px 12px 12px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'right' }} placeholder="0" value={addItemRow.size}
                                                     onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })} />
-                                                <select className="input" style={{ padding: '12px', width: '65px', fontSize: '0.9rem' }} value={addItemRow.sizeUnit}
+                                                <select className="input" style={{ width: 'auto', padding: '12px 8px 12px 0', fontSize: '0.9rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={addItemRow.sizeUnit}
                                                     onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })}>
                                                     <option value="mm">mm</option>
                                                     <option value="cm">cm</option>
@@ -582,48 +602,66 @@ function SellPurchase() {
                                                 </select>
                                             </div>
                                         </td>
-                                        <td>
-                                            <select className="input" style={{ padding: '12px', width: '80px', fontSize: '0.9rem' }} value={addItemRow.hsn}
+                                        <td style={{ textAlign: 'center' }}>
+                                            <select className="input" style={{ padding: '12px', width: '100%', fontSize: '0.9rem' }} value={addItemRow.hsn}
                                                 onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })}>
                                                 {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                             </select>
                                         </td>
-                                        <td style={{ display: 'flex', gap: '2px' }}>
-                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="CGST" type="number" value={addItemRow.cgst}
-                                                onChange={e => setAddItemRow({ ...addItemRow, cgst: e.target.value })} />
-                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="SGST" type="number" value={addItemRow.sgst}
-                                                onChange={e => setAddItemRow({ ...addItemRow, sgst: e.target.value })} />
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.9rem' }} placeholder="GST%" type="number" value={addItemRow.gst}
+                                                onChange={e => setAddItemRow({ ...addItemRow, gst: e.target.value })} />
                                         </td>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', width: '70px', fontSize: '0.9rem' }} placeholder="0" type="number"
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.9rem' }} placeholder="0" type="number"
                                                 ref={purchaseQtyRef}
                                                 value={addItemRow.quantity}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        if (e.shiftKey) addItemToList()
+                                                        else purchaseRateRef.current?.focus()
+                                                    }
+                                                }}
                                                 onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })}
                                             />
                                         </td>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', width: '100px', fontSize: '0.9rem' }} placeholder="0.00" type="number"
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} placeholder="0.00" type="number"
                                                 ref={purchaseRateRef}
                                                 value={addItemRow.rate}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        if (e.shiftKey) addItemToList()
+                                                        else purchaseAddBtnRef.current?.focus()
+                                                    }
+                                                }}
                                                 onChange={e => setAddItemRow({ ...addItemRow, rate: e.target.value })}
                                             />
                                         </td>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', width: '60px', fontSize: '0.9rem' }} placeholder="%" type="number"
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.8rem' }} placeholder="%" type="number"
                                                 ref={purchaseDiscountRef}
                                                 value={addItemRow.discount}
                                                 onChange={e => setAddItemRow({ ...addItemRow, discount: e.target.value })}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        addItemToList()
+                                                    }
+                                                }}
                                             />
                                         </td>
-                                        <td style={{ fontWeight: '800', fontSize: '1.1rem' }}>
+                                        <td style={{ fontWeight: '800', fontSize: '1.1rem', textAlign: 'center' }}>
                                             ${(() => {
                                                 const baseAmount = (parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0) * (1 - (parseFloat(addItemRow.discount) || 0) / 100);
-                                                const taxRate = ((parseFloat(addItemRow.cgst) || 0) + (parseFloat(addItemRow.sgst) || 0)) / 100;
+                                                const taxRate = (parseFloat(addItemRow.gst) || 18) / 100;
                                                 return (baseAmount * (1 + taxRate)).toFixed(2);
                                             })()}
                                         </td>
-                                        <td>
-                                            <button type="button" className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToList}>+</button>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button type="button" ref={purchaseAddBtnRef} className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToList}>+</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -673,19 +711,19 @@ function SellPurchase() {
                     animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }} onClick={() => setShowSellModal(false)}>
                     <div className="modal glass" style={{
-                        width: '95%', maxWidth: '1200px', maxHeight: '92vh', overflow: 'auto',
-                        padding: '45px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
-                        borderRadius: '32px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+                        width: '98%', maxWidth: '1600px', height: '95vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                        padding: '30px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
+                        borderRadius: '24px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
                         position: 'relative'
                     }} onClick={(e) => e.stopPropagation()}>
 
                         <div className="modal-close" onClick={() => setShowSellModal(false)} style={{
                             position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
-                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s'
+                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s', zIndex: 10
                         }}>✕</div>
 
-                        <div className="invoice-header" style={{ marginBottom: '40px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px' }}>
+                        <div className="invoice-header" style={{ marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '15px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                                 <div>
                                     <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Sales Invoice</h2>
                                     <p style={{ color: 'var(--accent)', fontWeight: '600', fontSize: '0.9rem' }}>Record of outward goods/services</p>
@@ -717,6 +755,12 @@ function SellPurchase() {
                                     <select className="input" value={sellForm.customerId || ''}
                                         ref={sellCustomerRef}
                                         onChange={(e) => setSellForm({ ...sellForm, customerId: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault()
+                                                sellItemNameRef.current?.focus()
+                                            }
+                                        }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}>
                                         <option value="">Walk-in Customer (Cash)</option>
                                         {customers.map(c => <option key={c.id} value={c.id} style={{ background: 'var(--bg-deep)' }}>{c.name}</option>)}
@@ -725,63 +769,85 @@ function SellPurchase() {
                             </div>
                         </div>
 
-                        <div className="invoice-table-wrapper" style={{ marginBottom: '40px' }}>
-                            <table className="table" style={{ width: '100%' }}>
-                                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="invoice-table-wrapper" style={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
+                            <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
+                                <thead style={{ background: 'rgba(255,255,255,0.02)', position: 'sticky', top: 0, zIndex: 5, backdropFilter: 'blur(5px)' }}>
                                     <tr>
-                                        <th>Product / Description</th>
-                                        <th>Size</th>
-                                        <th>HSN</th>
-                                        <th>Gst(%)</th>
-                                        <th>Qty</th>
-                                        <th>Rate</th>
-                                        <th>Disc</th>
-                                        <th>Amount</th>
-                                        <th style={{ width: '60px' }}></th>
+                                        <th style={{ textAlign: 'center', width: '33%' }}>Product / Description</th>
+                                        <th style={{ textAlign: 'center', width: '7%' }}>Size</th>
+                                        <th style={{ textAlign: 'center', width: '8%' }}>HSN</th>
+                                        <th style={{ textAlign: 'center', width: '6%' }}>Gst(%)</th>
+                                        <th style={{ textAlign: 'center', width: '6%' }}>Qty</th>
+                                        <th style={{ textAlign: 'center', width: '12%' }}>Rate</th>
+                                        <th style={{ textAlign: 'center', width: '6%' }}>Disc</th>
+                                        <th style={{ textAlign: 'center', width: '15%' }}>Amount</th>
+                                        <th style={{ width: '50px', textAlign: 'center' }}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {cartItems.map((item, index) => (
                                         <tr key={item.productId || index}>
-                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.name}</td>
-                                            <td>
-                                                <div style={{ display: 'flex', gap: '4px' }}>
-                                                    <input className="input" style={{ padding: '8px', width: '50px', fontSize: '0.8rem' }} value={item.size} onChange={e => updateCartItem(item.productId, 'size', e.target.value)} />
-                                                    <select className="input" style={{ padding: '8px', width: '60px', fontSize: '0.8rem' }} value={item.sizeUnit} onChange={e => updateCartItem(item.productId, 'sizeUnit', e.target.value)}>
+                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)', textAlign: 'center' }}>{item.name}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
+                                                    <input className="input" style={{ flex: 1, minWidth: '0', padding: '8px 4px 8px 8px', fontSize: '0.8rem', border: 'none', background: 'transparent', textAlign: 'right' }} value={item.size} onChange={e => updateCartItem(item.productId, 'size', e.target.value)} />
+                                                    <select className="input" style={{ width: 'auto', padding: '8px 8px 8px 0', fontSize: '0.8rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={item.sizeUnit} onChange={e => updateCartItem(item.productId, 'sizeUnit', e.target.value)}>
                                                         <option value="mm">mm</option>
                                                         <option value="cm">cm</option>
                                                         <option value="in">in</option>
                                                     </select>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td style={{ textAlign: 'center' }}>
                                                 <select className="input" style={{ padding: '8px', width: '70px', fontSize: '0.8rem' }} value={item.hsn} onChange={e => updateCartItem(item.productId, 'hsn', e.target.value)}>
                                                     {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                                 </select>
                                             </td>
-                                            <td>{parseFloat(item.cgst) + parseFloat(item.sgst)}%</td>
-                                            <td><input type="number" className="input" style={{ padding: '8px', width: '60px', fontSize: '0.8rem' }} value={item.quantity} onChange={e => updateCartItem(item.productId, 'quantity', e.target.value)} /></td>
-                                            <td><input type="number" className="input" style={{ padding: '8px', width: '80px', fontSize: '0.8rem' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
-                                            <td><input type="number" className="input" style={{ padding: '8px', width: '50px', fontSize: '0.8rem' }} value={item.discount} onChange={e => updateCartItem(item.productId, 'discount', e.target.value)} /></td>
-                                            <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem' }}>
+                                            <td style={{ textAlign: 'center' }}>{item.gst}%</td>
+                                            <td style={{ textAlign: 'center' }}><input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.8rem' }} value={item.quantity} onChange={e => updateCartItem(item.productId, 'quantity', e.target.value)} /></td>
+                                            <td style={{ textAlign: 'center' }}><input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
+                                            <td style={{ textAlign: 'center' }}><input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.8rem' }} value={item.discount} onChange={e => updateCartItem(item.productId, 'discount', e.target.value)} /></td>
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>
                                                 ${(() => {
                                                     const baseAmount = (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0) * (1 - (parseFloat(item.discount) || 0) / 100);
-                                                    const taxRate = ((parseFloat(item.cgst) || 0) + (parseFloat(item.sgst) || 0)) / 100;
+                                                    const taxRate = (parseFloat(item.gst) || 18) / 100;
                                                     return (baseAmount * (1 + taxRate)).toFixed(2);
                                                 })()}
                                             </td>
-                                            <td>
+                                            <td style={{ textAlign: 'center' }}>
                                                 <button type="button" className="btn" style={{ minWidth: 'auto', padding: '8px', background: 'rgba(255,71,87,0.1)', color: '#ff4757' }} onClick={() => removeFromCart(item.productId)}>✕</button>
                                             </td>
                                         </tr>
                                     ))}
                                     <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem' }}
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem', width: '100%' }}
                                                 ref={sellItemNameRef}
                                                 list="product-suggestions"
-                                                placeholder="Search or enter name..."
+                                                placeholder="Search"
                                                 value={sellItemInput.name}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Tab') {
+                                                        const val = e.target.value.toLowerCase()
+                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
+                                                        if (match) {
+                                                            e.preventDefault()
+                                                            setSellItemInput(prev => ({
+                                                                ...prev,
+                                                                productId: String(match.id),
+                                                                name: match.name,
+                                                                rate: match.sellingPrice || '',
+                                                                hsn: match.hsn || '8301',
+                                                                gst: match.gst || 18,
+                                                            }))
+                                                        }
+                                                    }
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        if (e.shiftKey) addItemToSellList()
+                                                        else sellQtyRef.current?.focus()
+                                                    }
+                                                }}
                                                 onChange={(e) => {
                                                     const val = e.target.value
                                                     const product = products.find(p => p.name === val)
@@ -792,8 +858,7 @@ function SellPurchase() {
                                                             name: product.name,
                                                             rate: product.sellingPrice || '',
                                                             hsn: product.hsn || '8301',
-                                                            cgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
-                                                            sgst: product.gst ? (parseFloat(product.gst) / 2).toString() : '9',
+                                                            gst: product.gst || 18,
                                                         }))
                                                     } else {
                                                         setSellItemInput(prev => ({ ...prev, name: val, productId: '' }))
@@ -801,11 +866,11 @@ function SellPurchase() {
                                                 }}
                                             />
                                         </td>
-                                        <td>
-                                            <div style={{ display: 'flex', gap: '4px' }}>
-                                                <input className="input" style={{ padding: '12px', width: '55px', fontSize: '0.9rem' }} placeholder="0" value={sellItemInput.size}
+                                        <td style={{ textAlign: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
+                                                <input className="input" style={{ flex: 1, minWidth: '0', padding: '12px 4px 12px 12px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'right' }} placeholder="0" value={sellItemInput.size}
                                                     onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })} />
-                                                <select className="input" style={{ padding: '12px', width: '65px', fontSize: '0.9rem' }} value={sellItemInput.sizeUnit}
+                                                <select className="input" style={{ width: 'auto', padding: '12px 8px 12px 0', fontSize: '0.9rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={sellItemInput.sizeUnit}
                                                     onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })}>
                                                     <option>mm</option>
                                                     <option>cm</option>
@@ -813,46 +878,64 @@ function SellPurchase() {
                                                 </select>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td style={{ textAlign: 'center' }}>
                                             <input className="input" style={{ padding: '12px', width: '80px', fontSize: '0.9rem' }} value={sellItemInput.hsn}
                                                 onChange={e => setSellItemInput({ ...sellItemInput, hsn: e.target.value })} />
                                         </td>
-                                        <td style={{ display: 'flex', gap: '2px' }}>
-                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="CGST" value={sellItemInput.cgst}
-                                                onChange={e => setSellItemInput({ ...sellItemInput, cgst: e.target.value })} />
-                                            <input className="input" style={{ padding: '12px', width: '45px', fontSize: '0.8rem' }} placeholder="SGST" value={sellItemInput.sgst}
-                                                onChange={e => setSellItemInput({ ...sellItemInput, sgst: e.target.value })} />
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '60px', fontSize: '0.9rem' }} placeholder="GST%" type="number" value={sellItemInput.gst}
+                                                onChange={e => setSellItemInput({ ...sellItemInput, gst: e.target.value })} />
                                         </td>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', width: '70px', fontSize: '0.9rem' }} placeholder="0" type="number"
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.9rem' }} placeholder="0" type="number"
                                                 ref={sellQtyRef}
                                                 value={sellItemInput.quantity}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        if (e.shiftKey) addItemToSellList()
+                                                        else sellRateRef.current?.focus()
+                                                    }
+                                                }}
                                                 onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })}
                                             />
                                         </td>
-                                        <td>
-                                            <input className="input" style={{ padding: '12px', width: '90px', fontSize: '0.9rem' }} placeholder="0.00" type="number"
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} placeholder="0.00" type="number"
                                                 ref={sellRateRef}
                                                 value={sellItemInput.rate}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        if (e.shiftKey) addItemToSellList()
+                                                        else sellAddBtnRef.current?.focus()
+                                                    }
+                                                }}
                                                 onChange={e => setSellItemInput({ ...sellItemInput, rate: e.target.value })}
                                             />
                                         </td>
-                                        <td>
+                                        <td style={{ textAlign: 'center' }}>
                                             <input className="input" style={{ padding: '12px', width: '60px', fontSize: '0.9rem' }} placeholder="%" type="number"
                                                 ref={sellDiscountRef}
                                                 value={sellItemInput.discount}
                                                 onChange={e => setSellItemInput({ ...sellItemInput, discount: e.target.value })}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        addItemToSellList()
+                                                    }
+                                                }}
                                             />
                                         </td>
-                                        <td style={{ fontWeight: '800', fontSize: '1.1rem' }}>
+                                        <td style={{ fontWeight: '800', fontSize: '1.1rem', textAlign: 'center' }}>
                                             ${(() => {
                                                 const baseAmount = (parseFloat(sellItemInput.quantity) || 0) * (parseFloat(sellItemInput.rate) || 0) * (1 - (parseFloat(sellItemInput.discount) || 0) / 100);
-                                                const taxRate = ((parseFloat(sellItemInput.cgst) || 0) + (parseFloat(sellItemInput.sgst) || 0)) / 100;
+                                                const taxRate = (parseFloat(sellItemInput.gst) || 18) / 100;
                                                 return (baseAmount * (1 + taxRate)).toFixed(2);
                                             })()}
                                         </td>
-                                        <td>
-                                            <button type="button" className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToSellList}>+</button>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button type="button" ref={sellAddBtnRef} className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToSellList}>+</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -891,7 +974,7 @@ function SellPurchase() {
                         </div>
                     </div>
                 </div>
-            )}\
+            )}
         </div>
     )
 }

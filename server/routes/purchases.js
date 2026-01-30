@@ -43,7 +43,7 @@ router.post("/", auth, async (req, res) => {
             purchasePrice: round2(item.rate), // Update Ref Price
             sellingPrice: round2(product.sellingPrice || item.rate), // Update selling if 0
             hsn: item.hsn || product.hsn || '8301',
-            gst: round2((parseFloat(item.cgst || 0) + parseFloat(item.sgst || 0))),
+            gst: round2(parseFloat(item.gst || 18)),
           },
           { transaction: t }
         );
@@ -57,7 +57,7 @@ router.post("/", auth, async (req, res) => {
             stock: parseInt(item.quantity),
             supplierId: supplierId,
             hsn: item.hsn || '8301',
-            gst: round2((parseFloat(item.cgst || 0) + parseFloat(item.sgst || 0))),
+            gst: round2(parseFloat(item.gst || 18)),
             // ignoring size/unit per new schema, name should contain it if unique
           },
           { transaction: t }
@@ -87,7 +87,7 @@ router.post("/", auth, async (req, res) => {
     // Update Supplier Balance (Creditor Dues)
     const totalBillAmount = items.reduce((sum, item) => {
       const amount = parseFloat(item.amount) || 0;
-      const gstPercent = (parseFloat(item.cgst) || 0) + (parseFloat(item.sgst) || 0);
+      const gstPercent = parseFloat(item.gst) || 18;
       const taxAmount = amount * (gstPercent / 100);
       return sum + amount + taxAmount;
     }, 0);

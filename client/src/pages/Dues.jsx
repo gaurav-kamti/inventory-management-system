@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../utils/api'
 import './Dues.css'
 
 function Dues() {
+    const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('debtors') // debtors or creditors
     const [customers, setCustomers] = useState([])
     const [suppliers, setSuppliers] = useState([])
@@ -86,7 +88,13 @@ function Dues() {
                                         <td><span className="badge badge-warning">Active Aging</span></td>
                                         <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(customer.outstandingBalance).toFixed(2)}</td>
                                         <td style={{ textAlign: 'right' }}>
-                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>Receive Payment</button>
+                                            <button
+                                                className="btn"
+                                                style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}
+                                                onClick={() => navigate(`/voucher/receipt?customerId=${customer.id}`)}
+                                            >
+                                                Receive Payment
+                                            </button>
                                         </td>
                                     </tr>
                                 )) : (
@@ -118,7 +126,13 @@ function Dues() {
                                         <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone}</td>
                                         <td style={{ fontWeight: '800', color: '#ff4757' }}>${parseFloat(supplier.outstandingBalance).toFixed(2)}</td>
                                         <td style={{ textAlign: 'right' }}>
-                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255, 71, 87, 0.1)', color: '#ff4757' }}>Pay Supplier</button>
+                                            <button
+                                                className="btn"
+                                                style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255, 71, 87, 0.1)', color: '#ff4757' }}
+                                                onClick={() => navigate(`/voucher/payment?supplierId=${supplier.id}`)}
+                                            >
+                                                Pay Supplier
+                                            </button>
                                         </td>
                                     </tr>
                                 )) : (

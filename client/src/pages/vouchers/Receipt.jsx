@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../POS.css';
 
 function Receipt() {
+    const [searchParams] = useSearchParams();
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState('');
     const [currentBalance, setCurrentBalance] = useState(0);
@@ -18,6 +20,17 @@ function Receipt() {
     useEffect(() => {
         fetchCustomers();
     }, []);
+
+    useEffect(() => {
+        const queryId = searchParams.get('customerId');
+        if (queryId && customers.length > 0 && !selectedCustomer) {
+            setSelectedCustomer(queryId);
+            const customer = customers.find(c => c.id === parseInt(queryId));
+            if (customer) {
+                setCurrentBalance(parseFloat(customer.outstandingBalance || 0));
+            }
+        }
+    }, [customers, searchParams]);
 
     useEffect(() => {
         if (selectedCustomer && method === 'Agst Ref') {

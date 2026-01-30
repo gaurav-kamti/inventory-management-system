@@ -20,11 +20,8 @@ const Sale = sequelize.define('Sale', {
     type: DataTypes.INTEGER,
     references: { model: 'Users', key: 'id' }
   },
-  salesChannel: {
-    type: DataTypes.STRING, // Changed from ENUM for validation safety
-    defaultValue: 'in-store'
-  },
   subtotal: {
+
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
   },
@@ -49,27 +46,12 @@ const Sale = sequelize.define('Sale', {
     defaultValue: 0
   },
   paymentMode: {
-    type: DataTypes.STRING, // Changed from ENUM
+    type: DataTypes.STRING,
     allowNull: false
   },
   status: {
-    type: DataTypes.STRING, // Changed from ENUM
+    type: DataTypes.STRING,
     defaultValue: 'completed'
-  },
-  customerEmail: {
-    type: DataTypes.STRING
-  },
-  customerPhone: {
-    type: DataTypes.STRING
-  },
-  shippingAddress: {
-    type: DataTypes.TEXT
-  },
-  shippingMethod: {
-    type: DataTypes.STRING
-  },
-  trackingNumber: {
-    type: DataTypes.STRING
   },
   roundOff: {
     type: DataTypes.DECIMAL(10, 2),
@@ -79,5 +61,6 @@ const Sale = sequelize.define('Sale', {
     type: DataTypes.TEXT
   }
 });
+
 
 module.exports = Sale;

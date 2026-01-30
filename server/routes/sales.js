@@ -41,14 +41,9 @@ router.post("/", auth, async (req, res) => {
       amountPaid,
       discount,
       roundOff,
-      salesChannel,
-      customerEmail,
-      customerPhone,
-      shippingAddress,
-      shippingMethod,
-      trackingNumber,
       notes,
     } = req.body;
+
 
     // Calculate totals or use provided totals
     let subtotal = 0;
@@ -133,7 +128,6 @@ router.post("/", auth, async (req, res) => {
         invoiceNumber,
         customerId: customerId || null,
         userId: req.user.id,
-        salesChannel: salesChannel || "in-store",
         subtotal: finalSubtotal,
         tax,
         discount: round2(discount || 0),
@@ -143,13 +137,9 @@ router.post("/", auth, async (req, res) => {
         amountDue: due,
         paymentMode,
         status: due > 0 ? "pending" : "completed",
-        customerEmail,
-        customerPhone,
-        shippingAddress,
-        shippingMethod,
-        trackingNumber,
         notes,
       },
+
       { transaction: t }
     );
 
@@ -166,13 +156,11 @@ router.post("/", auth, async (req, res) => {
           quantity: item.quantity,
           price: itemPrice, // Use manual price or store price
           total: itemTotal,
-          batchNumber: item.batchNumber,
-          serialNumber: item.serialNumber,
           hsn: item.hsn || product.hsn || '8301',
-          cgst: round2(item.cgst || 0),
-          sgst: round2(item.sgst || 0),
+          gst: round2(item.gst || product.gst || 18),
           discount: round2(item.discount || 0),
         },
+
         { transaction: t }
       );
 

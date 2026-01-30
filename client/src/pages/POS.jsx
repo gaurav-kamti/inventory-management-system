@@ -12,12 +12,6 @@ function POS() {
     const [discountPercent, setDiscountPercent] = useState(0)
     const [taxPercent, setTaxPercent] = useState(10)
     const [amountPaid, setAmountPaid] = useState('')
-    const [salesChannel, setSalesChannel] = useState('in-store')
-    const [customerEmail, setCustomerEmail] = useState('')
-    const [customerPhone, setCustomerPhone] = useState('')
-    const [shippingAddress, setShippingAddress] = useState('')
-    const [shippingMethod, setShippingMethod] = useState('')
-    const [trackingNumber, setTrackingNumber] = useState('')
     const [notes, setNotes] = useState('')
 
     useEffect(() => {
@@ -36,8 +30,7 @@ function POS() {
     }
 
     const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku.toLowerCase().includes(search.toLowerCase())
+        p.name.toLowerCase().includes(search.toLowerCase())
     )
 
     const addToCart = (product) => {
@@ -121,12 +114,6 @@ function POS() {
                 paymentMode: actualPaymentMode,
                 discount: discountAmount,
                 amountPaid: paymentMode === 'credit' ? 0 : paidAmount,
-                salesChannel,
-                customerEmail,
-                customerPhone,
-                shippingAddress,
-                shippingMethod,
-                trackingNumber,
                 notes
             }
 
@@ -137,11 +124,6 @@ function POS() {
             setTaxPercent(10)
             setAmountPaid('')
             setPaymentMode('full')
-            setCustomerEmail('')
-            setCustomerPhone('')
-            setShippingAddress('')
-            setShippingMethod('')
-            setTrackingNumber('')
             setNotes('')
             fetchProducts()
         } catch (error) {
@@ -157,7 +139,7 @@ function POS() {
                 <div className="pos-left">
                     <input
                         className="input search-input"
-                        placeholder="🔍 Search products by name or SKU..."
+                        placeholder="🔍 Search products by name..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -166,7 +148,6 @@ function POS() {
                         {filteredProducts.map(product => (
                             <div key={product.id} className="product-card glass" onClick={() => addToCart(product)}>
                                 <h3>{product.name}</h3>
-                                <p className="product-sku">{product.sku}</p>
                                 <p className="product-price">${product.sellingPrice}</p>
                                 <p className="product-stock">Stock: {product.stock}</p>
                             </div>
@@ -183,17 +164,6 @@ function POS() {
                             <select className="input" value={selectedCustomer || ''} onChange={(e) => setSelectedCustomer(e.target.value || null)}>
                                 <option value="">Walk-in Customer</option>
                                 {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="form-section">
-                            <label>Sales Channel</label>
-                            <select className="input" value={salesChannel} onChange={(e) => setSalesChannel(e.target.value)}>
-                                <option value="in-store">In-Store</option>
-                                <option value="website">Website</option>
-                                <option value="amazon">Amazon</option>
-                                <option value="wholesale">Wholesale</option>
-                                <option value="other">Other</option>
                             </select>
                         </div>
 
@@ -279,32 +249,6 @@ function POS() {
                                     required
                                 />
                             </div>
-                        )}
-
-                        <div className="form-section">
-                            <label>Customer Contact (Optional)</label>
-                            <input className="input" placeholder="Email" value={customerEmail}
-                                onChange={(e) => setCustomerEmail(e.target.value)} />
-                            <input className="input" placeholder="Phone" value={customerPhone}
-                                onChange={(e) => setCustomerPhone(e.target.value)} />
-                        </div>
-
-                        {salesChannel !== 'in-store' && (
-                            <>
-                                <div className="form-section">
-                                    <label>Shipping Address</label>
-                                    <textarea className="input" rows="2" placeholder="Delivery address..." value={shippingAddress}
-                                        onChange={(e) => setShippingAddress(e.target.value)} />
-                                </div>
-
-                                <div className="form-section">
-                                    <label>Shipping Details</label>
-                                    <input className="input" placeholder="Shipping Method (e.g., FedEx)" value={shippingMethod}
-                                        onChange={(e) => setShippingMethod(e.target.value)} />
-                                    <input className="input" placeholder="Tracking Number" value={trackingNumber}
-                                        onChange={(e) => setTrackingNumber(e.target.value)} />
-                                </div>
-                            </>
                         )}
 
                         <div className="form-section">

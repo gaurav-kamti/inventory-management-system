@@ -15,9 +15,6 @@ const Purchase = sequelize.define('Purchase', {
     type: DataTypes.INTEGER,
     references: { model: 'Suppliers', key: 'id' }
   },
-  supplierPartNumber: {
-    type: DataTypes.STRING
-  },
   invoiceNumber: {
     type: DataTypes.STRING,
     allowNull: false
@@ -26,25 +23,9 @@ const Purchase = sequelize.define('Purchase', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  unitOfMeasure: {
-    type: DataTypes.STRING,
-    defaultValue: 'pieces'
-  },
   unitCost: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
-  },
-  shippingCost: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
-  },
-  customsCost: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
-  },
-  handlingCost: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
   },
   landingCost: {
     type: DataTypes.DECIMAL(10, 2),
@@ -53,12 +34,6 @@ const Purchase = sequelize.define('Purchase', {
   totalCost: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
-  },
-  batchNumber: {
-    type: DataTypes.STRING
-  },
-  lotNumber: {
-    type: DataTypes.STRING
   },
   receivedDate: {
     type: DataTypes.DATE,
@@ -85,12 +60,13 @@ const Purchase = sequelize.define('Purchase', {
   },
   amountDue: {
     type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0 // Will be set to totalCost on create usually
+    defaultValue: 0
   },
   status: {
     type: DataTypes.STRING,
-    defaultValue: 'pending' // pending, partial, completed
+    defaultValue: 'pending'
   }
 });
+
 
 module.exports = Purchase;

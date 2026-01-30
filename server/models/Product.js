@@ -11,14 +11,6 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  categoryId: {
-    type: DataTypes.INTEGER,
-    references: { model: 'Categories', key: 'id' }
-  },
-  brandId: {
-    type: DataTypes.INTEGER,
-    references: { model: 'Brands', key: 'id' }
-  },
   purchasePrice: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
@@ -31,10 +23,6 @@ const Product = sequelize.define('Product', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
-  lowStockThreshold: {
-    type: DataTypes.INTEGER,
-    defaultValue: 10
-  },
   hsn: {
     type: DataTypes.STRING,
     defaultValue: '8301'
@@ -44,5 +32,6 @@ const Product = sequelize.define('Product', {
     defaultValue: 18.00
   }
 });
+
 
 module.exports = Product;

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../POS.css'; // Reusing POS styles for consistency
 
 function Payment() {
+    const [searchParams] = useSearchParams();
     const [suppliers, setSuppliers] = useState([]);
     const [selectedSupplier, setSelectedSupplier] = useState('');
     const [currentBalance, setCurrentBalance] = useState(0);
@@ -18,6 +20,17 @@ function Payment() {
     useEffect(() => {
         fetchSuppliers();
     }, []);
+
+    useEffect(() => {
+        const queryId = searchParams.get('supplierId');
+        if (queryId && suppliers.length > 0 && !selectedSupplier) {
+            setSelectedSupplier(queryId);
+            const supplier = suppliers.find(s => s.id === parseInt(queryId));
+            if (supplier) {
+                setCurrentBalance(parseFloat(supplier.outstandingBalance || 0));
+            }
+        }
+    }, [suppliers, searchParams]);
 
     useEffect(() => {
         if (selectedSupplier && method === 'Agst Ref') {

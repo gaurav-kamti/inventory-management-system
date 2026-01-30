@@ -27,23 +27,13 @@ const SaleItem = sequelize.define('SaleItem', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
   },
-  batchNumber: {
-    type: DataTypes.STRING
-  },
-  serialNumber: {
-    type: DataTypes.STRING
-  },
   hsn: {
     type: DataTypes.STRING,
     defaultValue: '8301'
   },
-  cgst: {
+  gst: {
     type: DataTypes.DECIMAL(5, 2),
-    defaultValue: 0
-  },
-  sgst: {
-    type: DataTypes.DECIMAL(5, 2),
-    defaultValue: 0
+    defaultValue: 18.00
   },
   discount: {
     type: DataTypes.DECIMAL(5, 2),

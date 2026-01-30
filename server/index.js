@@ -4,13 +4,8 @@ const cors = require('cors');
 const { sequelize } = require('./models');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
-const categoryRoutes = require('./routes/categories');
-const brandRoutes = require('./routes/brands');
 const customerRoutes = require('./routes/customers');
 const saleRoutes = require('./routes/sales');
-const creditRoutes = require('./routes/credits');
-const stockRoutes = require('./routes/stock');
-const dashboardRoutes = require('./routes/dashboard');
 const supplierRoutes = require('./routes/suppliers');
 const purchaseRoutes = require('./routes/purchases');
 
@@ -24,14 +19,10 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/brands', brandRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/sales', saleRoutes);
-app.use('/api/credits', creditRoutes);
-app.use('/api/stock', stockRoutes);
-app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
+
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/vouchers', require('./routes/vouchers'));

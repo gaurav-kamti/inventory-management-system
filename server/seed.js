@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { sequelize, User, Category, Brand, Product, Customer, Supplier } = require('./models');
+const { sequelize, User, Product, Customer, Supplier } = require('./models');
+
 
 async function seed() {
   try {
@@ -10,75 +11,44 @@ async function seed() {
     await User.create({
       username: 'admin',
       password: 'admin123',
-      fullName: 'Admin User',
       role: 'admin'
     });
     console.log('Admin user created');
 
-    // Create categories
-    const electronics = await Category.create({ name: 'Electronics', description: 'Electronic devices and accessories' });
-    const clothing = await Category.create({ name: 'Clothing', description: 'Apparel and fashion items' });
-    const food = await Category.create({ name: 'Food & Beverages', description: 'Food and drink products' });
-    console.log('Categories created');
-
-    // Create brands
-    const samsung = await Brand.create({ name: 'Samsung', description: 'Electronics brand' });
-    const nike = await Brand.create({ name: 'Nike', description: 'Sports apparel brand' });
-    const cocaCola = await Brand.create({ name: 'Coca-Cola', description: 'Beverage brand' });
-    console.log('Brands created');
-
     // Create products
     await Product.create({
-      sku: 'ELEC-001',
       name: 'Samsung Galaxy Phone',
-      description: 'Latest smartphone model',
-      categoryId: electronics.id,
-      brandId: samsung.id,
       purchasePrice: 500,
       sellingPrice: 699,
       stock: 25,
-      lowStockThreshold: 5,
-      unit: 'pieces'
+      hsn: '8301'
     });
 
     await Product.create({
-      sku: 'CLOTH-001',
       name: 'Nike Running Shoes',
-      description: 'Comfortable running shoes',
-      categoryId: clothing.id,
-      brandId: nike.id,
       purchasePrice: 60,
       sellingPrice: 99,
       stock: 50,
-      lowStockThreshold: 10,
-      unit: 'pairs'
+      hsn: '8302'
     });
 
+
     await Product.create({
-      sku: 'FOOD-001',
       name: 'Coca-Cola 2L',
-      description: 'Refreshing soft drink',
-      categoryId: food.id,
-      brandId: cocaCola.id,
       purchasePrice: 1.5,
       sellingPrice: 2.99,
       stock: 100,
-      lowStockThreshold: 20,
-      unit: 'bottles'
+      hsn: '2202'
     });
 
     await Product.create({
-      sku: 'ELEC-002',
       name: 'Wireless Headphones',
-      description: 'Bluetooth headphones',
-      categoryId: electronics.id,
-      brandId: samsung.id,
       purchasePrice: 30,
       sellingPrice: 59,
       stock: 3,
-      lowStockThreshold: 5,
-      unit: 'pieces'
+      hsn: '8518'
     });
+
     console.log('Products created');
 
     // Create customers

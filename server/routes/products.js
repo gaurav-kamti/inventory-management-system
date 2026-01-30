@@ -1,31 +1,25 @@
 const express = require('express');
-const { Product, Category, Brand } = require('../models');
+const { Product } = require('../models');
 const { auth } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
   try {
-    const { search, categoryId, brandId, lowStock } = req.query;
+    const { search, lowStock } = req.query;
     const where = {};
     
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { sku: { [Op.like]: `%${search}%` } }
-      ];
+      where.name = { [Op.like]: `%${search}%` };
     }
-    if (categoryId) where.categoryId = categoryId;
-    if (brandId) where.brandId = brandId;
     
     const products = await Product.findAll({
-      where,
-      include: [{ model: Category }, { model: Brand }]
+      where
     });
     
     let filtered = products;
     if (lowStock === 'true') {
-      filtered = products.filter(p => p.stock <= p.lowStockThreshold);
+      filtered = products.filter(p => p.stock <= 10);
     }
     
     res.json(filtered);
@@ -36,11 +30,10 @@ router.get('/', auth, async (req, res) => {
 
 router.get('/:id', auth, async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id, {
-      include: [{ model: Category }, { model: Brand }]
-    });
+    const product = await Product.findByPk(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -48,7 +41,7 @@ router.get('/:id', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, categoryId, brandId, purchasePrice, sellingPrice, stock, lowStockThreshold } = req.body;
+    const { name, purchasePrice, sellingPrice, stock } = req.body;
     
     // Check if product exists by name
     let product = await Product.findOne({ where: { name } });
@@ -59,21 +52,15 @@ router.post('/', auth, async (req, res) => {
         await product.update({
             stock: newStock,
             purchasePrice: purchasePrice || product.purchasePrice,
-            // Only update sellingPrice if explicitly provided, otherwise keep existing
-            sellingPrice: sellingPrice || product.sellingPrice,
-            categoryId: categoryId || product.categoryId,
-            brandId: brandId || product.brandId
+            sellingPrice: sellingPrice || product.sellingPrice
         });
     } else {
         // Create new product
         product = await Product.create({
             name,
-            categoryId,
-            brandId,
             purchasePrice,
-            sellingPrice: sellingPrice || 0, // Default if not provided
-            stock: stock || 0,
-            lowStockThreshold
+            sellingPrice: sellingPrice || 0,
+            stock: stock || 0
         });
     }
 

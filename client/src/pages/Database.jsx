@@ -218,7 +218,7 @@ function Database() {
                                             <td style={{ fontWeight: '600' }}>{item.quantity}</td>
                                             <td>${parseFloat(item.price).toFixed(2)}</td>
                                             <td style={{ color: '#ff4757' }}>{item.discount ? `${parseFloat(item.discount)}%` : '--'}</td>
-                                            <td>{item.cgst ? `${(parseFloat(item.cgst) + parseFloat(item.sgst))}%` : '--'}</td>
+                                            <td>{item.gst ? `${parseFloat(item.gst)}%` : '--'}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--accent)' }}>
                                                 ${parseFloat(item.total).toFixed(2)}
                                             </td>
