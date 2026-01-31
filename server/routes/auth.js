@@ -12,9 +12,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Use environment variable or fallback for consistency
+    const secret = process.env.JWT_SECRET || 'superGK108';
+
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
+      secret,
       { expiresIn: '24h' }
     );
 
