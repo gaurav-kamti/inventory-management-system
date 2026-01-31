@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import '../POS.css';
 
 function Receipt() {
@@ -43,10 +43,7 @@ function Receipt() {
 
     const fetchCustomers = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/customers', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get('/customers');
             setCustomers(res.data);
         } catch (error) {
             console.error('Error fetching customers:', error);
@@ -55,10 +52,7 @@ function Receipt() {
 
     const fetchReferences = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`http://localhost:5000/api/vouchers/unpaid-sales/${selectedCustomer}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get(`/vouchers/unpaid-sales/${selectedCustomer}`);
             setReferences(res.data);
         } catch (error) {
             console.error('Error fetching references:', error);
@@ -78,8 +72,7 @@ function Receipt() {
         setMessage('');
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/vouchers/receipt', {
+            const res = await api.post('/vouchers/receipt', {
                 customerId: selectedCustomer,
                 amount,
                 date,
@@ -87,8 +80,6 @@ function Receipt() {
                 notes,
                 method,
                 referenceId: selectedReference
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             setMessage(`Success! New Balance: ${res.data.newBalance}`);

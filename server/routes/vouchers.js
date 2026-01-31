@@ -16,6 +16,49 @@ const router = express.Router();
 const round2 = (v) =>
   Math.round((parseFloat(v || 0) + Number.EPSILON) * 100) / 100;
 
+// GET /api/vouchers/history
+router.get("/history", auth, async (req, res) => {
+  try {
+    const customerPayments = await CreditTransaction.findAll({
+      where: { type: 'payment' },
+      include: [{ model: Customer, attributes: ['name'] }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const supplierPayments = await SupplierTransaction.findAll({
+      where: { type: 'payment' },
+      include: [{ model: Supplier, attributes: ['name'] }],
+      order: [['date', 'DESC']]
+    });
+
+    // Normalize and combine
+    const vouchers = [
+      ...customerPayments.map(p => ({
+        id: `R-${p.id}`,
+        date: p.createdAt,
+        type: 'RECEIPT', // Money In
+        partyName: p.Customer?.name || 'Unknown',
+        amount: p.amount,
+        mode: p.notes, // Using notes as mode/description for now
+        rawDate: new Date(p.createdAt)
+      })),
+      ...supplierPayments.map(p => ({
+        id: `P-${p.id}`,
+        date: p.date,
+        type: 'PAYMENT', // Money Out
+        partyName: p.Supplier?.name || 'Unknown',
+        amount: p.amount,
+        mode: p.notes,
+        rawDate: new Date(p.date)
+      }))
+    ].sort((a, b) => b.rawDate - a.rawDate);
+
+    res.json(vouchers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/vouchers/unpaid-sales/:customerId
 router.get("/unpaid-sales/:customerId", auth, async (req, res) => {
   try {

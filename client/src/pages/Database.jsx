@@ -6,6 +6,7 @@ function Database() {
     const [activeTab, setActiveTab] = useState('sales')
     const [sales, setSales] = useState([])
     const [purchases, setPurchases] = useState([])
+    const [vouchers, setVouchers] = useState([])
     const [loading, setLoading] = useState(true)
 
     // For Bill Details Modal
@@ -25,7 +26,7 @@ function Database() {
     useEffect(() => {
         const loadData = async () => {
             setLoading(true)
-            await Promise.all([fetchSales(), fetchPurchases()])
+            await Promise.all([fetchSales(), fetchPurchases(), fetchVouchers()])
             setLoading(false)
         }
         loadData()
@@ -84,6 +85,15 @@ function Database() {
         }
     }
 
+    const fetchVouchers = async () => {
+        try {
+            const res = await api.get('/vouchers/history')
+            setVouchers(res.data)
+        } catch (error) {
+            console.error('Error fetching vouchers:', error)
+        }
+    }
+
     const openInvoiceDetails = (invoice) => {
         setSelectedInvoice(invoice)
         setShowInvoiceModal(true)
@@ -91,16 +101,16 @@ function Database() {
 
 
 
-    const invoices = activeTab === 'sales' ? sales : purchases
+    const invoices = activeTab === 'sales' ? sales : (activeTab === 'purchases' ? purchases : vouchers)
 
     return (
         <div className="inventory-page">
             <div className="page-header">
                 <h1 className="page-title">Master Records</h1>
-                <p className="page-subtitle">Centralized history of all sales and purchase vouchers</p>
+                <p className="page-subtitle">Centralized history of all sales, purchases, and vouchers</p>
             </div>
 
-            <div className="stats-grid" style={{ marginBottom: '30px' }}>
+            <div className="stats-grid" style={{ marginBottom: '30px', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div
                     className={`stat-card ${activeTab === 'sales' ? 'active' : ''}`}
                     onClick={() => setActiveTab('sales')}
@@ -121,6 +131,16 @@ function Database() {
                         <p className="stat-value">{purchases.length}</p>
                     </div>
                 </div>
+                <div
+                    className={`stat-card ${activeTab === 'vouchers' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('vouchers')}
+                >
+                    <div className="stat-icon" style={{ background: 'rgba(255, 107, 107, 0.1)', color: '#ff6b6b' }}>🧾</div>
+                    <div className="stat-info">
+                        <h3>Vouchers</h3>
+                        <p className="stat-value">{vouchers.length}</p>
+                    </div>
+                </div>
             </div>
 
             <div className="card">
@@ -135,9 +155,10 @@ function Database() {
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Voucher No.</th>
+                                    <th>{activeTab === 'vouchers' ? 'Type' : 'Voucher No.'}</th>
                                     <th>Party Name</th>
-                                    <th>Amount</th>
+                                    <th>{activeTab === 'vouchers' ? 'Mode/Note' : 'Amount'}</th>
+                                    {activeTab === 'vouchers' && <th>Amount</th>}
                                     <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
@@ -145,13 +166,35 @@ function Database() {
                                 {invoices.map(inv => (
                                     <tr key={inv.id}>
                                         <td style={{ fontSize: '0.85rem' }}>{formatDate(inv.date)}</td>
-                                        <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>{inv.invoiceNumber}</td>
+                                        <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>
+                                            {activeTab === 'vouchers' ? (
+                                                <span style={{ 
+                                                    padding: '4px 8px', 
+                                                    borderRadius: '4px', 
+                                                    background: inv.type === 'RECEIPT' ? 'rgba(142, 182, 155, 0.2)' : 'rgba(255, 107, 107, 0.2)',
+                                                    color: inv.type === 'RECEIPT' ? 'var(--accent)' : '#ff6b6b'
+                                                }}>
+                                                    {inv.type}
+                                                </span>
+                                            ) : inv.invoiceNumber}
+                                        </td>
                                         <td style={{ fontWeight: '600' }}>{inv.partyName}</td>
-                                        <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(inv.total).toFixed(2)}</td>
+                                        {activeTab === 'vouchers' ? (
+                                            <td style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{inv.mode}</td>
+                                        ) : (
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(inv.total).toFixed(2)}</td>
+                                        )}
+                                        {activeTab === 'vouchers' && (
+                                            <td style={{ fontWeight: '800', color: inv.type === 'RECEIPT' ? 'var(--accent)' : '#ff6b6b' }}>
+                                                ${parseFloat(inv.amount).toFixed(2)}
+                                            </td>
+                                        )}
                                         <td style={{ textAlign: 'right' }}>
-                                            <button className="btn" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
-                                                View Bill
-                                            </button>
+                                            {activeTab !== 'vouchers' && (
+                                                <button className="btn" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
+                                                    View Bill
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

@@ -108,10 +108,14 @@ function POS() {
                     productId: item.productId,
                     quantity: item.quantity,
                     batchNumber: item.batchNumber,
-                    serialNumber: item.serialNumber
+                    serialNumber: item.serialNumber,
+                    price: item.price // Explicitly send price to avoid backend default
                 })),
                 customerId: selectedCustomer,
                 paymentMode: actualPaymentMode,
+                subtotal,
+                tax,
+                total,
                 discount: discountAmount,
                 amountPaid: paymentMode === 'credit' ? 0 : paidAmount,
                 notes
