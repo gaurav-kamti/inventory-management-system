@@ -4,7 +4,8 @@ import './Inventory.css' // Reusing inventory styles for standard look
 
 function Database() {
     const [activeTab, setActiveTab] = useState('sales')
-    const [invoices, setInvoices] = useState([])
+    const [sales, setSales] = useState([])
+    const [purchases, setPurchases] = useState([])
     const [loading, setLoading] = useState(true)
 
     // For Bill Details Modal
@@ -22,13 +23,15 @@ function Database() {
     }
 
     useEffect(() => {
-        setInvoices([])
-        if (activeTab === 'sales') fetchSales()
-        if (activeTab === 'purchases') fetchPurchases()
-    }, [activeTab])
+        const loadData = async () => {
+            setLoading(true)
+            await Promise.all([fetchSales(), fetchPurchases()])
+            setLoading(false)
+        }
+        loadData()
+    }, [])
 
     const fetchSales = async () => {
-        setLoading(true)
         try {
             const res = await api.get('/sales')
             const salesData = res.data.map(s => ({
@@ -44,17 +47,13 @@ function Database() {
                 amountDue: s.amountDue,
                 items: s.SaleItems
             })).sort((a, b) => new Date(b.date) - new Date(a.date))
-            setInvoices(salesData)
+            setSales(salesData)
         } catch (error) {
             console.error('Error fetching sales:', error)
-            setInvoices([])
-        } finally {
-            setLoading(false)
         }
     }
 
     const fetchPurchases = async () => {
-        setLoading(true)
         try {
             const res = await api.get('/purchases')
             const purchasesMap = {}
@@ -79,12 +78,9 @@ function Database() {
                     total: p.totalCost
                 })
             })
-            setInvoices(Object.values(purchasesMap).sort((a, b) => new Date(b.date) - new Date(a.date)))
+            setPurchases(Object.values(purchasesMap).sort((a, b) => new Date(b.date) - new Date(a.date)))
         } catch (error) {
             console.error('Error fetching purchases:', error)
-            setInvoices([])
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -92,6 +88,10 @@ function Database() {
         setSelectedInvoice(invoice)
         setShowInvoiceModal(true)
     }
+
+
+
+    const invoices = activeTab === 'sales' ? sales : purchases
 
     return (
         <div className="inventory-page">
@@ -108,7 +108,7 @@ function Database() {
                     <div className="stat-icon" style={{ background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>📊</div>
                     <div className="stat-info">
                         <h3>Sales Ledger</h3>
-                        <p className="stat-value">{activeTab === 'sales' ? invoices.length : '--'}</p>
+                        <p className="stat-value">{sales.length}</p>
                     </div>
                 </div>
                 <div
@@ -118,7 +118,7 @@ function Database() {
                     <div className="stat-icon" style={{ background: 'rgba(78, 205, 196, 0.1)', color: '#4ecdc4' }}>🏛️</div>
                     <div className="stat-info">
                         <h3>Purchase Records</h3>
-                        <p className="stat-value">{activeTab === 'purchases' ? invoices.length : '--'}</p>
+                        <p className="stat-value">{purchases.length}</p>
                     </div>
                 </div>
             </div>

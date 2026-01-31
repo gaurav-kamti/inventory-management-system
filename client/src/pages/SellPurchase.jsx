@@ -117,19 +117,6 @@ function SellPurchase() {
         fetchCustomers()
     }, [])
 
-    // Initial Focus Logic
-    useEffect(() => {
-        if (showPurchaseModal) {
-            setTimeout(() => purchaseInvoiceRef.current?.focus(), 100)
-        }
-    }, [showPurchaseModal])
-
-    useEffect(() => {
-        if (showSellModal) {
-            setTimeout(() => sellCustomerRef.current?.focus(), 100)
-        }
-    }, [showSellModal])
-
     const fetchProducts = async () => {
         const response = await api.get('/products')
         setProducts(response.data)
@@ -144,6 +131,40 @@ function SellPurchase() {
         const response = await api.get('/customers')
         setCustomers(response.data)
     }
+
+    // Initial Focus Logic
+    useEffect(() => {
+        if (showPurchaseModal) {
+            setTimeout(() => purchaseInvoiceRef.current?.focus(), 100)
+        }
+    }, [showPurchaseModal])
+
+    useEffect(() => {
+        if (showSellModal) {
+            setTimeout(() => sellCustomerRef.current?.focus(), 100)
+        }
+    }, [showSellModal])
+
+    // Global Shortcut for Shift+Enter to Submit
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if (e.shiftKey && e.key === 'Enter') {
+                if (showPurchaseModal && addedItems.length > 0) {
+                    e.preventDefault()
+                    // Trigger purchase submission programmatically
+                    // We can't pass 'e' directly if it expects form event, but our handler uses e.preventDefault
+                    // Best to wrap handler logic or simulate
+                    handlePurchaseItem({ preventDefault: () => { } })
+                }
+                if (showSellModal && cartItems.length > 0) {
+                    e.preventDefault()
+                    handleSellItem({ preventDefault: () => { } })
+                }
+            }
+        }
+        window.addEventListener('keydown', handleGlobalKeyDown)
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+    }, [showPurchaseModal, showSellModal, addedItems, cartItems, sellForm, addForm, selectedAdvanceIds]) // Add dependencies for form state closure
 
     const fetchAdvances = async (entity, id) => {
         if (!id) {
@@ -238,7 +259,10 @@ function SellPurchase() {
             })
             setAddedItems([])
             setShowPurchaseModal(false)
+            setAddedItems([])
+            setShowPurchaseModal(false)
             fetchProducts()
+            fetchSuppliers() // Refresh suppliers to reflect any meaningful updates if needed
         } catch (error) {
             alert(error.response?.data?.error || 'Error recording purchase')
         }
@@ -334,7 +358,10 @@ function SellPurchase() {
 
             setCartItems([])
             setShowSellModal(false)
+            setCartItems([])
+            setShowSellModal(false)
             fetchProducts()
+            fetchCustomers() // Refresh customers to ensure outstanding balance is updated locally if displayed
         } catch (error) {
             alert(error.response?.data?.error || 'Error processing sale')
         }
@@ -583,8 +610,7 @@ function SellPurchase() {
                                                     }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
-                                                        if (e.shiftKey) addItemToList()
-                                                        else purchaseQtyRef.current?.focus()
+                                                        purchaseQtyRef.current?.focus()
                                                     }
                                                 }}
                                                 onChange={e => setAddItemRow({ ...addItemRow, name: e.target.value })}
@@ -619,8 +645,7 @@ function SellPurchase() {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
-                                                        if (e.shiftKey) addItemToList()
-                                                        else purchaseRateRef.current?.focus()
+                                                        purchaseRateRef.current?.focus()
                                                     }
                                                 }}
                                                 onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })}
@@ -633,8 +658,7 @@ function SellPurchase() {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
-                                                        if (e.shiftKey) addItemToList()
-                                                        else purchaseAddBtnRef.current?.focus()
+                                                        purchaseAddBtnRef.current?.focus()
                                                     }
                                                 }}
                                                 onChange={e => setAddItemRow({ ...addItemRow, rate: e.target.value })}
@@ -844,8 +868,7 @@ function SellPurchase() {
                                                     }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
-                                                        if (e.shiftKey) addItemToSellList()
-                                                        else sellQtyRef.current?.focus()
+                                                        sellQtyRef.current?.focus()
                                                     }
                                                 }}
                                                 onChange={(e) => {
@@ -893,8 +916,7 @@ function SellPurchase() {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
-                                                        if (e.shiftKey) addItemToSellList()
-                                                        else sellRateRef.current?.focus()
+                                                        sellRateRef.current?.focus()
                                                     }
                                                 }}
                                                 onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })}
@@ -907,8 +929,7 @@ function SellPurchase() {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
-                                                        if (e.shiftKey) addItemToSellList()
-                                                        else sellAddBtnRef.current?.focus()
+                                                        sellAddBtnRef.current?.focus()
                                                     }
                                                 }}
                                                 onChange={e => setSellItemInput({ ...sellItemInput, rate: e.target.value })}

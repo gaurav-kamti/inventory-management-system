@@ -44,7 +44,6 @@ router.post("/", auth, async (req, res) => {
       notes,
     } = req.body;
 
-
     // Calculate totals or use provided totals
     let subtotal = 0;
     for (const item of items) {
@@ -56,25 +55,31 @@ router.post("/", auth, async (req, res) => {
 
       // If no ID or ID not found, try by name
       if (!product && item.name) {
-          product = await Product.findOne({ where: { name: item.name } }, { transaction: t });
+        product = await Product.findOne(
+          { where: { name: item.name } },
+          { transaction: t },
+        );
       }
 
       // If still not found, create it (Ad-hoc sale auto-creation)
       if (!product && item.name) {
-          product = await Product.create({
-              name: item.name,
-              stock: 0, // Starts at 0, will go negative
-              sellingPrice: parseFloat(item.price || 0),
-              purchasePrice: 0, // Unknown
-              hsn: item.hsn || '8301'
-          }, { transaction: t });
+        product = await Product.create(
+          {
+            name: item.name,
+            stock: 0, // Starts at 0, will go negative
+            sellingPrice: parseFloat(item.price || 0),
+            purchasePrice: 0, // Unknown
+            hsn: item.hsn || "8301",
+          },
+          { transaction: t },
+        );
       }
-      
+
       // Stock Check REMOVED/RELAXED to allow negative stock ("Sold before purchase" scenario)
       // if (!product || product.stock < item.quantity) { ... } // Deleted this check
 
       // Update productId in the item object for later usage (SaleItem creation)
-      item.productId = product.id; 
+      item.productId = product.id;
 
       // Use item.price if provided (manual entry), else use product's default selling price
       const itemPrice = parseFloat(item.price || product.sellingPrice);
@@ -88,11 +93,13 @@ router.post("/", auth, async (req, res) => {
     const reqSubtotal = parseFloat(req.body.subtotal);
 
     const tax = !isNaN(reqTax) ? round2(reqTax) : round2(subtotal * 0.1);
-    const total = !isNaN(reqTotal) ? round2(reqTotal) : round2(subtotal + tax - round2(discount || 0));
+    const total = !isNaN(reqTotal)
+      ? round2(reqTotal)
+      : round2(subtotal + tax - round2(discount || 0));
     const finalSubtotal = !isNaN(reqSubtotal) ? round2(reqSubtotal) : subtotal;
 
     const paid = round2(
-      parseFloat(amountPaid) || (paymentMode === "credit" ? 0 : total)
+      parseFloat(amountPaid) || (paymentMode === "credit" ? 0 : total),
     );
     const due = round2(total - paid);
 
@@ -106,19 +113,34 @@ router.post("/", auth, async (req, res) => {
       ? setting.value
       : { prefix: "RM/", sequence: 1, fiscalYear: "25-26" };
 
-    invoiceNumber = `${config.prefix}${String(config.sequence).padStart(
-      3,
-      "0"
-    )}/${config.fiscalYear}`;
+    // Self-healing: Ensure uniqueness
+    let isUnique = false;
+    while (!isUnique) {
+      invoiceNumber = `${config.prefix}${String(config.sequence).padStart(
+        3,
+        "0",
+      )}/${config.fiscalYear}`;
 
-    // Update sequence
+      const existing = await Sale.findOne({
+        where: { invoiceNumber },
+        transaction: t,
+      });
+
+      if (!existing) {
+        isUnique = true;
+      } else {
+        config.sequence += 1; // Increment and retry
+      }
+    }
+
+    // Update sequence for next time
     config.sequence += 1;
     if (setting) {
       await setting.update({ value: config }, { transaction: t });
     } else {
       await Settings.create(
         { key: "invoice_config", value: config },
-        { transaction: t }
+        { transaction: t },
       );
     }
 
@@ -140,13 +162,15 @@ router.post("/", auth, async (req, res) => {
         notes,
       },
 
-      { transaction: t }
+      { transaction: t },
     );
 
     // Create sale items and update stock
     for (const item of items) {
       // Product is guaranteed to exist now (or created above)
-      const product = await Product.findByPk(item.productId, { transaction: t }); 
+      const product = await Product.findByPk(item.productId, {
+        transaction: t,
+      });
       const itemPrice = round2(item.price || product.sellingPrice);
       const itemTotal = round2(item.quantity * itemPrice);
       await SaleItem.create(
@@ -156,12 +180,12 @@ router.post("/", auth, async (req, res) => {
           quantity: item.quantity,
           price: itemPrice, // Use manual price or store price
           total: itemTotal,
-          hsn: item.hsn || product.hsn || '8301',
+          hsn: item.hsn || product.hsn || "8301",
           gst: round2(item.gst || product.gst || 18),
           discount: round2(item.discount || 0),
         },
 
-        { transaction: t }
+        { transaction: t },
       );
 
       // Update product stock and Selling Price (Dynamic Pricing)
@@ -170,7 +194,7 @@ router.post("/", auth, async (req, res) => {
           stock: product.stock - item.quantity,
           sellingPrice: itemPrice, // Update master selling price to latest transaction
         },
-        { transaction: t }
+        { transaction: t },
       );
     }
 
@@ -180,10 +204,10 @@ router.post("/", auth, async (req, res) => {
       await customer.update(
         {
           outstandingBalance: round2(
-            parseFloat(customer.outstandingBalance) + due
+            parseFloat(customer.outstandingBalance) + due,
           ),
         },
-        { transaction: t }
+        { transaction: t },
       );
 
       // Create main credit transaction for the sale
@@ -196,30 +220,43 @@ router.post("/", auth, async (req, res) => {
           method: "New Ref",
           notes: `Credit from sale ${invoiceNumber}`,
         },
-        { transaction: t }
+        { transaction: t },
       );
 
       // If there were advance adjustments, create payment transactions linking them
-      if (req.body.advanceAdjustments && req.body.advanceAdjustments.length > 0) {
-          for (const adj of req.body.advanceAdjustments) {
-              const advTrans = await CreditTransaction.findByPk(adj.id, { transaction: t });
-              if (advTrans) {
-                  const adjAmt = round2(parseFloat(adj.amount));
-                  await advTrans.update({
-                      remainingAdvance: round2(parseFloat(advTrans.remainingAdvance) - adjAmt)
-                  }, { transaction: t });
+      if (
+        req.body.advanceAdjustments &&
+        req.body.advanceAdjustments.length > 0
+      ) {
+        for (const adj of req.body.advanceAdjustments) {
+          const advTrans = await CreditTransaction.findByPk(adj.id, {
+            transaction: t,
+          });
+          if (advTrans) {
+            const adjAmt = round2(parseFloat(adj.amount));
+            await advTrans.update(
+              {
+                remainingAdvance: round2(
+                  parseFloat(advTrans.remainingAdvance) - adjAmt,
+                ),
+              },
+              { transaction: t },
+            );
 
-                  // Link the payment to this sale
-                  await CreditTransaction.create({
-                      customerId,
-                      saleId: sale.id,
-                      type: "payment",
-                      amount: adjAmt,
-                      method: "Agst Ref",
-                      notes: `Adjusted against Advance id: ${adj.id}`
-                  }, { transaction: t });
-              }
+            // Link the payment to this sale
+            await CreditTransaction.create(
+              {
+                customerId,
+                saleId: sale.id,
+                type: "payment",
+                amount: adjAmt,
+                method: "Agst Ref",
+                notes: `Adjusted against Advance id: ${adj.id}`,
+              },
+              { transaction: t },
+            );
           }
+        }
       }
     }
 
@@ -228,7 +265,7 @@ router.post("/", auth, async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error("Sale processing error:", error); // Log full error
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error.message, details: error.errors });
   }
 });
 
