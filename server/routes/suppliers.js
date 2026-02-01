@@ -101,4 +101,16 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const supplier = await Supplier.findByPk(req.params.id, {
+      include: [{ model: Purchase }, { model: SupplierTransaction }],
+    });
+    if (!supplier) return res.status(404).json({ error: "Supplier not found" });
+    res.json(supplier);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

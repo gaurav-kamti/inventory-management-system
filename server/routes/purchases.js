@@ -29,7 +29,8 @@ router.get("/", auth, async (req, res) => {
 router.post("/", auth, async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { supplierId, invoiceNumber, date, items } = req.body;
+    const { supplierId, invoiceNumber, date, items, total, roundOff } =
+      req.body;
 
     const distinctItems = [];
 

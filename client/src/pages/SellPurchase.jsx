@@ -280,6 +280,8 @@ function SellPurchase() {
                 supplierId: addForm.supplierId,
                 invoiceNumber: addForm.supplierInvoice || `INV-${Date.now()}`,
                 date: addForm.date,
+                total: addTotal,
+                roundOff: addRoundOff,
                 items: addedItems.map(item => ({
                     name: `${item.name} ${item.size}${item.sizeUnit}`.trim(),
                     rate: item.rate,
