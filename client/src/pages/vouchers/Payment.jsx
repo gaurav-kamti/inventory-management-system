@@ -17,6 +17,7 @@ function Payment() {
     const [selectedReference, setSelectedReference] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [successData, setSuccessData] = useState(null);
 
     useEffect(() => {
         fetchSuppliers();

@@ -391,6 +391,7 @@ function SellPurchase() {
                 subtotal: sellSubtotal,
                 tax: sellTax,
                 total: sellTotal,
+                roundOff: sellRoundOff,
                 amountPaid: sellForm.customerId ? 0 : sellTotal,
                 salesChannel: 'in-store',
                 invoiceNumber: sellForm.invoice,
