@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import '../POS.css';
 
 function Receipt() {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState('');
@@ -82,7 +83,11 @@ function Receipt() {
                 referenceId: selectedReference
             });
 
-            setMessage(`Success! New Balance: ${res.data.newBalance}`);
+            setSuccessData({
+                newBalance: res.data.newBalance,
+                customerName: customers.find(c => c.id === parseInt(selectedCustomer))?.name || 'Customer',
+                amount: amount
+            });
             setAmount('');
             setNotes('');
             setSelectedReference('');
@@ -104,6 +109,87 @@ function Receipt() {
             setLoading(false);
         }
     };
+
+    if (successData) {
+        return (
+            <div className="receipt-form-container" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+                <div className="glass card" style={{
+                    padding: '60px 40px',
+                    background: 'var(--bg-dark)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '32px',
+                    boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+                    maxWidth: '600px',
+                    margin: '0 auto',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ 
+                        width: '100px', 
+                        height: '100px', 
+                        background: 'rgba(142, 182, 155, 0.1)', 
+                        borderRadius: '50%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        margin: '0 auto 30px auto',
+                        color: 'var(--accent)',
+                        fontSize: '3.5rem',
+                        boxShadow: '0 0 30px rgba(142, 182, 155, 0.2)'
+                    }}>
+                        ✓
+                    </div>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px' }}>Receipt Saved!</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '40px', lineHeight: '1.6' }}>
+                        Successfully received <strong style={{ color: 'var(--accent)', fontSize: '1.3rem' }}>${parseFloat(successData.amount).toLocaleString()}</strong><br/>
+                        from <span style={{ color: 'var(--text-primary)' }}>{successData.customerName}</span>
+                    </p>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '24px', marginBottom: '40px', border: '1px solid var(--glass-border)' }}>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '700' }}>New Outstanding Balance</p>
+                        <h3 style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)' }}>${parseFloat(successData.newBalance).toLocaleString()}</h3>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                        <button 
+                            onClick={() => {
+                                setSuccessData(null);
+                                setSelectedCustomer(''); // Optional: Reset customer too if desired, or keep for rapid entry
+                            }}
+                            className="btn"
+                            style={{
+                                padding: '16px 32px',
+                                borderRadius: '18px',
+                                background: 'transparent',
+                                border: '2px solid var(--glass-border)',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            + New Receipt
+                        </button>
+                        <button 
+                            onClick={() => navigate('/dues')}
+                            className="btn"
+                            style={{
+                                padding: '16px 32px',
+                                borderRadius: '18px',
+                                background: 'var(--accent)',
+                                color: 'var(--bg-deep)',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                border: 'none',
+                                boxShadow: '0 10px 30px rgba(142, 182, 155, 0.3)'
+                            }}
+                        >
+                            View Dues →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="receipt-form-container">

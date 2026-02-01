@@ -27,10 +27,6 @@ const Customer = sequelize.define('Customer', {
   gstNumber: {
     type: DataTypes.STRING
   },
-  creditLimit: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
-  },
   outstandingBalance: {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0

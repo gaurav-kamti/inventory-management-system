@@ -1,93 +1,139 @@
 /* Dues Component - Professional Green Theme */
 
 .dues-page {
-    animation: fadeIn 0.6s ease-out;
+  animation: fadeIn 0.6s ease-out;
 }
 
 .dues-page .page-title {
-    font-size: 2.8rem;
-    font-weight: 900;
-    color: var(--text-primary);
-    letter-spacing: -1.5px;
-    margin-bottom: 40px;
-    text-align: center;
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  letter-spacing: -1.5px;
+  margin-bottom: 40px;
+  text-align: center;
 }
 
 /* Redefining stats for Dues */
 .dues-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    margin-bottom: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 40px;
 }
 
 .due-card {
-    padding: 35px;
-    border-radius: 28px;
-    background: var(--bg-dark);
-    border: 1px solid var(--glass-border);
-    transition: 0.4s;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+  padding: 35px;
+  border-radius: 28px;
+  background: var(--bg-dark);
+  border: 1px solid var(--glass-border);
+  transition: 0.4s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .due-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle at top right, rgba(142, 182, 155, 0.1), transparent);
-    z-index: 1;
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(
+    circle at top right,
+    rgba(142, 182, 155, 0.1),
+    transparent
+  );
+  z-index: 1;
 }
 
 .due-card.active {
-    border-color: var(--accent);
-    background: rgba(142, 182, 155, 0.05);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  border-color: var(--accent);
+  background: rgba(142, 182, 155, 0.05);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
 .due-card.active h3 {
-    color: var(--accent);
+  color: var(--accent);
 }
 
 .due-card .icon {
-    font-size: 2rem;
-    margin-bottom: 15px;
+  font-size: 2rem;
+  margin-bottom: 15px;
 }
 
 .due-card h3 {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
 }
 
 .due-card .amount {
-    font-size: 2.4rem;
-    font-weight: 900;
-    color: var(--text-primary);
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--text-primary);
 }
 
 /* Dues Table Container */
 .dues-table-container {
-    background: var(--bg-dark);
-    border: 1px solid var(--glass-border);
-    border-radius: 32px;
-    padding: 40px;
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+  background: var(--bg-dark);
+  border: 1px solid var(--glass-border);
+  border-radius: 32px;
+  padding: 40px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
 }
 
 .dues-table-container h2 {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-bottom: 30px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Expanded History Row */
+.history-row td {
+  background: rgba(0, 0, 0, 0.2) !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.history-container {
+  padding: 20px;
+  background: #151515;
+  border-left: 3px solid var(--accent);
+  margin: 10px 20px 20px 20px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.clickable-name {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clickable-name:hover {
+  color: var(--accent) !important;
+}
+
+.clickable-name.expanded {
+  color: var(--accent) !important;
+  font-weight: 900;
 }

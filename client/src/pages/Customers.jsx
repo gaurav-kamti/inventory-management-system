@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { formatOverdue } from '../utils/formatters'
 import './Customers.css'
 
 function Customers() {
     const [customers, setCustomers] = useState([])
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
-        name: '', phone: '', email: '', address: '', creditLimit: 0
+        name: '', phone: '', email: '', address: ''
     })
 
     useEffect(() => {
@@ -24,7 +25,7 @@ function Customers() {
             await api.post('/customers', formData)
             setShowModal(false)
             fetchCustomers()
-            setFormData({ name: '', phone: '', email: '', address: '', creditLimit: 0 })
+            setFormData({ name: '', phone: '', email: '', address: '' })
         } catch (error) {
             alert(error.response?.data?.error || 'Error creating customer')
         }
@@ -46,7 +47,6 @@ function Customers() {
                             <th>Name</th>
                             <th>Phone</th>
                             <th>Email</th>
-                            <th>Credit Limit</th>
                             <th>Outstanding</th>
                             <th>Status</th>
                         </tr>
@@ -57,11 +57,12 @@ function Customers() {
                                 <td>{customer.name}</td>
                                 <td>{customer.phone}</td>
                                 <td>{customer.email || '-'}</td>
-                                <td>${customer.creditLimit}</td>
                                 <td>${customer.outstandingBalance}</td>
                                 <td>
-                                    {customer.outstandingBalance > customer.creditLimit ? (
-                                        <span className="badge badge-danger">Over Limit</span>
+                                    {customer.outstandingBalance > 0 ? (
+                                        <span className="badge badge-warning">
+                                            {formatOverdue(customer.daysOverdue)}
+                                        </span>
                                     ) : (
                                         <span className="badge badge-success">Good</span>
                                     )}
@@ -85,8 +86,6 @@ function Customers() {
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                             <textarea className="input" placeholder="Address (optional)" value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-                            <input type="number" className="input" placeholder="Credit Limit" value={formData.creditLimit}
-                                onChange={(e) => setFormData({ ...formData, creditLimit: e.target.value })} />
                             <div className="modal-actions">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary">Add Customer</button>

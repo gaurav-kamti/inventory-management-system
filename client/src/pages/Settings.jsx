@@ -12,7 +12,7 @@ function Settings() {
     const [editingSupplier, setEditingSupplier] = useState(null)
 
     const [customerForm, setCustomerForm] = useState({
-        name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', creditLimit: 0
+        name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: ''
     })
     const [supplierForm, setSupplierForm] = useState({
         name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: ''
@@ -64,7 +64,7 @@ function Settings() {
             setShowCustomerModal(false)
             setEditingCustomer(null)
             fetchCustomers()
-            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', creditLimit: 0 })
+            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
         } catch (error) {
             alert(error.response?.data?.error || 'Error saving customer')
         }
@@ -97,8 +97,7 @@ function Settings() {
             email: customer.email || '',
             address: customer.address || '',
             pinCode: customer.pinCode || '',
-            gstNumber: customer.gstNumber || '',
-            creditLimit: customer.creditLimit || 0
+            gstNumber: customer.gstNumber || ''
         })
         setShowCustomerModal(true)
     }
@@ -179,7 +178,7 @@ function Settings() {
                         <h2><span>👥</span> Customer List ({customers.length})</h2>
                         <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={() => {
                             setEditingCustomer(null)
-                            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', creditLimit: 0 })
+                            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
                             setShowCustomerModal(true)
                         }}>
                             + Add New Customer
@@ -193,7 +192,6 @@ function Settings() {
                                     <th>Phone</th>
                                     <th>Address</th>
                                     <th>GST Number</th>
-                                    <th>Credit Limit</th>
                                     <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
@@ -204,7 +202,6 @@ function Settings() {
                                         <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
                                         <td>{customer.address ? `${customer.address}, ${customer.pinCode}` : <span style={{ opacity: 0.5 }}>Unrecorded</span>}</td>
                                         <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{customer.gstNumber || '--'}</span></td>
-                                        <td style={{ fontWeight: '700', color: 'var(--accent)' }}>${parseFloat(customer.creditLimit || 0).toLocaleString()}</td>
                                         <td style={{ textAlign: 'right' }}>
                                             <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => editCustomer(customer)}>
                                                 Edit
@@ -350,13 +347,6 @@ function Settings() {
                                     <input className="input" value={showCustomerModal ? customerForm.email : supplierForm.email}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} />
                                 </div>
-                                {showCustomerModal && (
-                                    <div className="form-group full-width">
-                                        <label>Credit Limit ($)</label>
-                                        <input type="number" className="input" value={customerForm.creditLimit}
-                                            onChange={(e) => setCustomerForm({ ...customerForm, creditLimit: e.target.value })} />
-                                    </div>
-                                )}
                                 {showSupplierModal && (
                                     <div className="form-group full-width">
                                         <label>Contact Person</label>

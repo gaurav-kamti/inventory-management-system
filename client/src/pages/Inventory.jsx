@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import { formatOverdue } from '../utils/formatters'
 import Analytics from './Analytics'
 import './Inventory.css'
 
@@ -197,7 +198,6 @@ function Inventory() {
                                         <th>Customer Name</th>
                                         <th>Contact</th>
                                         <th>Outstanding</th>
-                                        <th>Credit Limit</th>
                                         <th style={{ textAlign: 'right' }}>Status</th>
                                     </tr>
                                 </thead>
@@ -209,12 +209,11 @@ function Inventory() {
                                             <td style={{ color: customer.outstandingBalance > 0 ? '#ff4757' : 'var(--accent)', fontWeight: '700' }}>
                                                 ${parseFloat(customer.outstandingBalance || 0).toLocaleString()}
                                             </td>
-                                            <td>${parseFloat(customer.creditLimit || 0).toLocaleString()}</td>
                                             <td style={{ textAlign: 'right' }}>
-                                                {customer.outstandingBalance > customer.creditLimit ? (
-                                                    <span className="badge badge-danger">Critical Limit</span>
-                                                ) : customer.outstandingBalance > 0 ? (
-                                                    <span className="badge badge-warning">Active Aging</span>
+                                                {customer.outstandingBalance > 0 ? (
+                                                    <span className="badge badge-warning">
+                                                        {formatOverdue(customer.daysOverdue)}
+                                                    </span>
                                                 ) : (
                                                     <span className="badge badge-success">Account Clear</span>
                                                 )}

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import '../POS.css'; // Reusing POS styles for consistency
 
 function Payment() {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [suppliers, setSuppliers] = useState([]);
     const [selectedSupplier, setSelectedSupplier] = useState('');
@@ -82,7 +83,11 @@ function Payment() {
                 referenceId: selectedReference
             });
 
-            setMessage(`Success! New Balance: ${res.data.newBalance}`);
+            setSuccessData({
+                newBalance: res.data.newBalance,
+                supplierName: suppliers.find(s => s.id === parseInt(selectedSupplier))?.name || 'Supplier',
+                amount: amount
+            });
             setAmount('');
             setNotes('');
             setSelectedReference('');
@@ -104,6 +109,87 @@ function Payment() {
             setLoading(false);
         }
     };
+
+    if (successData) {
+        return (
+            <div className="payment-form-container" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+                <div className="glass card" style={{
+                    padding: '60px 40px',
+                    background: 'var(--bg-dark)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '32px',
+                    boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+                    maxWidth: '600px',
+                    margin: '0 auto',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ 
+                        width: '100px', 
+                        height: '100px', 
+                        background: 'rgba(255, 71, 87, 0.1)', 
+                        borderRadius: '50%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        margin: '0 auto 30px auto',
+                        color: '#ff4757',
+                        fontSize: '3.5rem',
+                        boxShadow: '0 0 30px rgba(255, 71, 87, 0.2)'
+                    }}>
+                        ✓
+                    </div>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px' }}>Payment Saved!</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '40px', lineHeight: '1.6' }}>
+                        Successfully paid <strong style={{ color: '#ff4757', fontSize: '1.3rem' }}>${parseFloat(successData.amount).toLocaleString()}</strong><br/>
+                        to <span style={{ color: 'var(--text-primary)' }}>{successData.supplierName}</span>
+                    </p>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '24px', marginBottom: '40px', border: '1px solid var(--glass-border)' }}>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '700' }}>New Outstanding Balance</p>
+                        <h3 style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: '900', color: '#ff4757' }}>${parseFloat(successData.newBalance).toLocaleString()}</h3>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                        <button 
+                            onClick={() => {
+                                setSuccessData(null);
+                                setSelectedSupplier('');
+                            }}
+                            className="btn"
+                            style={{
+                                padding: '16px 32px',
+                                borderRadius: '18px',
+                                background: 'transparent',
+                                border: '2px solid var(--glass-border)',
+                                color: 'var(--text-secondary)',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            + New Payment
+                        </button>
+                        <button 
+                            onClick={() => navigate('/dues')}
+                            className="btn"
+                            style={{
+                                padding: '16px 32px',
+                                borderRadius: '18px',
+                                background: '#ff4757',
+                                color: 'white',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                border: 'none',
+                                boxShadow: '0 10px 30px rgba(255, 71, 87, 0.3)'
+                            }}
+                        >
+                            View Dues →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="payment-form-container">

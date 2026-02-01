@@ -61,7 +61,8 @@ function SellPurchase() {
     const [sellForm, setSellForm] = useState({
         invoice: '',
         date: new Date().toISOString().split('T')[0],
-        supplierId: '',
+        customerId: '',
+        customerName: '',
         roundOff: ''
     })
 
@@ -83,6 +84,51 @@ function SellPurchase() {
 
     const [availableAdvances, setAvailableAdvances] = useState([])
     const [selectedAdvanceIds, setSelectedAdvanceIds] = useState([])
+
+    // Quick Add Party State
+    const [showQuickAddModal, setShowQuickAddModal] = useState(false)
+    const [quickAddType, setQuickAddType] = useState('customer') // 'customer' or 'supplier'
+    const [quickAddForm, setQuickAddForm] = useState({
+        name: '',
+        phone: '',
+        address: '',
+        gstNumber: ''
+    })
+
+    const handleQuickAdd = async () => {
+        try {
+            if (!quickAddForm.name) return alert('Name is required')
+            if (quickAddType === 'customer' && !quickAddForm.phone) return alert('Phone is required for customers')
+
+            const endpoint = quickAddType === 'customer' ? '/customers' : '/suppliers'
+            const res = await api.post(endpoint, quickAddForm)
+            
+            const newParty = res.data
+            
+            if (quickAddType === 'customer') {
+                setCustomers(prev => [...prev, newParty])
+                setSellForm(prev => ({
+                    ...prev,
+                    customerId: newParty.id,
+                    customerName: newParty.name
+                }))
+            } else {
+                setSuppliers(prev => [...prev, newParty])
+                setAddForm(prev => ({
+                    ...prev,
+                    supplierId: newParty.id,
+                    supplierName: newParty.name
+                }))
+            }
+            
+            setShowQuickAddModal(false)
+            alert(`${quickAddType === 'customer' ? 'Customer' : 'Supplier'} added successfully!`)
+            
+        } catch (error) {
+            console.error('Error adding party:', error)
+            alert(error.response?.data?.error || 'Error adding party')
+        }
+    }
 
     const addItemToList = () => {
         if (!addItemRow.name || !addItemRow.quantity || !addItemRow.rate) {
@@ -255,6 +301,7 @@ function SellPurchase() {
                 invoice: `INV-${Date.now()}`,
                 date: new Date().toISOString().split('T')[0],
                 supplierId: '',
+                supplierName: '',
                 items: []
             })
             setAddedItems([])
@@ -444,6 +491,22 @@ function SellPurchase() {
         </datalist>
     )
 
+    const supplierDatalist = (
+        <datalist id="supplier-suggestions">
+            {suppliers.map(s => (
+                <option key={s.id} value={s.name} />
+            ))}
+        </datalist>
+    )
+
+    const customerDatalist = (
+        <datalist id="customer-suggestions">
+            {customers.map(c => (
+                <option key={c.id} value={c.name} />
+            ))}
+        </datalist>
+    )
+
     return (
         <div className="inventory-page"> {/* Reusing inventory-page class for layout */}
             <div className="page-header" style={{ marginBottom: '40px' }}>
@@ -462,6 +525,8 @@ function SellPurchase() {
             </div>
 
             {productDatalist}
+            {supplierDatalist}
+            {customerDatalist}
 
             <div className="actions-container" style={{ display: 'flex', gap: '30px', padding: '40px', justifyContent: 'center' }}>
                 <button className="btn" style={{
@@ -538,20 +603,46 @@ function SellPurchase() {
                                 </div>
                                 <div className="invoice-field">
                                     <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Party Name (Supplier)</label>
-                                    <select className="input" value={addForm.supplierId}
+                                    <input className="input" placeholder="Search Supplier" value={addForm.supplierName}
                                         ref={purchaseSupplierRef}
-                                        onChange={(e) => setAddForm({ ...addForm, supplierId: e.target.value })}
+                                        list="supplier-suggestions"
+                                        onBlur={() => {
+                                            if (addForm.supplierName && !addForm.supplierId) {
+                                                const exists = suppliers.find(s => s.name.toLowerCase() === addForm.supplierName.toLowerCase())
+                                                if (!exists) {
+                                                    setQuickAddType('supplier')
+                                                    setQuickAddForm({ name: addForm.supplierName, phone: '', address: '', gstNumber: '' })
+                                                    setShowQuickAddModal(true)
+                                                } else {
+                                                    setAddForm(prev => ({ ...prev, supplierId: exists.id, supplierName: exists.name }))
+                                                }
+                                            }
+                                        }}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            const supplier = suppliers.find(s => s.name === val)
+                                            if (supplier) {
+                                                setAddForm({ ...addForm, supplierName: supplier.name, supplierId: supplier.id })
+                                            } else {
+                                                setAddForm({ ...addForm, supplierName: val, supplierId: '' })
+                                            }
+                                        }}
                                         onKeyDown={(e) => {
+                                            if (e.key === 'Tab') {
+                                                const val = e.target.value.toLowerCase()
+                                                const match = suppliers.find(s => s.name.toLowerCase().includes(val))
+                                                if (match) {
+                                                    e.preventDefault()
+                                                    setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
+                                                }
+                                            }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 purchaseItemNameRef.current?.focus()
                                             }
                                         }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
-                                        required>
-                                        <option value="" style={{ background: 'var(--bg-deep)' }}>-- Select Registered Supplier --</option>
-                                        {suppliers.map(s => <option key={s.id} value={s.id} style={{ background: 'var(--bg-deep)' }}>{s.name}</option>)}
-                                    </select>
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -776,19 +867,46 @@ function SellPurchase() {
                                 </div>
                                 <div className="invoice-field">
                                     <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Party Name (Customer)</label>
-                                    <select className="input" value={sellForm.customerId || ''}
+                                    <input className="input" placeholder="Search Customer" value={sellForm.customerName}
                                         ref={sellCustomerRef}
-                                        onChange={(e) => setSellForm({ ...sellForm, customerId: e.target.value })}
+                                        list="customer-suggestions"
+                                        onBlur={() => {
+                                            if (sellForm.customerName && !sellForm.customerId) {
+                                                const exists = customers.find(c => c.name.toLowerCase() === sellForm.customerName.toLowerCase())
+                                                if (!exists) {
+                                                    setQuickAddType('customer')
+                                                    setQuickAddForm({ name: sellForm.customerName, phone: '', address: '', gstNumber: '' })
+                                                    setShowQuickAddModal(true)
+                                                } else {
+                                                    setSellForm(prev => ({ ...prev, customerId: exists.id, customerName: exists.name }))
+                                                }
+                                            }
+                                        }}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            const customer = customers.find(c => c.name === val)
+                                            if (customer) {
+                                                setSellForm({ ...sellForm, customerName: customer.name, customerId: customer.id })
+                                            } else {
+                                                setSellForm({ ...sellForm, customerName: val, customerId: '' })
+                                            }
+                                        }}
                                         onKeyDown={(e) => {
+                                            if (e.key === 'Tab') {
+                                                const val = e.target.value.toLowerCase()
+                                                const match = customers.find(c => c.name.toLowerCase().includes(val))
+                                                if (match) {
+                                                    e.preventDefault()
+                                                    setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
+                                                }
+                                            }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 sellItemNameRef.current?.focus()
                                             }
                                         }}
-                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}>
-                                        <option value="">Walk-in Customer (Cash)</option>
-                                        {customers.map(c => <option key={c.id} value={c.id} style={{ background: 'var(--bg-deep)' }}>{c.name}</option>)}
-                                    </select>
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -992,6 +1110,79 @@ function SellPurchase() {
                         <div className="modal-actions" style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '20px' }}>
                             <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '18px 40px', color: 'var(--text-secondary)' }} onClick={() => setShowSellModal(false)}>Discard Action</button>
                             <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handleSellItem}>Issue Tax Invoice</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Quick Add Party Modal */}
+            {showQuickAddModal && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000,
+                    animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }} onClick={() => setShowQuickAddModal(false)}>
+                    <div className="modal glass" style={{
+                        width: '95%', maxWidth: '600px', display: 'flex', flexDirection: 'column',
+                        padding: '30px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
+                        borderRadius: '24px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+                        position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        
+                        <div className="modal-close" onClick={() => setShowQuickAddModal(false)} style={{
+                            position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
+                            fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s'
+                        }}>✕</div>
+
+                        <h2 style={{ color: 'var(--text-primary)', marginBottom: '30px', fontSize: '1.8rem', fontWeight: '900' }}>
+                            Add New {quickAddType === 'customer' ? 'Customer' : 'Supplier'}
+                        </h2>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Name *</label>
+                                <input className="input" style={{ width: '100%', padding: '12px' }}
+                                    value={quickAddForm.name}
+                                    onChange={e => setQuickAddForm({ ...quickAddForm, name: e.target.value })}
+                                    placeholder="Business or Person Name"
+                                />
+                            </div>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                                        Phone {quickAddType === 'customer' ? '*' : '(Optional)'}
+                                    </label>
+                                    <input className="input" style={{ width: '100%', padding: '12px' }}
+                                        value={quickAddForm.phone}
+                                        onChange={e => setQuickAddForm({ ...quickAddForm, phone: e.target.value })}
+                                        placeholder="Contact Number"
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>GST Number</label>
+                                    <input className="input" style={{ width: '100%', padding: '12px' }}
+                                        value={quickAddForm.gstNumber}
+                                        onChange={e => setQuickAddForm({ ...quickAddForm, gstNumber: e.target.value })}
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Address</label>
+                                <textarea className="input" style={{ width: '100%', padding: '12px', minHeight: '80px', resize: 'vertical' }}
+                                    value={quickAddForm.address}
+                                    onChange={e => setQuickAddForm({ ...quickAddForm, address: e.target.value })}
+                                    placeholder="Full Address (Optional)"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="modal-actions" style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
+                            <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '12px 30px' }} onClick={() => setShowQuickAddModal(false)}>Cancel</button>
+                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '12px 40px' }} onClick={handleQuickAdd}>Save & Select</button>
                         </div>
                     </div>
                 </div>

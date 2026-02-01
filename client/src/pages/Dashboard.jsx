@@ -105,10 +105,9 @@ function Dashboard() {
                 <table className="table">
                     <thead>
                         <tr>
-                            <th>Customer Name</th>
-                            <th>Phone</th>
-                            <th>Outstanding Balance</th>
-                            <th>Credit Limit</th>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Balance</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -118,11 +117,8 @@ function Dashboard() {
                                 <td>{customer.name}</td>
                                 <td>{customer.phone}</td>
                                 <td>${parseFloat(customer.outstandingBalance || 0).toFixed(2)}</td>
-                                <td>${parseFloat(customer.creditLimit || 0).toFixed(2)}</td>
                                 <td>
-                                    {customer.outstandingBalance > customer.creditLimit ? (
-                                        <span className="badge badge-danger">Over Limit</span>
-                                    ) : customer.outstandingBalance > 0 ? (
+                                    {customer.outstandingBalance > 0 ? (
                                         <span className="badge badge-warning">Pending</span>
                                     ) : (
                                         <span className="badge badge-success">Clear</span>
