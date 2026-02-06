@@ -7,7 +7,7 @@ function Customers() {
     const [customers, setCustomers] = useState([])
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
-        name: '', phone: '', email: '', address: ''
+        name: '', phone: '', email: '', address: '', state: 'West Bengal', stateCode: '19'
     })
 
     useEffect(() => {
@@ -25,7 +25,7 @@ function Customers() {
             await api.post('/customers', formData)
             setShowModal(false)
             fetchCustomers()
-            setFormData({ name: '', phone: '', email: '', address: '' })
+            setFormData({ name: '', phone: '', email: '', address: '', state: 'West Bengal', stateCode: '19' })
         } catch (error) {
             alert(error.response?.data?.error || 'Error creating customer')
         }
@@ -86,6 +86,12 @@ function Customers() {
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                             <textarea className="input" placeholder="Address (optional)" value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <input className="input" placeholder="State" value={formData.state}
+                                    onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+                                <input className="input" placeholder="State Code" value={formData.stateCode}
+                                    onChange={(e) => setFormData({ ...formData, stateCode: e.target.value })} />
+                            </div>
                             <div className="modal-actions">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary">Add Customer</button>

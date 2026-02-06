@@ -212,3 +212,47 @@
   font-weight: 700;
   font-size: 18px;
 }
+
+/* Print Styles */
+@media print {
+  /* Global reset for visibility - hides everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make the print template and its children visible */
+  #invoice-print-template,
+  #invoice-print-template * {
+    visibility: visible;
+  }
+
+  /* Position the template to fill the page and override hidden state */
+  #invoice-print-template {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: block !important; /* Override inline display: none */
+    background: white;
+    color: black;
+    z-index: 9999;
+  }
+
+  /* Reset body background */
+  body {
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  /* Hide custom scrollbars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ensure no margins interfere */
+  @page {
+    margin: 0.5cm;
+  }
+}

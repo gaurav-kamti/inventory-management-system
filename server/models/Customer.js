@@ -27,6 +27,14 @@ const Customer = sequelize.define('Customer', {
   gstNumber: {
     type: DataTypes.STRING
   },
+  state: {
+    type: DataTypes.STRING,
+    defaultValue: 'West Bengal'
+  },
+  stateCode: {
+    type: DataTypes.STRING,
+    defaultValue: '19'
+  },
   outstandingBalance: {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0

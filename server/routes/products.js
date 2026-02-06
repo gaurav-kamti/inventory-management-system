@@ -24,7 +24,8 @@ router.get('/', auth, async (req, res) => {
     
     res.json(filtered);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in GET /api/products:', error);
+    res.status(500).json({ error: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
   }
 });
 
@@ -41,18 +42,21 @@ router.get('/:id', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, purchasePrice, sellingPrice, stock } = req.body;
+    const { name, purchasePrice, sellingPrice, stock, hsn, gst, quantityUnit } = req.body;
     
     // Check if product exists by name
     let product = await Product.findOne({ where: { name } });
 
     if (product) {
-        // Update existing product: Add stock, update prices to latest
+        // Update existing product: Add stock, update prices and info to latest
         const newStock = product.stock + (parseInt(stock) || 0);
         await product.update({
             stock: newStock,
             purchasePrice: purchasePrice || product.purchasePrice,
-            sellingPrice: sellingPrice || product.sellingPrice
+            sellingPrice: sellingPrice || product.sellingPrice,
+            hsn: hsn || product.hsn,
+            gst: gst || product.gst,
+            quantityUnit: quantityUnit || product.quantityUnit
         });
     } else {
         // Create new product
@@ -60,7 +64,10 @@ router.post('/', auth, async (req, res) => {
             name,
             purchasePrice,
             sellingPrice: sellingPrice || 0,
-            stock: stock || 0
+            stock: stock || 0,
+            hsn: hsn || '8301',
+            gst: gst || 18.00,
+            quantityUnit: quantityUnit || 'Pcs'
         });
     }
 

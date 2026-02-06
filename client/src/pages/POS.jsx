@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import InvoiceTemplate from '../components/InvoiceTemplate'
 import './POS.css'
 
 function POS() {
@@ -13,6 +14,8 @@ function POS() {
     const [taxPercent, setTaxPercent] = useState(10)
     const [amountPaid, setAmountPaid] = useState('')
     const [notes, setNotes] = useState('')
+    const [lastSale, setLastSale] = useState(null)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     useEffect(() => {
         fetchProducts()
@@ -122,7 +125,30 @@ function POS() {
             }
 
             const response = await api.post('/sales', saleData)
-            alert(`Sale completed! Invoice: ${response.data.invoiceNumber}`)
+            
+            // Construct sale object for printing immediately
+            const completedSale = {
+                ...response.data,
+                items: cart.map(item => ({
+                    ...item,
+                    Product: { name: item.name },
+                    total: item.price * item.quantity,
+                    gst: 0 // POS items might not have tax per item in this simple version, but global tax
+                })),
+                subtotal,
+                tax,
+                discount: discountAmount,
+                total,
+                amountPaid: paymentMode === 'credit' ? 0 : paidAmount,
+                amountDue: remainingAmount,
+                invoiceNumber: response.data.invoiceNumber || 'INV-PENDING',
+                date: new Date(),
+                customer: customers.find(c => c.id == selectedCustomer)
+            }
+            
+            setLastSale(completedSale)
+            setShowSuccessModal(true)
+            
             setCart([])
             setDiscountPercent(0)
             setTaxPercent(10)
@@ -133,6 +159,15 @@ function POS() {
         } catch (error) {
             alert(error.response?.data?.error || 'Error processing sale')
         }
+    }
+
+    const handlePrint = () => {
+        window.print()
+    }
+
+    const closeSuccessModal = () => {
+        setShowSuccessModal(false)
+        setLastSale(null)
     }
 
     return (
@@ -303,6 +338,37 @@ function POS() {
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && lastSale && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0,0,0,0.8)', zIndex: 1000,
+                    display: 'flex', justifyContent: 'center', alignItems: 'center'
+                }}>
+                    <div className="modal-content glass" style={{
+                        padding: '40px', borderRadius: '20px', textAlign: 'center',
+                        maxWidth: '500px', width: '90%'
+                    }}>
+                        <div style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
+                        <h2>Sale Completed!</h2>
+                        <p>Invoice #{lastSale.invoiceNumber}</p>
+                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '30px' }}>
+                            <button className="btn" style={{ background: 'var(--accent)', color: '#fff' }} onClick={handlePrint}>
+                                🖨️ Print Invoice
+                            </button>
+                            <button className="btn" onClick={closeSuccessModal}>
+                                New Sale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Hidden Print Template */}
+            <div id="invoice-print-template" style={{ display: 'none' }}>
+                <InvoiceTemplate sale={lastSale} customer={lastSale?.customer} />
             </div>
         </div>
     )

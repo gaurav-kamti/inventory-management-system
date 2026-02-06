@@ -25,8 +25,13 @@ router.get("/", auth, async (req, res) => {
     });
     res.json(sales);
   } catch (error) {
+    require('fs').appendFileSync('error.log', `[${new Date().toISOString()}] Error fetching sales: ${error.message}\n${error.stack}\n`);
     console.error("Error fetching sales:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message, 
+      details: "Check server logs/error.log for more info",
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    });
   }
 });
 
@@ -42,6 +47,16 @@ router.post("/", auth, async (req, res) => {
       discount,
       roundOff,
       notes,
+      deliveryNote,
+      paymentTerms,
+      supplierRef,
+      buyerOrderNo,
+      buyerOrderDate,
+      despatchedThrough,
+      termsOfDelivery,
+      cgst,
+      sgst,
+      igst,
     } = req.body;
 
     // Calculate totals or use provided totals
@@ -160,6 +175,16 @@ router.post("/", auth, async (req, res) => {
         paymentMode,
         status: due > 0 ? "pending" : "completed",
         notes,
+        deliveryNote,
+        paymentTerms,
+        supplierRef,
+        buyerOrderNo,
+        buyerOrderDate,
+        despatchedThrough,
+        termsOfDelivery,
+        cgst: round2(cgst || 0),
+        sgst: round2(sgst || 0),
+        igst: round2(igst || 0),
       },
 
       { transaction: t },

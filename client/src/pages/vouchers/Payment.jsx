@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
-import '../POS.css'; // Reusing POS styles for consistency
+import InvoiceTemplate from '../../components/InvoiceTemplate';
+import '../Inventory.css'; // Import for print styles
 
 function Payment() {
     const navigate = useNavigate();
@@ -111,9 +112,33 @@ function Payment() {
         }
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     if (successData) {
         return (
             <div className="payment-form-container" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+                {/* Print Template */}
+                <div id="invoice-print-template" style={{ display: 'none' }}>
+                    <InvoiceTemplate 
+                        sale={{
+                            type: 'PAYMENT',
+                            invoiceNumber: `PAY-${Date.now().toString().slice(-6)}`, 
+                            date: date,
+                            partyName: successData.supplierName,
+                            amount: successData.amount,
+                            mode: 'Cash', 
+                            notes: notes ? `${method} - ${notes}` : method,
+                            total: successData.amount
+                        }} 
+                        customer={{
+                            name: successData.supplierName,
+                            ...suppliers.find(s => s.id === parseInt(selectedSupplier))
+                        }}
+                    />
+                </div>
+
                 <div className="glass card" style={{
                     padding: '60px 40px',
                     background: 'var(--bg-dark)',
@@ -151,6 +176,22 @@ function Payment() {
                     </div>
 
                     <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                        <button 
+                            onClick={handlePrint}
+                            className="btn"
+                            style={{
+                                padding: '16px 32px',
+                                borderRadius: '18px',
+                                background: 'rgba(255, 71, 87, 0.2)',
+                                color: '#ff4757',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                border: 'none',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            🖨️ Print Voucher
+                        </button>
                         <button 
                             onClick={() => {
                                 setSuccessData(null);

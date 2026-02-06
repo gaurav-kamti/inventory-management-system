@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
+import InvoiceTemplate from '../components/InvoiceTemplate'
 import './Inventory.css' // Reusing inventory styles for standard look
 
 function Database() {
@@ -44,9 +45,14 @@ function Database() {
                 total: s.total,
                 subtotal: s.subtotal,
                 tax: s.tax,
-                discount: s.discount,
-                amountDue: s.amountDue,
-                items: s.SaleItems
+                cgst: s.cgst || 0,
+                sgst: s.sgst || 0,
+                igst: s.igst || 0,
+                roundOff: s.roundOff || 0,
+                discount: s.discount || 0,
+                amountDue: s.amountDue || 0,
+                items: s.SaleItems,
+                customer: s.Customer
             })).sort((a, b) => new Date(b.date) - new Date(a.date))
             setSales(salesData)
         } catch (error) {
@@ -88,7 +94,16 @@ function Database() {
     const fetchVouchers = async () => {
         try {
             const res = await api.get('/vouchers/history')
-            setVouchers(res.data)
+            // Normalize voucher data for template
+            const vouchersData = res.data.map(v => ({
+                ...v,
+                total: v.amount,
+                invoiceNumber: v.id,
+                items: [], // Vouchers have no items
+                partyName: v.Customer?.name || v.Supplier?.name || 'Unknown',
+                customer: v.Customer || v.Supplier // For template address etc
+            }))
+            setVouchers(vouchersData)
         } catch (error) {
             console.error('Error fetching vouchers:', error)
         }
@@ -97,6 +112,10 @@ function Database() {
     const openInvoiceDetails = (invoice) => {
         setSelectedInvoice(invoice)
         setShowInvoiceModal(true)
+    }
+
+    const handlePrint = () => {
+        window.print();
     }
 
 
@@ -168,9 +187,9 @@ function Database() {
                                         <td style={{ fontSize: '0.85rem' }}>{formatDate(inv.date)}</td>
                                         <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>
                                             {activeTab === 'vouchers' ? (
-                                                <span style={{ 
-                                                    padding: '4px 8px', 
-                                                    borderRadius: '4px', 
+                                                <span style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '4px',
                                                     background: inv.type === 'RECEIPT' ? 'rgba(142, 182, 155, 0.2)' : 'rgba(255, 107, 107, 0.2)',
                                                     color: inv.type === 'RECEIPT' ? 'var(--accent)' : '#ff6b6b'
                                                 }}>
@@ -190,11 +209,9 @@ function Database() {
                                             </td>
                                         )}
                                         <td style={{ textAlign: 'right' }}>
-                                            {activeTab !== 'vouchers' && (
-                                                <button className="btn" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
-                                                    View Bill
-                                                </button>
-                                            )}
+                                            <button className="btn" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
+                                                {inv.type === 'SALE' ? 'View Invoice' : (inv.type === 'PURCHASE' ? 'View Bill' : 'View Voucher')}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -287,12 +304,20 @@ function Database() {
                             </table>
                         </div>
 
-                        <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end' }}>
-                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 40px', fontWeight: '800' }} onClick={() => setShowInvoiceModal(false)}>Close</button>
+                        <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
+                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 30px', fontWeight: '800' }} onClick={handlePrint}>
+                                🖨️ Print {selectedInvoice.type === 'SALE' ? 'Invoice' : (selectedInvoice.type === 'PURCHASE' ? 'Bill' : 'Voucher')}
+                            </button>
+                            <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', padding: '15px 40px', fontWeight: '800' }} onClick={() => setShowInvoiceModal(false)}>Close</button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Hidden Print Template */}
+            <div id="invoice-print-template" style={{ display: 'none' }}>
+                <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} />
+            </div>
         </div>
     )
 }

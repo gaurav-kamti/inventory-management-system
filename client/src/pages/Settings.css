@@ -108,6 +108,16 @@
     color: var(--bg-deep);
 }
 
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
 /* Modal Enhancements for Settings */
 .settings-modal {
     max-width: 600px !important;

@@ -30,6 +30,10 @@ const Product = sequelize.define('Product', {
   gst: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 18.00
+  },
+  quantityUnit: {
+    type: DataTypes.STRING,
+    defaultValue: 'Pcs'
   }
 });
 

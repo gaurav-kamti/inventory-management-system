@@ -3,7 +3,7 @@ import api from '../utils/api'
 import './Settings.css'
 
 function Settings() {
-    const [activeTab, setActiveTab] = useState('customers')
+    const [activeTab, setActiveTab] = useState('profile')
     const [customers, setCustomers] = useState([])
     const [suppliers, setSuppliers] = useState([])
     const [showCustomerModal, setShowCustomerModal] = useState(false)
@@ -12,7 +12,7 @@ function Settings() {
     const [editingSupplier, setEditingSupplier] = useState(null)
 
     const [customerForm, setCustomerForm] = useState({
-        name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: ''
+        name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19'
     })
     const [supplierForm, setSupplierForm] = useState({
         name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: ''
@@ -23,11 +23,16 @@ function Settings() {
     const [invoiceForm, setInvoiceForm] = useState({
         prefix: 'RM/', sequence: 1, fiscalYear: '25-26'
     })
+    const [companyForm, setCompanyForm] = useState({
+        name: '', address: '', gstNumber: '', panNumber: '', phone: '', email: '',
+        bankName: '', accountNo: '', ifscCode: '', branch: '', jurisdiction: 'Howrah'
+    })
 
     useEffect(() => {
         fetchCustomers()
         fetchSuppliers()
         fetchInvoiceSettings()
+        fetchCompanyProfile()
     }, [])
 
     const fetchInvoiceSettings = async () => {
@@ -38,6 +43,17 @@ function Settings() {
             }
         } catch (error) {
             console.error('Error fetching invoice settings:', error)
+        }
+    }
+
+    const fetchCompanyProfile = async () => {
+        try {
+            const response = await api.get('/settings/company_profile')
+            if (response.data) {
+                setCompanyForm(response.data)
+            }
+        } catch (error) {
+            console.error('Error fetching company profile:', error)
         }
     }
 
@@ -64,7 +80,7 @@ function Settings() {
             setShowCustomerModal(false)
             setEditingCustomer(null)
             fetchCustomers()
-            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
+            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19' })
         } catch (error) {
             alert(error.response?.data?.error || 'Error saving customer')
         }
@@ -97,7 +113,9 @@ function Settings() {
             email: customer.email || '',
             address: customer.address || '',
             pinCode: customer.pinCode || '',
-            gstNumber: customer.gstNumber || ''
+            gstNumber: customer.gstNumber || '',
+            state: customer.state || 'West Bengal',
+            stateCode: customer.stateCode || '19'
         })
         setShowCustomerModal(true)
     }
@@ -141,11 +159,30 @@ function Settings() {
         }
     }
 
+    const handleCompanyProfileSubmit = async (e) => {
+        e.preventDefault()
+        try {
+            await api.post('/settings', {
+                key: 'company_profile',
+                value: companyForm
+            })
+            alert('Company profile updated successfully!')
+        } catch (error) {
+            alert('Error updating company profile')
+        }
+    }
+
     return (
         <div className="settings-page">
             <h1 className="page-title">Settings</h1>
 
             <div className="tabs">
+                <button
+                    className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('profile')}
+                >
+                    <span>🏢</span> Company Profile
+                </button>
                 <button
                     className={`tab ${activeTab === 'customers' ? 'active' : ''}`}
                     onClick={() => setActiveTab('customers')}
@@ -172,13 +209,83 @@ function Settings() {
                 </button>
             </div>
 
+            {activeTab === 'profile' && (
+                <div className="card">
+                    <div className="section-header">
+                        <h2><span>🏢</span> Company Profile</h2>
+                    </div>
+                    <form onSubmit={handleCompanyProfileSubmit} className="settings-form company-profile-form">
+                        <div className="settings-grid-form">
+                            <div className="form-group full-width">
+                                <label>Company Name</label>
+                                <input className="input" value={companyForm.name}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })} required />
+                            </div>
+                            <div className="form-group full-width">
+                                <label>Address</label>
+                                <textarea className="input" rows="2" value={companyForm.address}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label>GSTIN</label>
+                                <input className="input" value={companyForm.gstNumber}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, gstNumber: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>PAN</label>
+                                <input className="input" value={companyForm.panNumber}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, panNumber: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Contact Phone</label>
+                                <input className="input" value={companyForm.phone}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Email Address</label>
+                                <input className="input" value={companyForm.email}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })} />
+                            </div>
+
+                            <h3 className="section-subtitle full-width">Bank Details</h3>
+                            <div className="form-group">
+                                <label>Bank Name</label>
+                                <input className="input" value={companyForm.bankName}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, bankName: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>A/c No.</label>
+                                <input className="input" value={companyForm.accountNo}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, accountNo: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>IFSC Code</label>
+                                <input className="input" value={companyForm.ifscCode}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, ifscCode: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Branch</label>
+                                <input className="input" value={companyForm.branch}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, branch: e.target.value })} />
+                            </div>
+                            <div className="form-group full-width">
+                                <label>Jurisdiction (e.g. Subject to Howrah Jurisdiction)</label>
+                                <input className="input" value={companyForm.jurisdiction}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, jurisdiction: e.target.value })} />
+                            </div>
+                        </div>
+                        <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px', marginTop: '20px' }}>Save Company Profile</button>
+                    </form>
+                </div>
+            )}
+
             {activeTab === 'customers' && (
                 <div className="card">
                     <div className="section-header">
                         <h2><span>👥</span> Customer List ({customers.length})</h2>
                         <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={() => {
                             setEditingCustomer(null)
-                            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
+                            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19' })
                             setShowCustomerModal(true)
                         }}>
                             + Add New Customer
@@ -369,6 +476,20 @@ function Settings() {
                                     <input className="input" value={showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstNumber: e.target.value }) : setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} />
                                 </div>
+                                {showCustomerModal && (
+                                    <>
+                                        <div className="form-group">
+                                            <label>State</label>
+                                            <input className="input" value={customerForm.state}
+                                                onChange={(e) => setCustomerForm({ ...customerForm, state: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>State Code</label>
+                                            <input className="input" value={customerForm.stateCode}
+                                                onChange={(e) => setCustomerForm({ ...customerForm, stateCode: e.target.value })} />
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="modal-actions" style={{ marginTop: '40px', display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>

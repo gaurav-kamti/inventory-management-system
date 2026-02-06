@@ -8,3 +8,88 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
   text-transform: uppercase;
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Print Styles */
+@media print {
+  /* Global reset for visibility - hides everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make the print template and its children visible */
+  #invoice-print-template,
+  #invoice-print-template * {
+    visibility: visible;
+  }
+
+  /* Position the template to fill the page and override hidden state */
+  #invoice-print-template {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: block !important;
+    background: white;
+    color: black;
+    z-index: 9999;
+  }
+
+  /* Reset body background */
+  body {
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  /* Hide custom scrollbars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ensure no margins interfere */
+  @page {
+    margin: 0.5cm;
+  }
+}

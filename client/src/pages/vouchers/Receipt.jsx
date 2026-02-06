@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
-import '../POS.css';
+import InvoiceTemplate from '../../components/InvoiceTemplate';
+import '../Inventory.css'; // Import for print styles
 
 function Receipt() {
     const navigate = useNavigate();
@@ -111,9 +112,43 @@ function Receipt() {
         }
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     if (successData) {
         return (
             <div className="receipt-form-container" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+                {/* Print Template */}
+                <div id="invoice-print-template" style={{ display: 'none' }}>
+                    <InvoiceTemplate 
+                        sale={{
+                            type: 'RECEIPT',
+                            invoiceNumber: `REC-${Date.now().toString().slice(-6)}`, // Mock ID since API doesn't return it yet
+                            date: date,
+                            partyName: successData.customerName,
+                            amount: successData.amount,
+                            mode: 'Cash', // Currently hardcoded in handleSubmit
+                            notes: notes ? `${method} - ${notes}` : method,
+                            total: successData.amount
+                        }} 
+                        customer={{
+                            name: successData.customerName,
+                            // Address and other details are not in successData, but we might have them in customers list if we search by ID
+                            // However, we cleared selectedCustomer in UI but maybe state is still there? 
+                            // Actually handleSubmit clears selectedCustomer only if user clicks "New Receipt".
+                            // But wait, in the success view, we are still in the same component instance.
+                            // The "New Receipt" button clears it.
+                            // So `customers` state is still available.
+                            // `selectedCustomer` is available?
+                            // handleSubmit doesn't clear selectedCustomer.
+                            // It clears amount, notes, selectedReference.
+                            // So we can find customer details.
+                            ...customers.find(c => c.id === parseInt(selectedCustomer))
+                        }}
+                    />
+                </div>
+
                 <div className="glass card" style={{
                     padding: '60px 40px',
                     background: 'var(--bg-dark)',
@@ -151,6 +186,22 @@ function Receipt() {
                     </div>
 
                     <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+                        <button 
+                            onClick={handlePrint}
+                            className="btn"
+                            style={{
+                                padding: '16px 32px',
+                                borderRadius: '18px',
+                                background: 'rgba(142, 182, 155, 0.2)',
+                                color: 'var(--accent)',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                border: 'none',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            🖨️ Print Receipt
+                        </button>
                         <button 
                             onClick={() => {
                                 setSuccessData(null);

@@ -59,6 +59,39 @@ const Sale = sequelize.define('Sale', {
   },
   notes: {
     type: DataTypes.TEXT
+  },
+  deliveryNote: {
+    type: DataTypes.STRING
+  },
+  paymentTerms: {
+    type: DataTypes.STRING
+  },
+  supplierRef: {
+    type: DataTypes.STRING
+  },
+  buyerOrderNo: {
+    type: DataTypes.STRING
+  },
+  buyerOrderDate: {
+    type: DataTypes.DATEONLY
+  },
+  despatchedThrough: {
+    type: DataTypes.STRING
+  },
+  termsOfDelivery: {
+    type: DataTypes.TEXT
+  },
+  cgst: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  sgst: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  igst: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   }
 });
 
