@@ -36,12 +36,15 @@ The frontend runs on `http://localhost:5173`
 
 ## ✨ Features
 
-- 📦 Inventory Management with stock tracking
-- 💰 Point of Sale (POS) with multiple payment modes
-- 👥 Customer Management with credit tracking
-- 💳 Credit & Payment Tracking
-- 📊 Dashboard & Reports
-- 🔐 Secure Authentication
+- 📦 **Inventory Management** with stock tracking, categories, and brands
+- 💰 **Point of Sale (POS)** with professional receipt printing
+- 🛒 **Purchase Management** for recording supplier bills and stock entry
+- 🧾 **Voucher System** (Receipts & Payments) for complete financial tracking
+- 🖨️ **Universal Printing** for Invoices, Purchase Bills, and Vouchers
+- 👥 **Customer & Supplier Management** with ledger history
+- 💳 **Credit & Dues Tracking** (Money In / Money Out)
+- 📊 **Dashboard & Analytics** for business insights
+- 🔐 **Secure Authentication** with role-based access
 
 ## 🛠️ Tech Stack
 
@@ -49,6 +52,7 @@ The frontend runs on `http://localhost:5173`
 - **Backend**: Node.js, Express
 - **Database**: SQLite with Sequelize ORM
 - **Authentication**: JWT with bcrypt
+- **Printing**: Native Browser Print API with Custom CSS Media Queries
 
 ## 📝 License
 
