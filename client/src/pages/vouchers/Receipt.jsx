@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import api from '../../services/api';
 import InvoiceTemplate from '../../components/InvoiceTemplate';
 import '../Inventory.css'; // Import for print styles
 

@@ -137,3 +137,16 @@
   color: var(--accent) !important;
   font-weight: 900;
 }
+
+/* Custom Date Picker Icon Color */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  /* Filter to approximate #8eb69b (var(--accent)) */
+  filter: invert(75%) sepia(23%) saturate(302%) hue-rotate(94deg) brightness(87%) contrast(93%);
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

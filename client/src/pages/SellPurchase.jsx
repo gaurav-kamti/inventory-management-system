@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import api from '../utils/api'
+import api from '../services/api'
 import { numberToWords, calculateGSTSplit, generateHSNSummary, round2 } from '../utils/invoiceUtils'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import { downloadPDF } from '../utils/pdfExport'
 import './Inventory.css' // We might need to create a separate CSS or share it
 
 function SellPurchase() {
@@ -35,7 +36,7 @@ function SellPurchase() {
         const d = String(date.getDate()).padStart(2, '0')
         const m = String(date.getMonth() + 1).padStart(2, '0')
         const y = date.getFullYear()
-        return `${d}-${m}-${y}`
+        return `${d}:${m}:${y}`
     }
 
     // Purchase Item Form (formerly Add Item)
@@ -499,6 +500,12 @@ function SellPurchase() {
 
     const handlePrint = () => {
         window.print();
+    }
+
+    const handleDownloadPDF = async (type) => {
+        const data = type === 'sale' ? lastSaleData : lastPurchaseData;
+        const fileName = `${type.toUpperCase()}_${data.invoiceNumber}.pdf`;
+        await downloadPDF('invoice-print-template', fileName);
     }
 
     const addItemToSellList = () => {
@@ -1528,7 +1535,10 @@ function SellPurchase() {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                 <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={handlePrint}>
-                                    🖨️ Print / Download Invoice
+                                    🖨️ Print Invoice
+                                </button>
+                                <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={() => handleDownloadPDF('sale')}>
+                                    📥 Download PDF
                                 </button>
                                 <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '15px' }} onClick={() => setShowSuccessModal(false)}>
                                     Proceed to New Sale
@@ -1558,7 +1568,10 @@ function SellPurchase() {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                 <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={handlePrint}>
-                                    🖨️ Print / Download Bill
+                                    🖨️ Print Bill
+                                </button>
+                                <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={() => handleDownloadPDF('purchase')}>
+                                    📥 Download PDF
                                 </button>
                                 <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '15px' }} onClick={() => setShowPurchaseSuccessModal(false)}>
                                     Record New Purchase

@@ -3,6 +3,7 @@
 ## Prerequisites
 
 Before you begin, ensure you have:
+
 - **Node.js** (v16 or higher) - [Download here](https://nodejs.org/)
 - **npm** (comes with Node.js)
 
@@ -39,6 +40,7 @@ npm run seed
 ```
 
 This will:
+
 - Create the SQLite database
 - Set up all tables (Users, Products, Categories, Brands, Customers, Sales, etc.)
 - Add sample data:
@@ -57,6 +59,7 @@ npm run dev
 ```
 
 This command starts:
+
 - **Backend server** on `http://localhost:5000`
 - **Frontend server** on `http://localhost:5173`
 
@@ -65,6 +68,7 @@ Your browser should automatically open to `http://localhost:5173`
 ## Login
 
 Use these credentials to log in:
+
 - **Username:** `admin`
 - **Password:** `admin123`
 
@@ -75,11 +79,13 @@ Use these credentials to log in:
 If port 5000 or 5173 is already in use:
 
 1. Edit `.env` file to change backend port:
+
 ```
 PORT=5001
 ```
 
 2. Edit `client/vite.config.js` to change frontend port:
+
 ```javascript
 server: {
   port: 5174,
@@ -150,8 +156,10 @@ After logging in, you can:
 1. **Dashboard** - View business overview and statistics
 2. **POS** - Make sales with multiple payment options
 3. **Products** - Add and manage inventory
-4. **Customers** - Manage customer accounts and credit
-5. **Sales** - View sales history and transactions
+4. **Purchases** - Manage supplier bills and stock entry
+5. **Customers** - Manage customer accounts and credit
+6. **Sales** - View sales history and transactions
+7. **Vouchers** - Record receipts and payments
 
 ## Features to Explore
 
@@ -161,5 +169,8 @@ After logging in, you can:
 - ✅ Monitor low stock alerts
 - ✅ Adjust inventory levels
 - ✅ Record customer payments
+- ✅ Universal Printing (Invoices, Purchase Bills, Vouchers)
+- ✅ Purchase Management with stock updates
+- ✅ Voucher System for complete financial tracking
 
 Enjoy using your Inventory Management System! 🎉

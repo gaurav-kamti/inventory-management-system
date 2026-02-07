@@ -63,7 +63,7 @@ const InvoiceTemplate = ({ sale, customer, company = {} }) => {
     const displayTotal = isVoucher ? (sale.amount || total) : total;
 
     return (
-        <div id="invoice-print-template" style={{
+        <div className="invoice-container" style={{
             padding: '40px',
             backgroundColor: 'white',
             color: 'black',

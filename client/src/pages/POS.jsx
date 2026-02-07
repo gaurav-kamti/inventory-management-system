@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import api from '../utils/api'
+import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import { downloadPDF } from '../utils/pdfExport'
 import './POS.css'
 
 function POS() {
@@ -163,6 +164,11 @@ function POS() {
 
     const handlePrint = () => {
         window.print()
+    }
+
+    const handleDownloadPDF = async () => {
+        const fileName = `SALE_${lastSale.invoiceNumber}.pdf`;
+        await downloadPDF('invoice-print-template', fileName);
     }
 
     const closeSuccessModal = () => {
@@ -354,11 +360,14 @@ function POS() {
                         <div style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
                         <h2>Sale Completed!</h2>
                         <p>Invoice #{lastSale.invoiceNumber}</p>
-                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '30px' }}>
-                            <button className="btn" style={{ background: 'var(--accent)', color: '#fff' }} onClick={handlePrint}>
+                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '30px', flexDirection: 'column' }}>
+                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px' }} onClick={handlePrint}>
                                 🖨️ Print Invoice
                             </button>
-                            <button className="btn" onClick={closeSuccessModal}>
+                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px' }} onClick={handleDownloadPDF}>
+                                📥 Download PDF
+                            </button>
+                            <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '15px' }} onClick={closeSuccessModal}>
                                 New Sale
                             </button>
                         </div>

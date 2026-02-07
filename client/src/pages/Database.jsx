@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
-import api from '../utils/api'
+import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import * as XLSX from 'xlsx'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { downloadPDF } from '../utils/pdfExport'
 import './Inventory.css' // Reusing inventory styles for standard look
 
 function Database() {
@@ -9,6 +13,9 @@ function Database() {
     const [purchases, setPurchases] = useState([])
     const [vouchers, setVouchers] = useState([])
     const [loading, setLoading] = useState(true)
+    const [dateRange, setDateRange] = useState({ start: '', end: '' })
+    const [searchQuery, setSearchQuery] = useState('')
+    const [prevTab, setPrevTab] = useState('')
 
     // For Bill Details Modal
     const [selectedInvoice, setSelectedInvoice] = useState(null)
@@ -21,7 +28,7 @@ function Database() {
         const d = String(date.getDate()).padStart(2, '0')
         const m = String(date.getMonth() + 1).padStart(2, '0')
         const y = date.getFullYear()
-        return `${d}-${m}-${y}`
+        return `${d}:${m}:${y}`
     }
 
     useEffect(() => {
@@ -109,6 +116,53 @@ function Database() {
         }
     }
 
+    // Set default date range whenever active data changes or tab changes
+    useEffect(() => {
+        if (activeTab !== prevTab) {
+            const activeData = activeTab === 'sales' ? sales : (activeTab === 'purchases' ? purchases : vouchers);
+            if (activeData.length > 0) {
+                const dates = activeData.map(d => new Date(d.date)).filter(d => !isNaN(d));
+                if (dates.length > 0) {
+                    const earliest = new Date(Math.min(...dates));
+                    const latest = new Date(Math.max(...dates));
+                    setDateRange({
+                        start: earliest.toISOString().split('T')[0],
+                        end: latest.toISOString().split('T')[0]
+                    });
+                }
+            }
+            setPrevTab(activeTab);
+        }
+    }, [activeTab, sales, purchases, vouchers, prevTab]);
+
+    const activeData = activeTab === 'sales' ? sales : (activeTab === 'purchases' ? purchases : vouchers)
+
+    const filteredInvoices = activeData.filter(inv => {
+        // Search Filter
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            const matches =
+                inv.partyName?.toLowerCase().includes(q) ||
+                inv.invoiceNumber?.toString().toLowerCase().includes(q);
+            if (!matches) return false;
+        }
+
+        // Date Filter
+        if (!dateRange.start && !dateRange.end) return true;
+        const d = new Date(inv.date);
+        if (dateRange.start) {
+            const start = new Date(dateRange.start);
+            start.setHours(0, 0, 0, 0);
+            if (d < start) return false;
+        }
+        if (dateRange.end) {
+            const end = new Date(dateRange.end);
+            end.setHours(23, 59, 59, 999);
+            if (d > end) return false;
+        }
+        return true;
+    })
+
     const openInvoiceDetails = (invoice) => {
         setSelectedInvoice(invoice)
         setShowInvoiceModal(true)
@@ -118,9 +172,59 @@ function Database() {
         window.print();
     }
 
+    const downloadInvoice = async () => {
+        const fileName = `${selectedInvoice.type}_${selectedInvoice.invoiceNumber || selectedInvoice.id}.pdf`;
+        await downloadPDF('invoice-print-template', fileName);
+    }
+
+    const exportToExcel = () => {
+        const data = filteredInvoices.map(inv => ({
+            Date: formatDate(inv.date),
+            'Voucher No': inv.invoiceNumber || inv.id,
+            'Party Name': inv.partyName,
+            Type: inv.type,
+            'Subtotal': inv.subtotal || inv.total,
+            'Tax': inv.tax || 0,
+            'Total Amount': inv.total
+        }))
+
+        const ws = XLSX.utils.json_to_sheet(data)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, "Records")
+        XLSX.writeFile(wb, `Master_Records_${activeTab}_${new Date().toISOString().split('T')[0]}.xlsx`)
+    }
+
+    const exportLedgerPDF = () => {
+        const doc = new jsPDF()
+        doc.setFontSize(18)
+        doc.text(`Master Records - ${activeTab.toUpperCase()}`, 14, 22)
+
+        doc.setFontSize(11)
+        doc.setTextColor(100)
+        doc.text(`Period: ${formatDate(dateRange.start)} to ${formatDate(dateRange.end)}`, 14, 30)
+
+        const tableColumn = ["Date", "Voucher No", "Party Name", "Type", "Amount"]
+        const tableRows = filteredInvoices.map(inv => [
+            formatDate(inv.date),
+            inv.invoiceNumber || inv.id,
+            inv.partyName,
+            inv.type,
+            `$${parseFloat(inv.total).toFixed(2)}`
+        ])
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            theme: 'grid',
+            headStyles: { fillColor: [142, 182, 155] }
+        })
+
+        doc.save(`Master_Records_${activeTab}.pdf`)
+    }
 
 
-    const invoices = activeTab === 'sales' ? sales : (activeTab === 'purchases' ? purchases : vouchers)
+
 
     return (
         <div className="inventory-page">
@@ -169,7 +273,63 @@ function Database() {
                     </div>
                 ) : (
                     <div className="table-container">
-                        <h2><span>📂</span> Transaction History</h2>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '20px' }}>
+                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <h2 style={{ margin: 0 }}><span>📂</span> Records</h2>
+
+                                {/* Search Box */}
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Search by Name or Invoice..."
+                                        className="input"
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        style={{ padding: '8px 15px 8px 35px', fontSize: '0.85rem', width: '220px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}
+                                    />
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+                                </div>
+
+                                {/* Date Range */}
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '5px 15px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                    <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--accent)' }}>FROM</label>
+                                        <input
+                                            type="date"
+                                            className="input"
+                                            value={dateRange.start}
+                                            onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+                                            style={{ padding: '4px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
+                                        />
+                                    </div>
+                                    <div style={{ width: '1px', height: '15px', background: 'var(--glass-border)' }}></div>
+                                    <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--accent)' }}>TO</label>
+                                        <input
+                                            type="date"
+                                            className="input"
+                                            value={dateRange.end}
+                                            onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+                                            style={{ padding: '4px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => setDateRange({ start: '', end: '' })}
+                                        style={{ background: 'rgba(142, 182, 155, 0.1)', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.65rem', fontWeight: '800', padding: '4px 8px', borderRadius: '6px' }}
+                                    >
+                                        RESET
+                                    </button>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button className="btn btn-secondary" onClick={exportToExcel} style={{ padding: '8px 15px', fontSize: '0.8rem' }}>
+                                    📊 Export Excel
+                                </button>
+                                <button className="btn btn-secondary" onClick={exportLedgerPDF} style={{ padding: '8px 15px', fontSize: '0.8rem' }}>
+                                    📄 Export PDF
+                                </button>
+                            </div>
+                        </div>
                         <table className="table">
                             <thead>
                                 <tr>
@@ -182,7 +342,7 @@ function Database() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {invoices.map(inv => (
+                                {filteredInvoices.map(inv => (
                                     <tr key={inv.id}>
                                         <td style={{ fontSize: '0.85rem' }}>{formatDate(inv.date)}</td>
                                         <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>
@@ -215,7 +375,7 @@ function Database() {
                                         </td>
                                     </tr>
                                 ))}
-                                {invoices.length === 0 && (
+                                {filteredInvoices.length === 0 && (
                                     <tr>
                                         <td colSpan="5" style={{ textAlign: 'center', padding: '60px', opacity: 0.5 }}>No records found for the selected category.</td>
                                     </tr>
@@ -306,7 +466,10 @@ function Database() {
 
                         <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
                             <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 30px', fontWeight: '800' }} onClick={handlePrint}>
-                                🖨️ Print {selectedInvoice.type === 'SALE' ? 'Invoice' : (selectedInvoice.type === 'PURCHASE' ? 'Bill' : 'Voucher')}
+                                🖨️ Print
+                            </button>
+                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 30px', fontWeight: '800' }} onClick={downloadInvoice}>
+                                📥 Download PDF
                             </button>
                             <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', padding: '15px 40px', fontWeight: '800' }} onClick={() => setShowInvoiceModal(false)}>Close</button>
                         </div>

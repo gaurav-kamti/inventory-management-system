@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import api from '../utils/api'
+import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
 import './Sales.css'
 

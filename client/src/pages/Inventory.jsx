@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import api from '../utils/api'
+import api from '../services/api'
 import { formatOverdue } from '../utils/formatters'
 import Analytics from './Analytics'
 import './Inventory.css'
