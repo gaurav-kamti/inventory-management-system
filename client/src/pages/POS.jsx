@@ -125,7 +125,7 @@ function POS() {
             }
 
             const response = await api.post('/sales', saleData)
-            
+
             // Construct sale object for printing immediately
             const completedSale = {
                 ...response.data,
@@ -145,10 +145,10 @@ function POS() {
                 date: new Date(),
                 customer: customers.find(c => c.id == selectedCustomer)
             }
-            
+
             setLastSale(completedSale)
             setShowSuccessModal(true)
-            
+
             setCart([])
             setDiscountPercent(0)
             setTaxPercent(10)

@@ -44,7 +44,7 @@ const InvoiceTemplate = ({ sale, customer, company = {} }) => {
     const isVoucher = isReceipt || isPayment;
 
     const title = isPurchase ? 'PURCHASE BILL' : (isReceipt ? 'RECEIPT VOUCHER' : (isPayment ? 'PAYMENT VOUCHER' : 'TAX INVOICE'));
-    
+
     // Labels
     const companyLabel = isPurchase ? 'Buyer' : (isReceipt ? 'Received By' : (isPayment ? 'Paid By' : 'Seller'));
     const otherPartyLabel = isPurchase ? 'Seller (Supplier)' : (isReceipt ? 'Received From' : (isPayment ? 'Paid To' : 'Buyer'));

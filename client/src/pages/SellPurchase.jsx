@@ -43,6 +43,14 @@ function SellPurchase() {
         invoice: `INV-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
         supplierId: '',
+        supplierName: '',
+        deliveryNote: '',
+        paymentTerms: '',
+        supplierRef: '',
+        buyerOrderNo: '',
+        buyerOrderDate: '',
+        despatchedThrough: '',
+        termsOfDelivery: '',
         items: []
     })
 
@@ -56,7 +64,8 @@ function SellPurchase() {
         gst: '18',
         quantity: '',
         rate: '',
-        discount: ''
+        discount: '',
+        quantityUnit: 'Pcs'
     })
 
     // Sell Item Form
@@ -164,7 +173,8 @@ function SellPurchase() {
             gst: '18',
             quantity: '',
             rate: '',
-            discount: ''
+            discount: '',
+            quantityUnit: 'Pcs'
         })
         setTimeout(() => purchaseItemNameRef.current?.focus(), 0)
     }
@@ -296,6 +306,13 @@ function SellPurchase() {
                 supplierId: addForm.supplierId,
                 invoiceNumber: addForm.supplierInvoice || `INV-${Date.now()}`,
                 date: addForm.date,
+                deliveryNote: addForm.deliveryNote,
+                paymentTerms: addForm.paymentTerms,
+                supplierRef: addForm.supplierRef,
+                buyerOrderNo: addForm.buyerOrderNo,
+                buyerOrderDate: addForm.buyerOrderDate,
+                despatchedThrough: addForm.despatchedThrough,
+                termsOfDelivery: addForm.termsOfDelivery,
                 total: addTotal,
                 roundOff: addRoundOff,
                 items: addedItems.map(item => ({
@@ -332,12 +349,19 @@ function SellPurchase() {
 
             setLastPurchaseData(completedPurchase)
             setShowPurchaseSuccessModal(true)
-            
+
             setAddForm({
                 invoice: `INV-${Date.now()}`,
                 date: new Date().toISOString().split('T')[0],
                 supplierId: '',
                 supplierName: '',
+                deliveryNote: '',
+                paymentTerms: '',
+                supplierRef: '',
+                buyerOrderNo: '',
+                buyerOrderDate: '',
+                despatchedThrough: '',
+                termsOfDelivery: '',
                 items: []
             })
             setAddedItems([])
@@ -350,7 +374,7 @@ function SellPurchase() {
     }
 
     const addToCart = (product) => {
-        const existing = cartItems.find(item => item.productId === product.id)
+        const existing = cartItems.find(item => item.productId === product.id && item.size === '' && item.sizeUnit === 'mm')
         if (existing) {
             return alert('Item already in cart')
         } else {
@@ -491,8 +515,10 @@ function SellPurchase() {
         // Check if item with same ID (if exists) or same NAME is already in cart?
         // simple duplicate check
         const existingIndex = cartItems.findIndex(i =>
-            (newItem.productId && i.productId === newItem.productId) ||
-            (!newItem.productId && i.name === newItem.name)
+            ((newItem.productId && i.productId === newItem.productId) ||
+                (!newItem.productId && i.name === newItem.name)) &&
+            i.size === newItem.size &&
+            i.sizeUnit === newItem.sizeUnit
         )
 
         if (existingIndex >= 0) {
@@ -591,6 +617,7 @@ function SellPurchase() {
     const supplierStateCode = selectedSupplier?.stateCode || companyStateCode;
     const purchaseGstSplit = calculateGSTSplit(addedItems, companyStateCode, supplierStateCode);
     const purchaseHsnSummary = generateHSNSummary(addedItems);
+    const purchaseAmountInWords = numberToWords(Math.round(addTotal));
 
     return (
         <div className="inventory-page"> {/* Reusing inventory-page class for layout */}
@@ -647,18 +674,18 @@ function SellPurchase() {
                     animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }} onClick={() => setShowPurchaseModal(false)}>
                     <div className="modal glass" style={{
-                        width: '98%', maxWidth: '1600px', height: '95vh', overflowY: 'auto', display: 'flex', flexDirection: 'column',
-                        padding: '30px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
+                        width: '98%', maxWidth: '1600px', height: '98vh', overflowY: 'auto', display: 'flex', flexDirection: 'column',
+                        padding: '20px', background: 'var(--bg-dark)', border: '1px solid var(--glass-border)',
                         borderRadius: '24px', boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
                         position: 'relative'
                     }} onClick={(e) => e.stopPropagation()}>
 
                         <div className="modal-close" onClick={() => setShowPurchaseModal(false)} style={{
-                            position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
+                            position: 'absolute', top: '15px', right: '25px', cursor: 'pointer',
                             fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s', zIndex: 10
                         }}>✕</div>
 
-                        <div className="invoice-header" style={{ marginBottom: '20px' }}>
+                        <div className="invoice-header" style={{ flexShrink: 0, marginBottom: '15px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '15px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                                 <div>
                                     <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Purchase Bill</h2>
@@ -730,17 +757,48 @@ function SellPurchase() {
                                     />
                                 </div>
                             </div>
+
+                            <div className="invoice-info-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginTop: '12px' }}>
+                                <div className="invoice-field">
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>DELIVERY NOTE</label>
+                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.deliveryNote} onChange={e => setAddForm({ ...addForm, deliveryNote: e.target.value })} />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>PAYMENT TERMS</label>
+                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.paymentTerms} onChange={e => setAddForm({ ...addForm, paymentTerms: e.target.value })} />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>SUPPLIER REF</label>
+                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.supplierRef} onChange={e => setAddForm({ ...addForm, supplierRef: e.target.value })} />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>BUYER ORDER NO</label>
+                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.buyerOrderNo} onChange={e => setAddForm({ ...addForm, buyerOrderNo: e.target.value })} />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>ORDER DATE</label>
+                                    <input type="date" className="input" style={{ padding: '6px 8px', fontSize: '0.8rem', colorScheme: 'dark' }} value={addForm.buyerOrderDate} onChange={e => setAddForm({ ...addForm, buyerOrderDate: e.target.value })} />
+                                </div>
+                                <div className="invoice-field">
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>DESPATCHED VIA</label>
+                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.despatchedThrough} onChange={e => setAddForm({ ...addForm, despatchedThrough: e.target.value })} />
+                                </div>
+                                <div className="invoice-field" style={{ gridColumn: 'span 2' }}>
+                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>TERMS OF DELIVERY</label>
+                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.termsOfDelivery} onChange={e => setAddForm({ ...addForm, termsOfDelivery: e.target.value })} />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="invoice-table-wrapper" style={{ marginBottom: '20px' }}>
                             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
-                                <thead style={{ background: 'rgba(255,255,255,0.02)', position: 'sticky', top: 0, zIndex: 5, backdropFilter: 'blur(5px)' }}>
+                                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                                     <tr>
-                                        <th style={{ textAlign: 'center', width: '33%' }}>Product / Description</th>
+                                        <th style={{ textAlign: 'center', width: '29%' }}>Product / Description</th>
                                         <th style={{ textAlign: 'center', width: '7%' }}>Size</th>
                                         <th style={{ textAlign: 'center', width: '8%' }}>HSN</th>
                                         <th style={{ textAlign: 'center', width: '6%' }}>Gst(%)</th>
-                                        <th style={{ textAlign: 'center', width: '6%' }}>Qty</th>
+                                        <th style={{ textAlign: 'center', width: '10%' }}>Qty</th>
                                         <th style={{ textAlign: 'center', width: '12%' }}>Rate</th>
                                         <th style={{ textAlign: 'center', width: '6%' }}>Disc</th>
                                         <th style={{ textAlign: 'center', width: '15%' }}>Amount</th>
@@ -759,7 +817,7 @@ function SellPurchase() {
                                             </td>
                                             <td style={{ textAlign: 'center' }}>{item.hsn}</td>
                                             <td style={{ textAlign: 'center' }}>{item.gst}%</td>
-                                            <td style={{ fontWeight: '600', textAlign: 'center' }}>{item.quantity}</td>
+                                            <td style={{ fontWeight: '600', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.quantityUnit || 'Pcs'}</td>
                                             <td style={{ fontWeight: '600', textAlign: 'center' }}>${parseFloat(item.rate).toFixed(2)}</td>
                                             <td style={{ color: '#ff4757', textAlign: 'center' }}>{item.discount}%</td>
                                             <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>${item.amount.toFixed(2)}</td>
@@ -770,7 +828,7 @@ function SellPurchase() {
                                     ))}
                                     <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
                                         <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem', width: '100%' }}
+                                            <input className="input" style={{ padding: '8px 12px', fontSize: '0.9rem', width: '100%' }}
                                                 ref={purchaseItemNameRef}
                                                 list="product-suggestions"
                                                 placeholder="Search"
@@ -794,41 +852,48 @@ function SellPurchase() {
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
-                                                <input className="input" style={{ flex: 1, minWidth: '0', padding: '12px 4px 12px 12px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'right' }} placeholder="0" value={addItemRow.size}
+                                                <input className="input" style={{ flex: 1, minWidth: '0', padding: '8px 4px 8px 12px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'right' }} placeholder="0" value={addItemRow.size}
                                                     onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })} />
-                                                <select className="input" style={{ width: 'auto', padding: '12px 8px 12px 0', fontSize: '0.9rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={addItemRow.sizeUnit}
+                                                <select className="input" style={{ width: 'auto', padding: '8px 8px 8px 0', fontSize: '0.9rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={addItemRow.sizeUnit}
                                                     onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })}>
-                                                    <option value="mm">mm</option>
-                                                    <option value="cm">cm</option>
-                                                    <option value="in">in</option>
+                                                    <option value="mm" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>mm</option>
+                                                    <option value="cm" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>cm</option>
+                                                    <option value="in" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>in</option>
                                                 </select>
                                             </div>
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <select className="input" style={{ padding: '12px', width: '100%', fontSize: '0.9rem' }} value={addItemRow.hsn}
-                                                onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })}>
-                                                {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
-                                            </select>
+                                            <input className="input" style={{ padding: '8px', width: '80px', fontSize: '0.9rem' }} value={addItemRow.hsn}
+                                                onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })} />
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.9rem' }} placeholder="GST%" type="number" value={addItemRow.gst}
+                                            <input className="input" style={{ padding: '8px', width: '60px', textAlign: 'center', fontSize: '0.9rem' }} placeholder="GST%" type="number" value={addItemRow.gst}
                                                 onChange={e => setAddItemRow({ ...addItemRow, gst: e.target.value })} />
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.9rem' }} placeholder="0" type="number"
-                                                ref={purchaseQtyRef}
-                                                value={addItemRow.quantity}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault()
-                                                        purchaseRateRef.current?.focus()
-                                                    }
-                                                }}
-                                                onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })}
-                                            />
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 55px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden', width: '100%' }}>
+                                                <input className="input" style={{ width: '100%', minWidth: '0', padding: '10px 5px', textAlign: 'center', fontSize: '0.85rem', border: 'none', background: 'transparent', borderRadius: 0 }} placeholder="0" type="number"
+                                                    ref={purchaseQtyRef}
+                                                    value={addItemRow.quantity}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault()
+                                                            purchaseRateRef.current?.focus()
+                                                        }
+                                                    }}
+                                                    onChange={e => setAddItemRow({ ...addItemRow, quantity: e.target.value })}
+                                                />
+                                                <select className="input" style={{ width: '100%', padding: '10px 0', fontSize: '0.75rem', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'center', color: 'var(--text-primary)', borderRadius: 0 }}
+                                                    value={addItemRow.quantityUnit} onChange={e => setAddItemRow({ ...addItemRow, quantityUnit: e.target.value })}>
+                                                    <option value="Pcs" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Pcs</option>
+                                                    <option value="Set" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Set</option>
+                                                    <option value="Box" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Box</option>
+                                                    <option value="Dzn" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Dzn</option>
+                                                </select>
+                                            </div>
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} placeholder="0.00" type="number"
+                                            <input className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} placeholder="0.00" type="number"
                                                 ref={purchaseRateRef}
                                                 value={addItemRow.rate}
                                                 onKeyDown={(e) => {
@@ -841,7 +906,7 @@ function SellPurchase() {
                                             />
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.8rem' }} placeholder="%" type="number"
+                                            <input className="input" style={{ padding: '8px', width: '60px', textAlign: 'center', fontSize: '0.8rem' }} placeholder="%" type="number"
                                                 ref={purchaseDiscountRef}
                                                 value={addItemRow.discount}
                                                 onChange={e => setAddItemRow({ ...addItemRow, discount: e.target.value })}
@@ -908,52 +973,60 @@ function SellPurchase() {
                                 </table>
                             </div>
                         )}
-                    </div>
 
-                    <div className="invoice-total-overview" style={{
-                        display: 'flex', justifyContent: 'flex-end', gap: '80px', padding: '30px',
-                        background: 'rgba(0,0,0,0.3)', borderRadius: '24px', border: '1px solid var(--glass-border)'
-                    }}>
-                        <div style={{ textAlign: 'right' }}>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Subtotal</p>
-                            <p style={{ fontSize: '1.6rem', fontWeight: '800' }}>${addSubtotal.toFixed(2)}</p>
-                        </div>
+                        <div className="invoice-total-overview" style={{
+                            display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px',
+                            background: 'rgba(0,0,0,0.3)', borderRadius: '24px', border: '1px solid var(--glass-border)',
+                            marginTop: '20px'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '80px' }}>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Purchase</p>
+                                    <p style={{ fontSize: '1.6rem', fontWeight: '800' }}>${addSubtotal.toFixed(2)}</p>
+                                </div>
 
-                        {purchaseGstSplit.type === 'CGST/SGST' ? (
-                            <>
+                                {purchaseGstSplit.type === 'CGST/SGST' ? (
+                                    <>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>CGST</p>
+                                            <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${purchaseGstSplit.cgst.toFixed(2)}</p>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>SGST</p>
+                                            <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${purchaseGstSplit.sgst.toFixed(2)}</p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>IGST</p>
+                                        <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${purchaseGstSplit.igst.toFixed(2)}</p>
+                                    </div>
+                                )}
+
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>CGST</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${purchaseGstSplit.cgst.toFixed(2)}</p>
+                                    <p style={{ color: 'var(--accent)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '900', textTransform: 'uppercase' }}>Grand Total</p>
+                                    <p style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>${addTotal.toFixed(0)}</p>
+                                    {totalAdjusted > 0 && (
+                                        <div style={{ marginTop: '10px', color: 'orange', fontSize: '0.9rem', fontWeight: '700' }}>
+                                            Adjusted: -${totalAdjusted.toFixed(2)}
+                                            <p style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Net Due: ${Math.max(0, addTotal - totalAdjusted).toFixed(0)}</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>SGST</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${purchaseGstSplit.sgst.toFixed(2)}</p>
-                                </div>
-                            </>
-                        ) : (
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>IGST</p>
-                                <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${purchaseGstSplit.igst.toFixed(2)}</p>
                             </div>
-                        )}
 
-                        <div style={{ textAlign: 'right' }}>
-                            <p style={{ color: 'var(--accent)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '900', textTransform: 'uppercase' }}>Grand Total</p>
-                            <p style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>${addTotal.toFixed(0)}</p>
-                            {totalAdjusted > 0 && (
-                                <div style={{ marginTop: '10px', color: 'orange', fontSize: '0.9rem', fontWeight: '700' }}>
-                                    Adjusted: -${totalAdjusted.toFixed(2)}
-                                    <p style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Net Due: ${Math.max(0, addTotal - totalAdjusted).toFixed(0)}</p>
-                                </div>
-                            )}
+                            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '15px' }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '5px' }}>Amount in Words</p>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '1rem', fontWeight: '600', fontStyle: 'italic' }}>{purchaseAmountInWords}</p>
+                            </div>
                         </div>
-                    </div>
 
-                    {advanceSection}
+                        {advanceSection}
 
-                    <div className="modal-actions" style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '20px' }}>
-                        <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '18px 40px', color: 'var(--text-secondary)' }} onClick={() => setShowPurchaseModal(false)}>Cancel</button>
-                        <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handlePurchaseItem}>Save Bill</button>
+                        <div className="modal-actions" style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '20px' }}>
+                            <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '18px 40px', color: 'var(--text-secondary)' }} onClick={() => setShowPurchaseModal(false)}>Discard Action</button>
+                            <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handlePurchaseItem}>Record Purchase Bill</button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -974,7 +1047,7 @@ function SellPurchase() {
                     }} onClick={(e) => e.stopPropagation()}>
 
                         <div className="modal-close" onClick={() => setShowSellModal(false)} style={{
-                            position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
+                            position: 'absolute', top: '15px', right: '25px', cursor: 'pointer',
                             fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s', zIndex: 10
                         }}>✕</div>
 
@@ -1088,11 +1161,11 @@ function SellPurchase() {
                             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
                                 <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                                     <tr>
-                                        <th style={{ textAlign: 'center', width: '33%' }}>Product / Description</th>
+                                        <th style={{ textAlign: 'center', width: '29%' }}>Product / Description</th>
                                         <th style={{ textAlign: 'center', width: '7%' }}>Size</th>
                                         <th style={{ textAlign: 'center', width: '8%' }}>HSN</th>
                                         <th style={{ textAlign: 'center', width: '6%' }}>Gst(%)</th>
-                                        <th style={{ textAlign: 'center', width: '6%' }}>Qty</th>
+                                        <th style={{ textAlign: 'center', width: '10%' }}>Qty</th>
                                         <th style={{ textAlign: 'center', width: '12%' }}>Rate</th>
                                         <th style={{ textAlign: 'center', width: '6%' }}>Disc</th>
                                         <th style={{ textAlign: 'center', width: '15%' }}>Amount</th>
@@ -1107,9 +1180,9 @@ function SellPurchase() {
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
                                                     <input className="input" style={{ flex: 1, minWidth: '0', padding: '8px 4px 8px 8px', fontSize: '0.8rem', border: 'none', background: 'transparent', textAlign: 'right' }} value={item.size} onChange={e => updateCartItem(item.productId, 'size', e.target.value)} />
                                                     <select className="input" style={{ width: 'auto', padding: '8px 8px 8px 0', fontSize: '0.8rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={item.sizeUnit} onChange={e => updateCartItem(item.productId, 'sizeUnit', e.target.value)}>
-                                                        <option value="mm">mm</option>
-                                                        <option value="cm">cm</option>
-                                                        <option value="in">in</option>
+                                                        <option value="mm" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>mm</option>
+                                                        <option value="cm" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>cm</option>
+                                                        <option value="in" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>in</option>
                                                     </select>
                                                 </div>
                                             </td>
@@ -1119,7 +1192,7 @@ function SellPurchase() {
                                                 </select>
                                             </td>
                                             <td style={{ textAlign: 'center' }}>{item.gst}%</td>
-                                            <td style={{ textAlign: 'center' }}>{item.quantity} {item.quantityUnit || 'Pcs'}</td>
+                                            <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.quantityUnit || 'Pcs'}</td>
                                             <td style={{ textAlign: 'center' }}><input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
                                             <td style={{ textAlign: 'center' }}><input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.8rem' }} value={item.discount} onChange={e => updateCartItem(item.productId, 'discount', e.target.value)} /></td>
                                             <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>
@@ -1186,9 +1259,9 @@ function SellPurchase() {
                                                     onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })} />
                                                 <select className="input" style={{ width: 'auto', padding: '12px 8px 12px 0', fontSize: '0.9rem', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer', textAlign: 'left' }} value={sellItemInput.sizeUnit}
                                                     onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })}>
-                                                    <option>mm</option>
-                                                    <option>cm</option>
-                                                    <option>in</option>
+                                                    <option style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>mm</option>
+                                                    <option style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>cm</option>
+                                                    <option style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>in</option>
                                                 </select>
                                             </div>
                                         </td>
@@ -1201,8 +1274,8 @@ function SellPurchase() {
                                                 onChange={e => setSellItemInput({ ...sellItemInput, gst: e.target.value })} />
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
-                                                <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '0.9rem', border: 'none', background: 'transparent' }} placeholder="0" type="number"
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 55px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden', width: '100%' }}>
+                                                <input className="input" style={{ width: '100%', minWidth: '0', padding: '10px 5px', textAlign: 'center', fontSize: '0.85rem', border: 'none', background: 'transparent', borderRadius: 0 }} placeholder="0" type="number"
                                                     ref={sellQtyRef}
                                                     value={sellItemInput.quantity}
                                                     onKeyDown={(e) => {
@@ -1213,12 +1286,12 @@ function SellPurchase() {
                                                     }}
                                                     onChange={e => setSellItemInput({ ...sellItemInput, quantity: e.target.value })}
                                                 />
-                                                <select className="input" style={{ width: 'auto', padding: '12px 8px 12px 0', fontSize: '0.8rem', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left', color: 'var(--text-secondary)' }}
+                                                <select className="input" style={{ width: '100%', padding: '10px 0', fontSize: '0.75rem', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'center', color: 'var(--text-primary)', borderRadius: 0 }}
                                                     value={sellItemInput.quantityUnit} onChange={e => setSellItemInput({ ...sellItemInput, quantityUnit: e.target.value })}>
-                                                    <option value="Pcs">Pcs</option>
-                                                    <option value="Set">Set</option>
-                                                    <option value="Box">Box</option>
-                                                    <option value="Dzn">Dzn</option>
+                                                    <option value="Pcs" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Pcs</option>
+                                                    <option value="Set" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Set</option>
+                                                    <option value="Box" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Box</option>
+                                                    <option value="Dzn" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Dzn</option>
                                                 </select>
                                             </div>
                                         </td>
@@ -1378,7 +1451,7 @@ function SellPurchase() {
                         }} onClick={(e) => e.stopPropagation()}>
 
                             <div className="modal-close" onClick={() => setShowQuickAddModal(false)} style={{
-                                position: 'absolute', top: '25px', right: '25px', cursor: 'pointer',
+                                position: 'absolute', top: '15px', right: '25px', cursor: 'pointer',
                                 fontSize: '1.5rem', color: 'var(--text-secondary)', transition: '0.3s'
                             }}>✕</div>
 
