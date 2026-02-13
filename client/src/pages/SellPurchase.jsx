@@ -747,6 +747,13 @@ function SellPurchase() {
                                             }
                                         }}
                                         onKeyDown={(e) => {
+                                            if (e.key === 'Tab' && !e.shiftKey) {
+                                                const val = e.target.value.toLowerCase()
+                                                const match = suppliers.find(s => s.name.toLowerCase().includes(val))
+                                                if (match) {
+                                                    setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
+                                                }
+                                            }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 purchaseItemNameRef.current?.focus()
@@ -833,6 +840,13 @@ function SellPurchase() {
                                                 placeholder="Search"
                                                 value={addItemRow.name}
                                                 onKeyDown={(e) => {
+                                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                                        const val = e.target.value.toLowerCase()
+                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
+                                                        if (match) {
+                                                            setAddItemRow(prev => ({ ...prev, name: match.name, size: match.size || '', sizeUnit: match.sizeUnit || 'mm', hsn: match.hsn || '', gst: match.gst || 18, rate: match.purchasePrice || '' }))
+                                                        }
+                                                    }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
                                                         purchaseQtyRef.current?.focus()
@@ -1105,6 +1119,13 @@ function SellPurchase() {
                                             }
                                         }}
                                         onKeyDown={(e) => {
+                                            if (e.key === 'Tab' && !e.shiftKey) {
+                                                const val = e.target.value.toLowerCase()
+                                                const match = customers.find(c => c.name.toLowerCase().includes(val))
+                                                if (match) {
+                                                    setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
+                                                }
+                                            }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 sellItemNameRef.current?.focus()
@@ -1206,6 +1227,20 @@ function SellPurchase() {
                                                 placeholder="Search"
                                                 value={sellItemInput.name}
                                                 onKeyDown={(e) => {
+                                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                                        const val = e.target.value.toLowerCase()
+                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
+                                                        if (match) {
+                                                            setSellItemInput(prev => ({
+                                                                ...prev,
+                                                                productId: String(match.id),
+                                                                name: match.name,
+                                                                rate: match.sellingPrice || '',
+                                                                hsn: match.hsn || '8301',
+                                                                gst: match.gst || 18,
+                                                            }))
+                                                        }
+                                                    }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
                                                         sellQtyRef.current?.focus()
