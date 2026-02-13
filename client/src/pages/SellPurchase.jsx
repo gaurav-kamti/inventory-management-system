@@ -747,13 +747,14 @@ function SellPurchase() {
                                             }
                                         }}
                                         onKeyDown={(e) => {
-                                            if (e.key === 'Tab') {
+                                            if (e.key === 'Tab' && !e.shiftKey) {
+                                                e.preventDefault()
                                                 const val = e.target.value.toLowerCase()
                                                 const match = suppliers.find(s => s.name.toLowerCase().includes(val))
                                                 if (match) {
-                                                    e.preventDefault()
                                                     setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
                                                 }
+                                                purchaseItemNameRef.current?.focus()
                                             }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
@@ -841,13 +842,14 @@ function SellPurchase() {
                                                 placeholder="Search"
                                                 value={addItemRow.name}
                                                 onKeyDown={(e) => {
-                                                    if (e.key === 'Tab') {
+                                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                                        e.preventDefault()
                                                         const val = e.target.value.toLowerCase()
                                                         const match = products.find(p => p.name.toLowerCase().includes(val))
                                                         if (match) {
-                                                            e.preventDefault()
                                                             setAddItemRow(prev => ({ ...prev, name: match.name, size: match.size || '', sizeUnit: match.sizeUnit || 'mm', hsn: match.hsn || '', gst: match.gst || 18, rate: match.purchasePrice || '' }))
                                                         }
+                                                        purchaseQtyRef.current?.focus()
                                                     }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
@@ -1113,13 +1115,14 @@ function SellPurchase() {
                                             }
                                         }}
                                         onKeyDown={(e) => {
-                                            if (e.key === 'Tab') {
+                                            if (e.key === 'Tab' && !e.shiftKey) {
+                                                e.preventDefault()
                                                 const val = e.target.value.toLowerCase()
                                                 const match = customers.find(c => c.name.toLowerCase().includes(val))
                                                 if (match) {
-                                                    e.preventDefault()
                                                     setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
                                                 }
+                                                sellItemNameRef.current?.focus()
                                             }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
@@ -1222,11 +1225,11 @@ function SellPurchase() {
                                                 placeholder="Search"
                                                 value={sellItemInput.name}
                                                 onKeyDown={(e) => {
-                                                    if (e.key === 'Tab') {
+                                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                                        e.preventDefault()
                                                         const val = e.target.value.toLowerCase()
                                                         const match = products.find(p => p.name.toLowerCase().includes(val))
                                                         if (match) {
-                                                            e.preventDefault()
                                                             setSellItemInput(prev => ({
                                                                 ...prev,
                                                                 productId: String(match.id),
@@ -1236,6 +1239,7 @@ function SellPurchase() {
                                                                 gst: match.gst || 18,
                                                             }))
                                                         }
+                                                        sellQtyRef.current?.focus()
                                                     }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()

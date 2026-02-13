@@ -10,6 +10,7 @@ function Settings() {
     const [showSupplierModal, setShowSupplierModal] = useState(false)
     const [editingCustomer, setEditingCustomer] = useState(null)
     const [editingSupplier, setEditingSupplier] = useState(null)
+    const [expandedId, setExpandedId] = useState(null)
 
     const [customerForm, setCustomerForm] = useState({
         name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19'
@@ -297,24 +298,52 @@ function Settings() {
                                 <tr>
                                     <th>Customer Name</th>
                                     <th>Phone</th>
-                                    <th>Address</th>
-                                    <th>GST Number</th>
                                     <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {customers.map(customer => (
-                                    <tr key={customer.id}>
-                                        <td><strong style={{ color: 'var(--text-primary)' }}>{customer.name}</strong></td>
-                                        <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
-                                        <td>{customer.address ? `${customer.address}, ${customer.pinCode}` : <span style={{ opacity: 0.5 }}>Unrecorded</span>}</td>
-                                        <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{customer.gstNumber || '--'}</span></td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => editCustomer(customer)}>
-                                                Edit
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <React.Fragment key={customer.id}>
+                                        <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === `c-${customer.id}` ? null : `c-${customer.id}`)}>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ transition: '0.3s', display: 'inline-block', transform: expandedId === `c-${customer.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                                                    <strong style={{ color: 'var(--text-primary)' }}>{customer.name}</strong>
+                                                </div>
+                                            </td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }}
+                                                    onClick={(e) => { e.stopPropagation(); editCustomer(customer); }}>
+                                                    Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {expandedId === `c-${customer.id}` && (
+                                            <tr style={{ background: 'rgba(142, 182, 155, 0.05)', animation: 'slideDown 0.3s ease-out' }}>
+                                                <td colSpan="3" style={{ padding: '20px' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Full Address</p>
+                                                            <p style={{ margin: 0 }}>{customer.address ? `${customer.address}, ${customer.pinCode}` : 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GST Identification Number</p>
+                                                            <p style={{ margin: 0, fontFamily: 'monospace' }}>{customer.gstNumber || 'Not Registered'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email Address</p>
+                                                            <p style={{ margin: 0 }}>{customer.email || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>State & Region</p>
+                                                            <p style={{ margin: 0 }}>{customer.state || 'N/A'} (Code: {customer.stateCode || '--'})</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
@@ -369,25 +398,57 @@ function Settings() {
                             <thead>
                                 <tr>
                                     <th>Supplier Name</th>
-                                    <th>Contact Person</th>
                                     <th>Contact Detail</th>
-                                    <th>GST Number</th>
                                     <th style={{ textAlign: 'right' }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {suppliers.map(supplier => (
-                                    <tr key={supplier.id}>
-                                        <td><strong style={{ color: 'var(--text-primary)' }}>{supplier.name}</strong></td>
-                                        <td>{supplier.contactPerson || '--'}</td>
-                                        <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone || supplier.email || '--'}</td>
-                                        <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{supplier.gstNumber || '--'}</span></td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => editSupplier(supplier)}>
-                                                Edit
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <React.Fragment key={supplier.id}>
+                                        <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === `s-${supplier.id}` ? null : `s-${supplier.id}`)}>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ transition: '0.3s', display: 'inline-block', transform: expandedId === `s-${supplier.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                                                    <strong style={{ color: 'var(--text-primary)' }}>{supplier.name}</strong>
+                                                </div>
+                                            </td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone || supplier.email || '--'}</td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }}
+                                                    onClick={(e) => { e.stopPropagation(); editSupplier(supplier); }}>
+                                                    Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {expandedId === `s-${supplier.id}` && (
+                                            <tr style={{ background: 'rgba(142, 182, 155, 0.05)', animation: 'slideDown 0.3s ease-out' }}>
+                                                <td colSpan="3" style={{ padding: '20px' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Contact Person</p>
+                                                            <p style={{ margin: 0 }}>{supplier.contactPerson || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GST Identification Number</p>
+                                                            <p style={{ margin: 0, fontFamily: 'monospace' }}>{supplier.gstNumber || 'Not Registered'}</p>
+                                                        </div>
+                                                        <div style={{ gridColumn: 'span 2' }}>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Business Address</p>
+                                                            <p style={{ margin: 0 }}>{supplier.address ? `${supplier.address}, ${supplier.pinCode}` : 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email ID</p>
+                                                            <p style={{ margin: 0 }}>{supplier.email || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Phone Number</p>
+                                                            <p style={{ margin: 0 }}>{supplier.phone || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>

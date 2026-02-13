@@ -3,7 +3,6 @@
 ## Prerequisites
 
 Before you begin, ensure you have:
-
 - **Node.js** (v16 or higher) - [Download here](https://nodejs.org/)
 - **npm** (comes with Node.js)
 
@@ -40,7 +39,6 @@ npm run seed
 ```
 
 This will:
-
 - Create the SQLite database
 - Set up all tables (Users, Products, Categories, Brands, Customers, Sales, etc.)
 - Add sample data:
@@ -59,7 +57,6 @@ npm run dev
 ```
 
 This command starts:
-
 - **Backend server** on `http://localhost:5000`
 - **Frontend server** on `http://localhost:5173`
 
@@ -68,7 +65,6 @@ Your browser should automatically open to `http://localhost:5173`
 ## Login
 
 Use these credentials to log in:
-
 - **Username:** `admin`
 - **Password:** `admin123`
 
@@ -79,13 +75,11 @@ Use these credentials to log in:
 If port 5000 or 5173 is already in use:
 
 1. Edit `.env` file to change backend port:
-
 ```
 PORT=5001
 ```
 
 2. Edit `client/vite.config.js` to change frontend port:
-
 ```javascript
 server: {
   port: 5174,
