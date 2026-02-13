@@ -747,15 +747,6 @@ function SellPurchase() {
                                             }
                                         }}
                                         onKeyDown={(e) => {
-                                            if (e.key === 'Tab' && !e.shiftKey) {
-                                                e.preventDefault()
-                                                const val = e.target.value.toLowerCase()
-                                                const match = suppliers.find(s => s.name.toLowerCase().includes(val))
-                                                if (match) {
-                                                    setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
-                                                }
-                                                purchaseItemNameRef.current?.focus()
-                                            }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 purchaseItemNameRef.current?.focus()
@@ -842,21 +833,20 @@ function SellPurchase() {
                                                 placeholder="Search"
                                                 value={addItemRow.name}
                                                 onKeyDown={(e) => {
-                                                    if (e.key === 'Tab' && !e.shiftKey) {
-                                                        e.preventDefault()
-                                                        const val = e.target.value.toLowerCase()
-                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
-                                                        if (match) {
-                                                            setAddItemRow(prev => ({ ...prev, name: match.name, size: match.size || '', sizeUnit: match.sizeUnit || 'mm', hsn: match.hsn || '', gst: match.gst || 18, rate: match.purchasePrice || '' }))
-                                                        }
-                                                        purchaseQtyRef.current?.focus()
-                                                    }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
                                                         purchaseQtyRef.current?.focus()
                                                     }
                                                 }}
-                                                onChange={e => setAddItemRow({ ...addItemRow, name: e.target.value })}
+                                                onChange={e => {
+                                                    const val = e.target.value
+                                                    const product = products.find(p => p.name === val)
+                                                    if (product) {
+                                                        setAddItemRow({ ...addItemRow, name: product.name, size: product.size || '', sizeUnit: product.sizeUnit || 'mm', hsn: product.hsn || '', gst: product.gst || 18, rate: product.purchasePrice || '' })
+                                                    } else {
+                                                        setAddItemRow({ ...addItemRow, name: val })
+                                                    }
+                                                }}
                                             />
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
@@ -1115,15 +1105,6 @@ function SellPurchase() {
                                             }
                                         }}
                                         onKeyDown={(e) => {
-                                            if (e.key === 'Tab' && !e.shiftKey) {
-                                                e.preventDefault()
-                                                const val = e.target.value.toLowerCase()
-                                                const match = customers.find(c => c.name.toLowerCase().includes(val))
-                                                if (match) {
-                                                    setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
-                                                }
-                                                sellItemNameRef.current?.focus()
-                                            }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 sellItemNameRef.current?.focus()
@@ -1225,22 +1206,6 @@ function SellPurchase() {
                                                 placeholder="Search"
                                                 value={sellItemInput.name}
                                                 onKeyDown={(e) => {
-                                                    if (e.key === 'Tab' && !e.shiftKey) {
-                                                        e.preventDefault()
-                                                        const val = e.target.value.toLowerCase()
-                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
-                                                        if (match) {
-                                                            setSellItemInput(prev => ({
-                                                                ...prev,
-                                                                productId: String(match.id),
-                                                                name: match.name,
-                                                                rate: match.sellingPrice || '',
-                                                                hsn: match.hsn || '8301',
-                                                                gst: match.gst || 18,
-                                                            }))
-                                                        }
-                                                        sellQtyRef.current?.focus()
-                                                    }
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault()
                                                         sellQtyRef.current?.focus()
