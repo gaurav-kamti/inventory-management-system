@@ -55,8 +55,7 @@ router.post("/", auth, async (req, res) => {
       despatchedThrough,
       termsOfDelivery,
       cgst,
-      sgst,
-      igst,
+      sgst
     } = req.body;
 
     // Calculate totals or use provided totals
@@ -184,7 +183,6 @@ router.post("/", auth, async (req, res) => {
         termsOfDelivery,
         cgst: round2(cgst || 0),
         sgst: round2(sgst || 0),
-        igst: round2(igst || 0),
       },
 
       { transaction: t },

@@ -1,0 +1,356 @@
+/* InvoiceTemplate.css */
+/*
+  Add to your index.html or global CSS:
+  @import url('https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+*/
+
+/* ── Wrapper ───────────────────────────────────────────────────────────────── */
+.inv-wrap {
+    background: #ffffff;
+    width: 210mm;
+    max-width: 100%;
+    padding: 8mm 10mm;
+    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    color: #111111;
+    line-height: 1.5;
+    border: 1px solid #cccccc;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────────────── */
+.inv-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 10px;
+}
+.inv-credit-memo {
+    font-style: italic;
+    color: #555;
+    font-size: 10px;
+    min-height: 14px; /* keeps layout even when empty */
+}
+.inv-copy-badge {
+    font-style: italic;
+    color: #333;
+    font-size: 10px;
+}
+
+/* ── Title ─────────────────────────────────────────────────────────────────── */
+.inv-title-row {
+    text-align: center;
+    font-family: 'Tinos', Georgia, serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 6px 0;
+    border: 1px solid #000;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* ── Header: Seller (left) + Invoice Meta (right) ──────────────────────────── */
+.inv-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid #000;
+    border-bottom: none;
+}
+
+/* Seller block */
+.inv-seller {
+    padding: 8px 10px;
+    border-right: 1px solid #000;
+}
+.inv-seller-name {
+    font-family: 'Tinos', Georgia, serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+.inv-seller-sub {
+    font-size: 10px;
+    color: #333;
+    margin-bottom: 1px;
+}
+
+/* Meta right side */
+.inv-meta {
+    display: flex;
+    flex-direction: column;
+}
+.inv-meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #000;
+    flex: 1;
+}
+.inv-meta-row.no-bottom { border-bottom: none; }
+.inv-meta-cell {
+    padding: 5px 7px;
+    border-right: 1px solid #000;
+}
+.inv-meta-cell.no-right  { border-right: none; }
+.inv-meta-cell.full-span {
+    grid-column: span 2;
+    border-right: none;
+}
+.meta-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #888;
+    display: block;
+    margin-bottom: 2px;
+}
+.meta-val       { font-size: 11px; font-weight: 600; }
+.meta-val.light { font-weight: 400; }
+
+/* ── Buyer section ─────────────────────────────────────────────────────────── */
+.inv-buyer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid #000;
+    border-bottom: none;
+}
+.inv-buyer-left {
+    padding: 8px 10px;
+    border-right: 1px solid #000;
+}
+.party-name {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Tinos', Georgia, serif;
+    margin: 3px 0;
+}
+.party-line {
+    font-size: 10px;
+    color: #333;
+    margin-bottom: 2px;
+}
+.inv-buyer-right {
+    display: flex;
+    flex-direction: column;
+}
+.buyer-rcell {
+    padding: 3px 8px;
+    font-size: 10px;
+    border-bottom: 1px solid #ccc;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 36px;
+    flex: 1;
+}
+.buyer-rcell:last-child  { border-bottom: none; }
+.buyer-rcell--top {
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+    flex-direction: column;
+    flex: none;
+}
+
+/* ── Items Table ───────────────────────────────────────────────────────────── */
+.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    border-bottom: none;
+    font-size: 10.5px;
+}
+.inv-table th {
+    background: #ffffff;
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: left;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+.inv-table th.r  { text-align: right; }
+.inv-table th.c  { text-align: center; }
+.inv-table td    { padding: 4px 6px; border: 1px solid #000; vertical-align: middle; }
+.inv-table td.r  { text-align: right; font-variant-numeric: tabular-nums; }
+.inv-table td.c  { text-align: center; }
+
+/* Spacer row */
+.inv-table tr.spacer-row td { border: none; height: 18px; }
+
+/* Subtotal rows (Taxable Value / CGST / SGST / Total Value / Rounded Off) */
+.inv-table tr.subtotal-row td {
+    border: none;
+    padding: 2px 6px;
+}
+
+/* Only the LAST cell (amount column) gets borders to stay connected */
+.inv-table tr.subtotal-row td:last-child {
+    border-left: 1px solid #000;
+    border-right: 1px solid #000;
+}
+
+/* First subtotal row needs top border to connect with item rows above */
+.inv-table tr.subtotal-row:first-of-type td:last-child {
+    border-top: 1px solid #000;
+}
+.subtotal-label  { text-align: right; font-size: 10px; }
+.subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; }
+.subtotal-rate   { font-size: 10px; text-align: right; color: #555; }
+.bold-label      { font-weight: 700; }
+.italic          { font-style: italic; }
+
+/* Total Invoice Value row */
+.inv-table tr.total-row td {
+    border: 1px solid #000;
+    padding: 5px 6px;
+    background: #ffffff;
+    font-weight: 700;
+}
+.total-label { text-align: right; font-size: 11px; }
+.total-rs    { text-align: right; font-size: 11px; width: 30px; }
+.total-val   { text-align: right; font-size: 12px; font-family: 'Tinos', serif; }
+
+/* ── Amount in words + E. & O.E ────────────────────────────────────────────── */
+.inv-words-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border: 1px solid #000;
+    border-top: none;
+    border-bottom: none;
+    padding: 6px 10px;
+}
+.inv-words-left { flex: 1; }
+.inv-words-text {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Tinos', Georgia, serif;
+    margin-top: 2px;
+}
+.inv-eoe {
+    font-size: 10px;
+    font-style: italic;
+    color: #333;
+    white-space: nowrap;
+    padding-left: 12px;
+}
+
+/* ── HSN/SAC Tax Breakdown Table ───────────────────────────────────────────── */
+.inv-hsn-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    border-top: none;
+    border-bottom: none;
+    font-size: 10px;
+}
+.inv-hsn-table th {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: #ffffff;
+}
+.inv-hsn-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    vertical-align: middle;
+}
+.inv-hsn-table td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.inv-hsn-table td.c { text-align: center; }
+.inv-hsn-table tr.hsn-total-row td {
+    border-top: 1px solid #000;
+    background: #fafafa;
+}
+
+/* ── Tax amount in words ────────────────────────────────────────────────────── */
+.inv-tax-words-row {
+    border: 1px solid #000;
+    border-top: none;
+    border-bottom: none;
+    padding: 5px 10px;
+    font-size: 10px;
+    color: #333;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+.inv-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid #000;
+    min-height: 100px;
+}
+.footer-left {
+    padding: 8px 10px;
+    border-right: 1px solid #000;
+}
+.footer-right {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+.bank-name   { font-weight: 700; font-size: 12px; margin: 3px 0 2px; }
+.bank-line   { font-size: 10px; color: #333; margin-bottom: 1px; }
+.firm-pan    { font-size: 10px; font-weight: 600; margin-top: 6px; color: #111; }
+.inv-decl {
+    font-size: 9.5px;
+    color: #444;
+    margin-top: 6px;
+    border-top: 1px dashed #ccc;
+    padding-top: 5px;
+    line-height: 1.5;
+}
+.inv-jurisdiction {
+    font-size: 9px;
+    color: #666;
+    margin-top: 3px;
+    font-style: italic;
+}
+.sig-for  { font-size: 11px; font-weight: 700; font-family: 'Tinos', Georgia, serif; }
+.sig-line {
+    border-top: 1px solid #999;
+    margin-top: 38px;
+    padding-top: 4px;
+    font-size: 9.5px;
+    color: #555;
+    text-align: center;
+    width: 150px;
+}
+
+/* ── Computer generated ──────────────────────────────────────────────────────── */
+.inv-computer {
+    text-align: center;
+    font-size: 9px;
+    color: #888;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────────── */
+@media print {
+    .inv-wrap { box-shadow: none; border: none; width: 100%; padding: 6mm 8mm; }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .inv-wrap           { font-size: 9px; padding: 4mm; }
+    .inv-header         { grid-template-columns: 1fr; }
+    .inv-seller         { border-right: none; border-bottom: 1px solid #000; }
+    .inv-buyer          { grid-template-columns: 1fr; }
+    .inv-buyer-left     { border-right: none; border-bottom: 1px solid #000; }
+    .inv-buyer-right    { border-top: 1px solid #000; }
+    .inv-footer         { grid-template-columns: 1fr; }
+    .footer-left        { border-right: none; border-bottom: 1px solid #000; }
+    .footer-right       { align-items: flex-start; }
+}

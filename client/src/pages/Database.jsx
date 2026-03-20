@@ -20,6 +20,7 @@ function Database() {
     // For Bill Details Modal
     const [selectedInvoice, setSelectedInvoice] = useState(null)
     const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+    const [showExportMenu, setShowExportMenu] = useState(false)
 
     // Helper for dd:mm:yyyy date format
     const formatDate = (dateStr) => {
@@ -54,7 +55,6 @@ function Database() {
                 tax: s.tax,
                 cgst: s.cgst || 0,
                 sgst: s.sgst || 0,
-                igst: s.igst || 0,
                 roundOff: s.roundOff || 0,
                 discount: s.discount || 0,
                 amountDue: s.amountDue || 0,
@@ -321,13 +321,54 @@ function Database() {
                                     </button>
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <button className="btn btn-secondary" onClick={exportToExcel} style={{ padding: '8px 15px', fontSize: '0.8rem' }}>
-                                    📊 Export Excel
+                            <div style={{ display: 'flex', gap: '10px', position: 'relative' }}>
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setShowExportMenu(!showExportMenu)}
+                                    onBlur={() => setTimeout(() => setShowExportMenu(false), 200)}
+                                    style={{ padding: '8px 20px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '12px' }}
+                                >
+                                    Export <span style={{ fontSize: '0.65rem', transform: showExportMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
                                 </button>
-                                <button className="btn btn-secondary" onClick={exportLedgerPDF} style={{ padding: '8px 15px', fontSize: '0.8rem' }}>
-                                    📄 Export PDF
-                                </button>
+
+                                {showExportMenu && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        right: 0,
+                                        marginTop: '8px',
+                                        background: 'rgba(5, 31, 32, 0.95)',
+                                        backdropFilter: 'blur(12px)',
+                                        border: '1px solid var(--glass-border)',
+                                        borderRadius: '12px',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '4px',
+                                        minWidth: '200px',
+                                        zIndex: 100,
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.4)'
+                                    }}>
+                                        <button 
+                                            onMouseDown={exportToExcel}
+                                            style={{ textAlign: 'left', padding: '10px 15px', background: 'transparent', border: 'none', color: 'var(--text-primary)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                            <span style={{ color: '#4ecdc4', fontSize: '1.1rem' }}>📊</span> 
+                                            <span style={{ fontWeight: 600 }}>Excel (.xlsx)</span>
+                                        </button>
+                                        <button 
+                                            onMouseDown={exportLedgerPDF}
+                                            style={{ textAlign: 'left', padding: '10px 15px', background: 'transparent', border: 'none', color: 'var(--text-primary)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                            <span style={{ color: '#ff6b6b', fontSize: '1.1rem' }}>📄</span> 
+                                            <span style={{ fontWeight: 600 }}>PDF Document</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <table className="table">

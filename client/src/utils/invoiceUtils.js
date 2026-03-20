@@ -46,8 +46,6 @@ export function numberToWords(num) {
 
 // Calculate CGST/SGST or IGST based on state codes
 export function calculateGSTSplit(items, sellerStateCode, buyerStateCode) {
-    const isInterState = sellerStateCode !== buyerStateCode;
-    
     let totalTaxableAmount = 0;
     let totalTax = 0;
     
@@ -60,25 +58,12 @@ export function calculateGSTSplit(items, sellerStateCode, buyerStateCode) {
         totalTax += taxAmount;
     });
     
-    if (isInterState) {
-        // Inter-state: IGST only
-        return {
-            type: 'IGST',
-            igst: totalTax,
-            cgst: 0,
-            sgst: 0,
-            taxableAmount: totalTaxableAmount
-        };
-    } else {
-        // Intra-state: CGST + SGST (split equally)
-        return {
-            type: 'CGST/SGST',
-            igst: 0,
-            cgst: totalTax / 2,
-            sgst: totalTax / 2,
-            taxableAmount: totalTaxableAmount
-        };
-    }
+    return {
+        type: 'CGST/SGST',
+        cgst: totalTax / 2,
+        sgst: totalTax / 2,
+        taxableAmount: totalTaxableAmount
+    };
 }
 
 // Generate HSN-wise summary
@@ -104,7 +89,6 @@ export function generateHSNSummary(items) {
                 taxableValue: 0,
                 cgst: 0,
                 sgst: 0,
-                igst: 0,
                 totalTax: 0
             };
         }

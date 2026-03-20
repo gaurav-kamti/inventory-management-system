@@ -88,10 +88,6 @@ const Sale = sequelize.define('Sale', {
   sgst: {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0
-  },
-  igst: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
   }
 });
 
