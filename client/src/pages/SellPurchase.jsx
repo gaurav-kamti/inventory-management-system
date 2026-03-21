@@ -315,8 +315,10 @@ function SellPurchase() {
                 discountPercent: parseFloat(addForm.discountPercent) || 0,
                 discountAmount: addDiscAmt,
                 taxableAmount: addAfterDisc,
-                gstPercent: parseFloat(addForm.gstPercent) || 0,
+                gstPercent: parseFloat(addForm.gstPercent) || 18,
                 tax: addTax,
+                cgst: addTax / 2,
+                sgst: addTax / 2,
                 total: addTotal,
                 roundOff: addRoundOff,
                 items: addedItems.map(item => ({
@@ -351,8 +353,10 @@ function SellPurchase() {
                 discountPercent: parseFloat(addForm.discountPercent) || 0,
                 discountAmount: addDiscAmt,
                 taxableAmount: addAfterDisc,
-                gstPercent: parseFloat(addForm.gstPercent) || 0,
+                gstPercent: parseFloat(addForm.gstPercent) || 18,
                 tax: addTax,
+                cgst: addTax / 2,
+                sgst: addTax / 2,
                 total: addTotal,
                 roundOff: addRoundOff
             }
@@ -457,8 +461,10 @@ function SellPurchase() {
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
                 discountAmount: sellDiscAmt,
                 taxableAmount: sellAfterDisc,
-                gstPercent: parseFloat(sellForm.gstPercent) || 0,
+                gstPercent: parseFloat(sellForm.gstPercent) || 18,
                 tax: sellTax,
+                cgst: sellTax / 2,
+                sgst: sellTax / 2,
                 total: sellTotal,
                 roundOff: sellRoundOff,
                 amountPaid: sellForm.customerId ? 0 : sellTotal,
@@ -487,8 +493,10 @@ function SellPurchase() {
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
                 discountAmount: sellDiscAmt,
                 taxableAmount: sellAfterDisc,
-                gstPercent: parseFloat(sellForm.gstPercent) || 0,
+                gstPercent: parseFloat(sellForm.gstPercent) || 18,
                 tax: sellTax,
+                cgst: sellTax / 2,
+                sgst: sellTax / 2,
                 total: sellTotal,
                 roundOff: sellRoundOff
             })

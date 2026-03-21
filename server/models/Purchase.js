@@ -65,6 +65,38 @@ const Purchase = sequelize.define('Purchase', {
   status: {
     type: DataTypes.STRING,
     defaultValue: 'pending'
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  taxableAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  gstPercent: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 18
+  },
+  discountPercent: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0
+  },
+  discountAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  cgst: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  sgst: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  total: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   }
 });
 

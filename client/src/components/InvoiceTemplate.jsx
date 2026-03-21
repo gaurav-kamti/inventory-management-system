@@ -95,6 +95,12 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
         despatchedThrough, termsOfDelivery,
         notes, type = 'SALE', mode,
         creditMemo = false,
+        subtotal: saleSubtotal = 0,
+        discountPercent = 0,
+        discountAmount = 0,
+        taxableAmount = sale.taxableAmount || (sale.subtotal - (sale.discount || 0)),
+        gstPercent = sale.gstPercent || 18,
+        tax: saleTax = sale.tax || 0,
     } = sale;
 
     const co = {
@@ -132,14 +138,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
         }]
         : items;
 
-    const {
-        subtotal: saleSubtotal = 0,
-        discountPercent = 0,
-        discountAmount = 0,
-        taxableAmount = 0,
-        gstPercent = 0,
-        tax: saleTax = 0,
-    } = sale;
+
 
     const displayTotal = isVoucher ? (sale.amount || total) : total;
     
@@ -315,9 +314,9 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                                 <td colSpan={7} className="subtotal-label">GST ({gstPercent}%)</td>
                                 <td className="r subtotal-val">{fmt2(saleTax)}</td>
                             </tr>
-                            <tr className="subtotal-row">
+                             <tr className="subtotal-row">
                                 <td colSpan={7} className="subtotal-label bold-label">Rounded Off</td>
-                                <td className="r subtotal-val">{fmt2(roundOff)}</td>
+                                <td className="r subtotal-val">{roundOff >= 0 ? '+' : '-'}{fmt2(Math.abs(roundOff))}</td>
                             </tr>
                             <tr className="total-row">
                                 <td colSpan={6} className="total-label">Total Invoice Value</td>

@@ -88,6 +88,22 @@ const Sale = sequelize.define('Sale', {
   sgst: {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0
+  },
+  gstPercent: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 18
+  },
+  discountPercent: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0
+  },
+  discountAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  taxableAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   }
 });
 

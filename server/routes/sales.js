@@ -55,7 +55,13 @@ router.post("/", auth, async (req, res) => {
       despatchedThrough,
       termsOfDelivery,
       cgst,
-      sgst
+      sgst,
+      gstPercent,
+      discountPercent,
+      discountAmount,
+      taxableAmount,
+      subtotal: providedSubtotal,
+      total: providedTotal
     } = req.body;
 
     // Calculate totals or use provided totals
@@ -164,15 +170,14 @@ router.post("/", auth, async (req, res) => {
         invoiceNumber,
         customerId: customerId || null,
         userId: req.user.id,
-        subtotal: finalSubtotal,
-        tax,
-        discount: round2(discount || 0),
-        roundOff: round2(roundOff || 0),
-        total,
-        amountPaid: paid,
-        amountDue: due,
+        subtotal: providedSubtotal || subtotal,
+        tax: parseFloat(cgst || 0) + parseFloat(sgst || 0),
+        discount: discountAmount || 0,
+        total: providedTotal || (subtotal + parseFloat(cgst || 0) + parseFloat(sgst || 0) + parseFloat(roundOff || 0)),
         paymentMode,
-        status: due > 0 ? "pending" : "completed",
+        amountPaid: amountPaid || 0,
+        amountDue: (providedTotal || (subtotal + parseFloat(cgst || 0) + parseFloat(sgst || 0) + parseFloat(roundOff || 0))) - (amountPaid || 0),
+        roundOff: roundOff || 0,
         notes,
         deliveryNote,
         paymentTerms,
@@ -181,10 +186,13 @@ router.post("/", auth, async (req, res) => {
         buyerOrderDate,
         despatchedThrough,
         termsOfDelivery,
-        cgst: round2(cgst || 0),
-        sgst: round2(sgst || 0),
+        cgst: cgst || 0,
+        sgst: sgst || 0,
+        gstPercent: gstPercent || 18,
+        discountPercent: discountPercent || 0,
+        discountAmount: discountAmount || 0,
+        taxableAmount: taxableAmount || subtotal
       },
-
       { transaction: t },
     );
 

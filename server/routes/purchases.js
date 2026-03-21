@@ -33,8 +33,21 @@ router.get("/", auth, async (req, res) => {
 router.post("/", auth, async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { supplierId, invoiceNumber, date, items, total, roundOff } =
-      req.body;
+    const {
+      supplierId,
+      invoiceNumber,
+      date,
+      items,
+      total,
+      roundOff,
+      subtotal,
+      taxableAmount,
+      gstPercent,
+      discountPercent,
+      discountAmount,
+      cgst,
+      sgst
+    } = req.body;
 
     const distinctItems = [];
 
@@ -88,6 +101,16 @@ router.post("/", auth, async (req, res) => {
           totalCost: round2(parseFloat(item.amount)),
           receivedDate: date,
           unitOfMeasure: "pcs",
+          subtotal: subtotal || 0,
+          taxableAmount: taxableAmount || subtotal || 0,
+          gstPercent: gstPercent || 18,
+          discountPercent: discountPercent || 0,
+          discountAmount: discountAmount || 0,
+          cgst: cgst || 0,
+          sgst: sgst || 0,
+          tax: (parseFloat(cgst || 0) + parseFloat(sgst || 0)),
+          total: total || 0,
+          roundOff: roundOff || 0
         },
         { transaction: t },
       );
