@@ -44,8 +44,25 @@ sequelize
   .sync({ force: false })
   .then(() => {
     console.log("Database synced successfully");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    
+    // Inline Migration to fix 500 errors from missing GST columns
+    const runMigrations = async () => {
+      const salesCols = ['cgst', 'sgst', 'gstPercent', 'discountPercent', 'discountAmount', 'taxableAmount'];
+      const purchCols = ['subtotal', 'taxableAmount', 'gstPercent', 'discountPercent', 'discountAmount', 'cgst', 'sgst', 'total', 'roundOff'];
+      for (let col of salesCols) {
+        try { await sequelize.query(`ALTER TABLE Sales ADD COLUMN ${col} REAL DEFAULT 0`); } catch (e) { /* ignores if exists */ }
+      }
+      for (let col of purchCols) {
+        try { await sequelize.query(`ALTER TABLE Purchases ADD COLUMN ${col} REAL DEFAULT 0`); } catch (e) { /* ignores if exists */ }
+      }
+      try { await sequelize.query(`UPDATE Sales SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
+      try { await sequelize.query(`UPDATE Purchases SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
+    };
+
+    runMigrations().then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
     });
   })
   .catch((err) => {

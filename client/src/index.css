@@ -166,4 +166,102 @@ input[type="number"]::-webkit-inner-spin-button {
 
 input[type="number"] {
     -moz-appearance: textfield; /* Firefox */
+    appearance: textfield;
+}
+
+
+/* Standardize Date Picker Icons Across Browsers */
+input[type="date"] {
+    position: relative;
+    cursor: pointer;
+    color-scheme: dark;
+}
+
+/* White icon via color-scheme: dark — do NOT add filter: invert, it cancels out */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 6px;
+    opacity: 0.9;
+    background: transparent;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Flatpickr Dark Theme Overrides */
+.flatpickr-calendar {
+    background: var(--bg-dark) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    font-family: 'Inter', sans-serif !important;
+}
+.flatpickr-months, .flatpickr-month {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    fill: var(--text-primary) !important;
+}
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    fill: var(--accent) !important;
+    color: var(--accent) !important;
+}
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--text-primary) !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months option {
+    background: var(--bg-deep) !important;
+    color: var(--text-primary) !important;
+}
+.flatpickr-weekdays {
+    background: transparent !important;
+}
+span.flatpickr-weekday {
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+}
+.flatpickr-day {
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+}
+.flatpickr-day:hover {
+    background: rgba(142, 182, 155, 0.15) !important;
+    border-color: transparent !important;
+}
+.flatpickr-day.selected {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: var(--bg-deep) !important;
+    font-weight: 700 !important;
+}
+.flatpickr-day.today {
+    border-color: var(--accent) !important;
+}
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: var(--text-secondary) !important;
+    opacity: 0.4 !important;
+}
+.flatpickr-innerContainer {
+    border-bottom: none !important;
+}
+.numInputWrapper:hover {
+    background: rgba(142, 182, 155, 0.1) !important;
+}
+.numInputWrapper span {
+    border-color: var(--glass-border) !important;
+}
+.numInputWrapper span:hover {
+    background: rgba(142, 182, 155, 0.2) !important;
 }

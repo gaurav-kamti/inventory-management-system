@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import DatePicker from '../components/DatePicker'
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -29,7 +30,7 @@ function Database() {
         const d = String(date.getDate()).padStart(2, '0')
         const m = String(date.getMonth() + 1).padStart(2, '0')
         const y = date.getFullYear()
-        return `${d}:${m}:${y}`
+        return `${d}/${m}/${y}`
     }
 
     useEffect(() => {
@@ -116,24 +117,13 @@ function Database() {
         }
     }
 
-    // Set default date range whenever active data changes or tab changes
+    // Clear the date filter when switching tabs so all records are visible by default
     useEffect(() => {
         if (activeTab !== prevTab) {
-            const activeData = activeTab === 'sales' ? sales : (activeTab === 'purchases' ? purchases : vouchers);
-            if (activeData.length > 0) {
-                const dates = activeData.map(d => new Date(d.date)).filter(d => !isNaN(d));
-                if (dates.length > 0) {
-                    const earliest = new Date(Math.min(...dates));
-                    const latest = new Date(Math.max(...dates));
-                    setDateRange({
-                        start: earliest.toISOString().split('T')[0],
-                        end: latest.toISOString().split('T')[0]
-                    });
-                }
-            }
+            setDateRange({ start: '', end: '' });
             setPrevTab(activeTab);
         }
-    }, [activeTab, sales, purchases, vouchers, prevTab]);
+    }, [activeTab, prevTab]);
 
     const activeData = activeTab === 'sales' ? sales : (activeTab === 'purchases' ? purchases : vouchers)
 
@@ -294,22 +284,18 @@ function Database() {
                                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '5px 15px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                                     <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
                                         <label style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--accent)' }}>FROM</label>
-                                        <input
-                                            type="date"
-                                            className="input"
+                                        <DatePicker
                                             value={dateRange.start}
-                                            onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+                                            onChange={(val) => setDateRange({ ...dateRange, start: val })}
                                             style={{ padding: '4px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
                                         />
                                     </div>
                                     <div style={{ width: '1px', height: '15px', background: 'var(--glass-border)' }}></div>
                                     <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
                                         <label style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--accent)' }}>TO</label>
-                                        <input
-                                            type="date"
-                                            className="input"
+                                        <DatePicker
                                             value={dateRange.end}
-                                            onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+                                            onChange={(val) => setDateRange({ ...dateRange, end: val })}
                                             style={{ padding: '4px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
                                         />
                                     </div>
@@ -462,13 +448,12 @@ function Database() {
                             <table className="table">
                                 <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                                     <tr>
-                                        <th>Item Name</th>
-                                        <th>HSN</th>
-                                        <th>Qty</th>
-                                        <th>Rate</th>
-                                        <th>Disc</th>
-                                        <th>GST</th>
-                                        <th style={{ textAlign: 'right' }}>Amount</th>
+                                        <th style={{ width: '100%' }}>Item Name</th>
+                                        <th style={{ whiteSpace: 'nowrap', padding: '15px' }}>HSN</th>
+                                        <th style={{ whiteSpace: 'nowrap', padding: '15px' }}>Size</th>
+                                        <th style={{ textAlign: 'right', whiteSpace: 'nowrap', padding: '15px' }}>Qty</th>
+                                        <th style={{ textAlign: 'right', whiteSpace: 'nowrap', padding: '15px' }}>Rate</th>
+                                        <th style={{ textAlign: 'right', whiteSpace: 'nowrap', padding: '15px' }}>Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -476,10 +461,11 @@ function Database() {
                                         <tr key={idx}>
                                             <td style={{ fontWeight: '700' }}>{item.Product?.name || 'Unknown Item'}</td>
                                             <td>{item.hsn || '--'}</td>
-                                            <td style={{ fontWeight: '600' }}>{item.quantity}</td>
-                                            <td>${parseFloat(item.price).toFixed(2)}</td>
-                                            <td style={{ color: '#ff4757' }}>{item.discount ? `${parseFloat(item.discount)}%` : '--'}</td>
-                                            <td>{item.gst ? `${parseFloat(item.gst)}%` : '--'}</td>
+                                            <td>{item.Product?.size || item.size || '--'}</td>
+                                            <td style={{ textAlign: 'right', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                                                {item.quantity} {item.unit || item.quantityUnit || 'Pcs'}
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>${parseFloat(item.price).toFixed(2)}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--accent)' }}>
                                                 ${parseFloat(item.total).toFixed(2)}
                                             </td>
@@ -488,17 +474,37 @@ function Database() {
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colSpan="6" style={{ textAlign: 'right', padding: '15px', fontWeight: '700', color: 'var(--text-secondary)' }}>Subtotal</td>
-                                        <td style={{ textAlign: 'right', padding: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
+                                        <td colSpan="5" style={{ textAlign: 'right', padding: '15px', fontWeight: '700', color: 'var(--text-secondary)' }}>Subtotal</td>
+                                        <td style={{ textAlign: 'right', padding: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>${parseFloat(selectedInvoice.taxableAmount || selectedInvoice.subtotal || 0).toFixed(2)}</td>
                                     </tr>
                                     {selectedInvoice.tax > 0 && (
                                         <tr>
-                                            <td colSpan="6" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>GST Component</td>
+                                            <td colSpan="5" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                                                GST ({selectedInvoice.gstPercent || 18}%)
+                                            </td>
                                             <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700' }}>${parseFloat(selectedInvoice.tax).toFixed(2)}</td>
                                         </tr>
                                     )}
+                                    {(selectedInvoice.discountAmount > 0 || selectedInvoice.discountPercent > 0) && (
+                                        <tr>
+                                            <td colSpan="5" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                                                Discount {selectedInvoice.discountPercent > 0 ? `(${selectedInvoice.discountPercent}%)` : ''}
+                                            </td>
+                                            <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700', color: '#ff4757' }}>
+                                                -${parseFloat(selectedInvoice.discountAmount || 0).toFixed(2)}
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {selectedInvoice.roundOff != null && selectedInvoice.roundOff !== 0 && (
+                                        <tr>
+                                            <td colSpan="5" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>Rounded Off</td>
+                                            <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700' }}>
+                                                {selectedInvoice.roundOff >= 0 ? '+' : '-'}${Math.abs(selectedInvoice.roundOff).toFixed(2)}
+                                            </td>
+                                        </tr>
+                                    )}
                                     <tr style={{ background: 'rgba(142, 182, 155, 0.05)' }}>
-                                        <td colSpan="6" style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.2rem', color: 'var(--accent)' }}>GRAND TOTAL</td>
+                                        <td colSpan="5" style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.2rem', color: 'var(--accent)' }}>GRAND TOTAL</td>
                                         <td style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.6rem', color: 'var(--accent)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
                                     </tr>
                                 </tfoot>

@@ -5,6 +5,7 @@ import { formatOverdue } from '../utils/formatters'
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import DatePicker from '../components/DatePicker'
 import './Dues.css'
 
 function Dues() {
@@ -111,7 +112,7 @@ function Dues() {
         const d = String(date.getDate()).padStart(2, '0')
         const m = String(date.getMonth() + 1).padStart(2, '0')
         const y = date.getFullYear()
-        return `${d}:${m}:${y}`
+        return `${d}/${m}/${y}`
     }
 
     const getFilteredLedger = () => {
@@ -265,21 +266,17 @@ function Dues() {
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '5px 12px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                                 <label style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--accent)' }}>FROM</label>
-                                <input
-                                    type="date"
-                                    className="input"
-                                    style={{ padding: '2px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
+                                <DatePicker
                                     value={dateRange.start}
-                                    onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+                                    onChange={(val) => setDateRange({ ...dateRange, start: val })}
+                                    style={{ padding: '2px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
                                 />
                                 <div style={{ width: '1px', height: '12px', background: 'var(--glass-border)' }}></div>
                                 <label style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--accent)' }}>TO</label>
-                                <input
-                                    type="date"
-                                    className="input"
-                                    style={{ padding: '2px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
+                                <DatePicker
                                     value={dateRange.end}
-                                    onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+                                    onChange={(val) => setDateRange({ ...dateRange, end: val })}
+                                    style={{ padding: '2px', fontSize: '0.8rem', width: '125px', background: 'transparent', border: 'none' }}
                                 />
                             </div>
                             <button className="btn btn-secondary" onClick={exportToExcel} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>

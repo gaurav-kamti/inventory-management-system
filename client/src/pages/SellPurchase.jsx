@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
 import { numberToWords, calculateGSTSplit, generateHSNSummary, round2 } from '../utils/invoiceUtils'
+import { formatDate } from '../utils/formatters'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import DatePicker from '../components/DatePicker'
 import { downloadPDF } from '../utils/pdfExport'
 import './Inventory.css' // We might need to create a separate CSS or share it
 
@@ -29,20 +31,14 @@ function SellPurchase() {
     const sellDiscountRef = useRef(null)
     const sellAddBtnRef = useRef(null)
 
-    // Helper for dd:mm:yyyy date format
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '-'
-        const date = new Date(dateStr)
-        const d = String(date.getDate()).padStart(2, '0')
-        const m = String(date.getMonth() + 1).padStart(2, '0')
-        const y = date.getFullYear()
-        return `${d}:${m}:${y}`
-    }
+    const formatDateDisplay = (dateStr) => {
+    return formatDate(dateStr, 'dd/mm/yyyy');
+}
 
     // Purchase Item Form (formerly Add Item)
     const [addForm, setAddForm] = useState({
         invoice: `INV-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
+        date: '',
         supplierId: '',
         supplierName: '',
         deliveryNote: '',
@@ -73,7 +69,7 @@ function SellPurchase() {
     // Sell Item Form
     const [sellForm, setSellForm] = useState({
         invoice: '',
-        date: new Date().toISOString().split('T')[0],
+        date: '',
         customerId: '',
         customerName: '',
         roundOff: '',
@@ -285,7 +281,7 @@ function SellPurchase() {
                 {availableAdvances.map(adv => (
                     <label key={adv.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85em', color: '#eee', marginBottom: '5px' }}>
                         <input type="checkbox" checked={selectedAdvanceIds.includes(adv.id)} onChange={() => toggleAdvance(adv.id)} />
-                        <span>Date: {formatDate(adv.date || adv.createdAt)} | Amt: ${parseFloat(adv.remainingAdvance).toFixed(2)} {adv.notes ? `(${adv.notes})` : ''}</span>
+                        <span>Date: {formatDateDisplay(adv.date || adv.createdAt)} | Amt: ${parseFloat(adv.remainingAdvance).toFixed(2)} {adv.notes ? `(${adv.notes})` : ''}</span>
                     </label>
                 ))}
             </div>
@@ -314,9 +310,10 @@ function SellPurchase() {
                 subtotal: addTaxable,
                 discountPercent: parseFloat(addForm.discountPercent) || 0,
                 discountAmount: addDiscAmt,
-                taxableAmount: addAfterDisc,
+                taxableAmount: addTaxable,
                 gstPercent: parseFloat(addForm.gstPercent) || 18,
                 tax: addTax,
+                afterGST: addAfterGST,
                 cgst: addTax / 2,
                 sgst: addTax / 2,
                 total: addTotal,
@@ -352,9 +349,10 @@ function SellPurchase() {
                 subtotal: addTaxable,
                 discountPercent: parseFloat(addForm.discountPercent) || 0,
                 discountAmount: addDiscAmt,
-                taxableAmount: addAfterDisc,
+                taxableAmount: addTaxable,
                 gstPercent: parseFloat(addForm.gstPercent) || 18,
                 tax: addTax,
+                afterGST: addAfterGST,
                 cgst: addTax / 2,
                 sgst: addTax / 2,
                 total: addTotal,
@@ -366,7 +364,7 @@ function SellPurchase() {
 
             setAddForm({
                 invoice: `INV-${Date.now()}`,
-                date: new Date().toISOString().split('T')[0],
+                date: '',
                 supplierId: '',
                 supplierName: '',
                 deliveryNote: '',
@@ -425,18 +423,20 @@ function SellPurchase() {
 
     // Calculations
     const sellTaxable = cartItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), 0)
-    const sellDiscAmt = sellTaxable * (parseFloat(sellForm.discountPercent) || 0) / 100
-    const sellAfterDisc = sellTaxable - sellDiscAmt
-    const sellTax = sellAfterDisc * (parseFloat(sellForm.gstPercent) || 0) / 100
-    const sellRoundOff = Math.round(sellAfterDisc + sellTax) - (sellAfterDisc + sellTax)
-    const sellTotal = sellAfterDisc + sellTax + sellRoundOff
+    const sellTax = sellTaxable * (parseFloat(sellForm.gstPercent) || 0) / 100
+    const sellAfterGST = sellTaxable + sellTax
+    const sellDiscAmt = sellAfterGST * (parseFloat(sellForm.discountPercent) || 0) / 100
+    const sellAmountAfterDiscount = sellAfterGST - sellDiscAmt
+    const sellRoundOff = Math.round(sellAmountAfterDiscount) - sellAmountAfterDiscount
+    const sellTotal = sellAmountAfterDiscount + sellRoundOff
 
     const addTaxable = addedItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), 0)
-    const addDiscAmt = addTaxable * (parseFloat(addForm.discountPercent) || 0) / 100
-    const addAfterDisc = addTaxable - addDiscAmt
-    const addTax = addAfterDisc * (parseFloat(addForm.gstPercent) || 0) / 100
-    const addRoundOff = Math.round(addAfterDisc + addTax) - (addAfterDisc + addTax)
-    const addTotal = addAfterDisc + addTax + addRoundOff
+    const addTax = addTaxable * (parseFloat(addForm.gstPercent) || 0) / 100
+    const addAfterGST = addTaxable + addTax
+    const addDiscAmt = addAfterGST * (parseFloat(addForm.discountPercent) || 0) / 100
+    const addAmountAfterDiscount = addAfterGST - addDiscAmt
+    const addRoundOff = Math.round(addAmountAfterDiscount) - addAmountAfterDiscount
+    const addTotal = addAmountAfterDiscount + addRoundOff
 
     const handleSellItem = async (e) => {
         e.preventDefault()
@@ -460,9 +460,10 @@ function SellPurchase() {
                 subtotal: sellTaxable,
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
                 discountAmount: sellDiscAmt,
-                taxableAmount: sellAfterDisc,
+                taxableAmount: sellTaxable,
                 gstPercent: parseFloat(sellForm.gstPercent) || 18,
                 tax: sellTax,
+                afterGST: sellAfterGST,
                 cgst: sellTax / 2,
                 sgst: sellTax / 2,
                 total: sellTotal,
@@ -492,9 +493,10 @@ function SellPurchase() {
                 subtotal: sellTaxable,
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
                 discountAmount: sellDiscAmt,
-                taxableAmount: sellAfterDisc,
+                taxableAmount: sellTaxable,
                 gstPercent: parseFloat(sellForm.gstPercent) || 18,
                 tax: sellTax,
+                afterGST: sellAfterGST,
                 cgst: sellTax / 2,
                 sgst: sellTax / 2,
                 total: sellTotal,
@@ -506,7 +508,7 @@ function SellPurchase() {
             setShowSellModal(false)
             setSellForm({
                 invoice: '',
-                date: new Date().toISOString().split('T')[0],
+                date: '',
                 customerId: '',
                 customerName: '',
                 roundOff: '',
@@ -728,7 +730,7 @@ function SellPurchase() {
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{new Date().toLocaleDateString('en-GB')}</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{formatDateDisplay(new Date())}</p>
                                 </div>
                             </div>
 
@@ -738,14 +740,24 @@ function SellPurchase() {
                                     <input className="input" placeholder="e.g. SUP/2024/001" value={addForm.supplierInvoice || ''}
                                         ref={purchaseInvoiceRef}
                                         onChange={(e) => setAddForm({ ...addForm, supplierInvoice: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                // Find the date input and focus it, or use a ref if I had one. 
+                                                // Actually I'll just use the next element focus logic.
+                                                e.target.closest('.invoice-info-row').querySelector('input[placeholder="dd/mm/yyyy"]')?.focus();
+                                            }
+                                        }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
                                     />
                                 </div>
                                 <div className="invoice-field">
-                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Invoice Date</label>
-                                    <input type="date" className="input" value={addForm.date}
-                                        onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
-                                        required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px', colorScheme: 'dark' }}
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</label>
+                                    <DatePicker
+                                        value={addForm.date}
+                                        onChange={(val) => setAddForm({ ...addForm, date: val })}
+                                        required
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '10px 14px' }}
                                     />
                                 </div>
                                 <div className="invoice-field">
@@ -778,7 +790,7 @@ function SellPurchase() {
                                             if (e.key === 'Tab' && !e.shiftKey) {
                                                 const val = e.target.value.toLowerCase()
                                                 const match = suppliers.find(s => s.name.toLowerCase().includes(val))
-                                                if (match) {
+                                                if (val && match) {
                                                     setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
                                                 }
                                             }
@@ -811,7 +823,11 @@ function SellPurchase() {
                                 </div>
                                 <div className="invoice-field">
                                     <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>ORDER DATE</label>
-                                    <input type="date" className="input" style={{ padding: '6px 8px', fontSize: '0.8rem', colorScheme: 'dark' }} value={addForm.buyerOrderDate} onChange={e => setAddForm({ ...addForm, buyerOrderDate: e.target.value })} />
+                                    <DatePicker
+                                        value={addForm.buyerOrderDate}
+                                        onChange={(val) => setAddForm({ ...addForm, buyerOrderDate: val })}
+                                        style={{ padding: '6px 8px', fontSize: '0.8rem' }}
+                                    />
                                 </div>
                                 <div className="invoice-field">
                                     <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>DESPATCHED VIA</label>
@@ -840,7 +856,12 @@ function SellPurchase() {
                                 <tbody>
                                     {addedItems.map((item, index) => (
                                         <tr key={index}>
-                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)', textAlign: 'center' }}>{item.name}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <input className="input" style={{ width: '100%', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: '700' }}
+                                                    value={item.name}
+                                                    onChange={e => updateAddedItem(index, 'name', e.target.value)}
+                                                />
+                                            </td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
                                                     <input
@@ -865,7 +886,27 @@ function SellPurchase() {
                                                     {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                                 </select>
                                             </td>
-                                            <td style={{ fontWeight: '600', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.quantityUnit || 'Pcs'}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 55px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
+                                                    <input className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', padding: '8px 5px' }}
+                                                        type="number"
+                                                        value={item.quantity}
+                                                        onChange={e => {
+                                                            const q = e.target.value;
+                                                            const r = parseFloat(item.rate) || 0;
+                                                            updateAddedItem(index, 'quantity', q);
+                                                            updateAddedItem(index, 'amount', (parseFloat(q) || 0) * r);
+                                                        }}
+                                                    />
+                                                    <select className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.75rem' }}
+                                                        value={item.quantityUnit} onChange={e => updateAddedItem(index, 'quantityUnit', e.target.value)}>
+                                                        <option value="Pcs">Pcs</option>
+                                                        <option value="Set">Set</option>
+                                                        <option value="Box">Box</option>
+                                                        <option value="Dzn">Dzn</option>
+                                                    </select>
+                                                </div>
+                                            </td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateAddedItem(index, 'rate', e.target.value)} />
                                             </td>
@@ -886,7 +927,7 @@ function SellPurchase() {
                                                     if (e.key === 'Tab' && !e.shiftKey) {
                                                         const val = e.target.value.toLowerCase()
                                                         const match = products.find(p => p.name.toLowerCase().includes(val))
-                                                        if (match) {
+                                                        if (val && match) {
                                                             const q = parseFloat(addItemRow.quantity) || 0;
                                                             const r = parseFloat(match.purchasePrice) || 0;
                                                             const amt = (q * r).toFixed(2);
@@ -1061,26 +1102,22 @@ function SellPurchase() {
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({addForm.gstPercent}%)</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+${addTax.toFixed(2)}</p>
+                                </div>
+
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>After GST</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${addAfterGST.toFixed(2)}</p>
+                                </div>
+
+                                <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Disc (%)</p>
                                     <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }} 
                                         value={addForm.discountPercent} 
                                         onChange={e => setAddForm({...addForm, discountPercent: e.target.value})} 
                                     />
                                     <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-${addDiscAmt.toFixed(2)}</p>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>After Discount</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${addAfterDisc.toFixed(2)}</p>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST (%)</p>
-                                    <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }} 
-                                        value={addForm.gstPercent} 
-                                        onChange={e => setAddForm({...addForm, gstPercent: e.target.value})} 
-                                    />
-                                    <p style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: '700' }}>+${addTax.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
@@ -1138,7 +1175,7 @@ function SellPurchase() {
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{new Date().toLocaleDateString('en-GB')}</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{formatDateDisplay(new Date())}</p>
                                 </div>
                             </div>
 
@@ -1148,14 +1185,22 @@ function SellPurchase() {
                                     <input className="input" placeholder="INV/001" value={sellForm.invoice || ''}
                                         ref={sellInvoiceRef}
                                         onChange={(e) => setSellForm({ ...sellForm, invoice: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                e.target.closest('.invoice-info-row').querySelector('input[placeholder="dd/mm/yyyy"]')?.focus();
+                                            }
+                                        }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
                                     />
                                 </div>
                                 <div className="invoice-field">
-                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date of Issue</label>
-                                    <input type="date" className="input" value={sellForm.date}
-                                        onChange={(e) => setSellForm({ ...sellForm, date: e.target.value })}
-                                        required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px', colorScheme: 'dark' }}
+                                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</label>
+                                    <DatePicker
+                                        value={sellForm.date}
+                                        onChange={(val) => setSellForm({ ...sellForm, date: val })}
+                                        required
+                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '10px 14px' }}
                                     />
                                 </div>
                                 <div className="invoice-field">
@@ -1188,7 +1233,7 @@ function SellPurchase() {
                                             if (e.key === 'Tab' && !e.shiftKey) {
                                                 const val = e.target.value.toLowerCase()
                                                 const match = customers.find(c => c.name.toLowerCase().includes(val))
-                                                if (match) {
+                                                if (val && match) {
                                                     setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
                                                 }
                                             }
@@ -1222,7 +1267,11 @@ function SellPurchase() {
                                 </div>
                                 <div className="invoice-field">
                                     <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>ORDER DATE</label>
-                                    <input type="date" className="input" style={{ padding: '6px 8px', fontSize: '0.8rem', colorScheme: 'dark' }} value={sellForm.buyerOrderDate} onChange={e => setSellForm({ ...sellForm, buyerOrderDate: e.target.value })} />
+                                    <DatePicker
+                                        value={sellForm.buyerOrderDate}
+                                        onChange={(val) => setSellForm({ ...sellForm, buyerOrderDate: val })}
+                                        style={{ padding: '6px 8px', fontSize: '0.8rem' }}
+                                    />
                                 </div>
                                 <div className="invoice-field">
                                     <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>DESPATCHED VIA</label>
@@ -1251,7 +1300,12 @@ function SellPurchase() {
                                 <tbody>
                                     {cartItems.map((item, index) => (
                                         <tr key={item.productId || index}>
-                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)', textAlign: 'center' }}>{item.name}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <input className="input" style={{ width: '100%', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: '700' }}
+                                                    value={item.name}
+                                                    onChange={e => updateCartItem(item.productId, 'name', e.target.value)}
+                                                />
+                                            </td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
                                                     <input
@@ -1276,7 +1330,26 @@ function SellPurchase() {
                                                     {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                                 </select>
                                             </td>
-                                            <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity} {item.quantityUnit || 'Pcs'}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 55px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
+                                                    <input className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', padding: '8px 5px' }}
+                                                        type="number"
+                                                        value={item.quantity}
+                                                        onChange={e => {
+                                                            const q = e.target.value;
+                                                            const r = parseFloat(item.rate) || 0;
+                                                            updateCartItem(item.productId, 'quantity', q);
+                                                        }}
+                                                    />
+                                                    <select className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.75rem' }}
+                                                        value={item.quantityUnit} onChange={e => updateCartItem(item.productId, 'quantityUnit', e.target.value)}>
+                                                        <option value="Pcs">Pcs</option>
+                                                        <option value="Set">Set</option>
+                                                        <option value="Box">Box</option>
+                                                        <option value="Dzn">Dzn</option>
+                                                    </select>
+                                                </div>
+                                            </td>
                                             <td style={{ textAlign: 'center' }}><input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
                                             <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>
                                                 ${((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)).toFixed(2)}
@@ -1297,7 +1370,7 @@ function SellPurchase() {
                                                     if (e.key === 'Tab' && !e.shiftKey) {
                                                         const val = e.target.value.toLowerCase()
                                                         const match = products.find(p => p.name.toLowerCase().includes(val))
-                                                        if (match) {
+                                                        if (val && match) {
                                                             const q = parseFloat(sellItemInput.quantity) || 0;
                                                             const r = parseFloat(match.sellingPrice) || 0;
                                                             const amt = (q * r).toFixed(2);
@@ -1486,26 +1559,22 @@ function SellPurchase() {
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({sellForm.gstPercent}%)</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+${sellTax.toFixed(2)}</p>
+                                </div>
+
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>After GST</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${sellAfterGST.toFixed(2)}</p>
+                                </div>
+
+                                <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Disc (%)</p>
                                     <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }} 
                                         value={sellForm.discountPercent} 
                                         onChange={e => setSellForm({...sellForm, discountPercent: e.target.value})} 
                                     />
                                     <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-${sellDiscAmt.toFixed(2)}</p>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>After Discount</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${sellAfterDisc.toFixed(2)}</p>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST (%)</p>
-                                    <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }} 
-                                        value={sellForm.gstPercent} 
-                                        onChange={e => setSellForm({...sellForm, gstPercent: e.target.value})} 
-                                    />
-                                    <p style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: '700' }}>+${sellTax.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>

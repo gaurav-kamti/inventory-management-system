@@ -1,5 +1,5 @@
 .pos-page {
-  color: white;
+  color: var(--text-primary);
 }
 
 .pos-layout {
@@ -38,7 +38,7 @@
 
 .product-sku {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
@@ -50,7 +50,7 @@
 
 .product-stock {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 .cart-section {
@@ -72,7 +72,7 @@
 .form-section label {
   display: block;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-secondary);
   font-weight: 600;
   margin-bottom: 5px;
 }
@@ -90,7 +90,7 @@
   max-height: 250px;
   overflow-y: auto;
   margin: 15px 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 10px;
   background: rgba(0, 0, 0, 0.2);
@@ -99,7 +99,7 @@
 .empty-cart {
   text-align: center;
   padding: 30px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   font-style: italic;
 }
 
@@ -108,7 +108,7 @@
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
 }
 
 .cart-item-header {
@@ -125,7 +125,7 @@
 
 .cart-item-price {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 .cart-item-controls {
@@ -139,7 +139,7 @@
   height: 30px;
   border: none;
   background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: var(--text-primary);
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
@@ -153,19 +153,19 @@
 .input-small {
   flex: 1;
   padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.05);
-  color: white;
+  color: var(--text-primary);
   font-size: 12px;
 }
 
 .input-small::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
 }
 
 .cart-totals {
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid var(--glass-border);
   padding-top: 15px;
   margin-bottom: 15px;
 }
@@ -180,7 +180,7 @@
   font-size: 20px;
   font-weight: 700;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid var(--glass-border);
 }
 
 .discount-input {
@@ -210,48 +210,4 @@
   color: #fbbf24;
   font-weight: 700;
   font-size: 18px;
-}
-
-/* Print Styles */
-@media print {
-  /* Global reset for visibility - hides everything by default */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Make the print template and its children visible */
-  #invoice-print-template,
-  #invoice-print-template * {
-    visibility: visible;
-  }
-
-  /* Position the template to fill the page and override hidden state */
-  #invoice-print-template {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    display: block !important; /* Override inline display: none */
-    background: white;
-    color: black;
-    z-index: 9999;
-  }
-
-  /* Reset body background */
-  body {
-    background: white !important;
-    overflow: visible !important;
-  }
-
-  /* Hide custom scrollbars */
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Ensure no margins interfere */
-  @page {
-    margin: 0.5cm;
-  }
 }

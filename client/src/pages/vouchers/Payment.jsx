@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import InvoiceTemplate from '../../components/InvoiceTemplate';
+import DatePicker from '../../components/DatePicker';
 import '../Inventory.css'; // Import for print styles
 
 function Payment() {
@@ -11,7 +12,7 @@ function Payment() {
     const [selectedSupplier, setSelectedSupplier] = useState('');
     const [currentBalance, setCurrentBalance] = useState(0);
     const [amount, setAmount] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState('');
     const [notes, setNotes] = useState('');
     const [method, setMethod] = useState('On Account');
     const [references, setReferences] = useState([]);
@@ -360,12 +361,10 @@ function Payment() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
                         <div className="form-group">
                             <label style={{ display: 'block', marginBottom: '12px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Posting Date</label>
-                            <input
-                                type="date"
+                             <DatePicker
                                 value={date}
-                                onChange={(e) => setDate(e.target.value)}
+                                onChange={setDate}
                                 required
-                                className="input"
                                 style={{
                                     padding: '18px',
                                     borderRadius: '16px',
@@ -373,8 +372,7 @@ function Payment() {
                                     border: '1px solid var(--glass-border)',
                                     color: 'var(--text-primary)',
                                     width: '100%',
-                                    outline: 'none',
-                                    colorScheme: 'dark'
+                                    outline: 'none'
                                 }}
                             />
                         </div>

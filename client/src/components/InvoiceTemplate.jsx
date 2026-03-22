@@ -31,9 +31,11 @@ function fmt2(n) {
 
 function fmtDate(d) {
     try {
-        return new Date(d).toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric',
-        });
+        const date = new Date(d);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
     } catch { return d; }
 }
 
@@ -98,10 +100,13 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
         subtotal: saleSubtotal = 0,
         discountPercent = 0,
         discountAmount = 0,
-        taxableAmount = sale.taxableAmount || (sale.subtotal - (sale.discount || 0)),
-        gstPercent = sale.gstPercent || 18,
-        tax: saleTax = sale.tax || 0,
+        gstPercent = 18,
     } = sale;
+
+    // Derived fields with safe fallbacks
+    const taxableAmount = sale.taxableAmount || saleSubtotal || 0;
+    const saleTax = sale.tax || 0;
+    const saleAfterGST = sale.afterGST || (Number(taxableAmount) + Number(saleTax));
 
     const co = {
         name:      'M/s. R.M. TRADING',
@@ -298,22 +303,22 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                         <>
                             <tr className="subtotal-row">
                                 <td colSpan={7} className="subtotal-label">Taxable Value</td>
-                                <td className="r subtotal-val">{fmt2(saleSubtotal)}</td>
-                            </tr>
-                            {discountAmount > 0 && (
-                                <tr className="subtotal-row">
-                                    <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>
-                                    <td className="r subtotal-val">-{fmt2(discountAmount)}</td>
-                                </tr>
-                            )}
-                            <tr className="subtotal-row">
-                                <td colSpan={7} className="subtotal-label">After Discount</td>
                                 <td className="r subtotal-val">{fmt2(taxableAmount)}</td>
                             </tr>
                             <tr className="subtotal-row">
                                 <td colSpan={7} className="subtotal-label">GST ({gstPercent}%)</td>
                                 <td className="r subtotal-val">{fmt2(saleTax)}</td>
                             </tr>
+                            <tr className="subtotal-row">
+                                <td colSpan={7} className="subtotal-label">After GST</td>
+                                <td className="r subtotal-val">{fmt2(saleAfterGST)}</td>
+                            </tr>
+                            {discountAmount > 0 && (
+                                <tr className="subtotal-row">
+                                    <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>
+                                    <td className="r subtotal-val" style={{ color: '#ff4757' }}>-{fmt2(discountAmount)}</td>
+                                </tr>
+                            )}
                              <tr className="subtotal-row">
                                 <td colSpan={7} className="subtotal-label bold-label">Rounded Off</td>
                                 <td className="r subtotal-val">{roundOff >= 0 ? '+' : '-'}{fmt2(Math.abs(roundOff))}</td>

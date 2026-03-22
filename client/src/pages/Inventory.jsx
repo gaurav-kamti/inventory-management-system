@@ -114,10 +114,10 @@ function Inventory() {
                     <div className="stat-icon" style={{ background: 'rgba(255, 159, 67, 0.1)', color: '#ff9f43' }}>📈</div>
                     <div className="stat-info">
                         <h3>Total Sales</h3>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                            <p className="stat-value" style={{ fontSize: '1.2rem' }}>${stats.totalSold.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                            <span style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700' }}>R:${stats.paymentReceived.toFixed(0)}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#fca5a5', fontWeight: '700' }}>D:${stats.paymentRemaining.toFixed(0)}</span>
+                        <p className="stat-value" style={{ fontSize: '1.2rem' }}>${stats.totalSold.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                            <span style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700' }}>Received: ${stats.paymentReceived.toFixed(0)}</span>
+                            <span style={{ fontSize: '0.65rem', color: '#fca5a5', fontWeight: '700' }}>Due: ${stats.paymentRemaining.toFixed(0)}</span>
                         </div>
                     </div>
                 </div>
