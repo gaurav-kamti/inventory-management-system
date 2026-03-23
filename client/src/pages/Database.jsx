@@ -56,8 +56,10 @@ function Database() {
                 tax: s.tax,
                 cgst: s.cgst || 0,
                 sgst: s.sgst || 0,
+                taxableAmount: s.taxableAmount || s.subtotal || 0,
                 roundOff: s.roundOff || 0,
-                discount: s.discount || 0,
+                discountPercent: s.discountPercent || 0,
+                discountAmount: s.discountAmount || s.discount || 0,
                 amountDue: s.amountDue || 0,
                 items: s.SaleItems,
                 customer: s.Customer
@@ -82,6 +84,12 @@ function Database() {
                         partyName: p.Supplier?.name || 'Unknown',
                         type: 'PURCHASE',
                         total: 0,
+                        subtotal: p.subtotal || 0,
+                        discountPercent: p.discountPercent || 0,
+                        discountAmount: p.discountAmount || 0,
+                        taxableAmount: p.taxableAmount || 0,
+                        tax: p.tax || 0,
+                        roundOff: p.roundOff || 0,
                         items: []
                     }
                 }
@@ -421,17 +429,17 @@ function Database() {
                     display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
                 }} onClick={() => setShowInvoiceModal(false)}>
                     <div className="modal glass" style={{
-                        width: '90%', maxWidth: '1000px', maxHeight: '90vh', overflow: 'auto',
-                        padding: '40px', background: 'var(--bg-dark)', borderRadius: '32px',
+                        width: '85%', maxWidth: '850px', maxHeight: '92vh', overflow: 'auto',
+                        padding: '24px', background: 'var(--bg-dark)', borderRadius: '24px',
                         border: '1px solid var(--glass-border)'
                     }} onClick={e => e.stopPropagation()}>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '35px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                             <div>
-                                <h2 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: '900', letterSpacing: '-1px' }}>
+                                <h2 style={{ color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: '900', letterSpacing: '-0.5px' }}>
                                     {selectedInvoice.type} Voucher Details
                                 </h2>
-                                <p style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.9rem' }}>Ref: {selectedInvoice.invoiceNumber}</p>
+                                <p style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.85rem' }}>Ref: {selectedInvoice.invoiceNumber}</p>
                             </div>
                             <div style={{ textAlign: 'right' }}>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700' }}>ENTRY DATE</p>
@@ -439,9 +447,9 @@ function Database() {
                             </div>
                         </div>
 
-                        <div style={{ marginBottom: '30px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', borderLeft: '4px solid var(--accent)' }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', marginBottom: '5px' }}>PARTY NAME</p>
-                            <p style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)' }}>{selectedInvoice.partyName}</p>
+                        <div style={{ marginBottom: '15px', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', borderLeft: '4px solid var(--accent)' }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: '700', marginBottom: '2px' }}>PARTY NAME</p>
+                            <p style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)' }}>{selectedInvoice.partyName}</p>
                         </div>
 
                         <div className="table-container">
@@ -504,14 +512,14 @@ function Database() {
                                         </tr>
                                     )}
                                     <tr style={{ background: 'rgba(142, 182, 155, 0.05)' }}>
-                                        <td colSpan="5" style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.2rem', color: 'var(--accent)' }}>GRAND TOTAL</td>
-                                        <td style={{ textAlign: 'right', padding: '20px', fontWeight: '900', fontSize: '1.6rem', color: 'var(--accent)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
+                                        <td colSpan="5" style={{ textAlign: 'right', padding: '10px 20px', fontWeight: '900', fontSize: '1.1rem', color: 'var(--accent)' }}>GRAND TOTAL</td>
+                                        <td style={{ textAlign: 'right', padding: '10px 20px', fontWeight: '900', fontSize: '1.4rem', color: 'var(--accent)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
-                        <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
+                        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
                             <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 30px', fontWeight: '800' }} onClick={handlePrint}>
                                 🖨️ Print
                             </button>

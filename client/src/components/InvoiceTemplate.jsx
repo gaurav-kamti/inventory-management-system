@@ -309,10 +309,6 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                                 <td colSpan={7} className="subtotal-label">GST ({gstPercent}%)</td>
                                 <td className="r subtotal-val">{fmt2(saleTax)}</td>
                             </tr>
-                            <tr className="subtotal-row">
-                                <td colSpan={7} className="subtotal-label">After GST</td>
-                                <td className="r subtotal-val">{fmt2(saleAfterGST)}</td>
-                            </tr>
                             {discountAmount > 0 && (
                                 <tr className="subtotal-row">
                                     <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>

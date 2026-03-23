@@ -1,37 +1,114 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 /**
- * Reusable date picker with dd/mm/yyyy format.
- * Props:
- *   value    – date string in YYYY-MM-DD (internal) format
- *   onChange – callback receiving YYYY-MM-DD string
- *   required, className, style – passed through
+ * Parse flexible date input: supports dd/mm/yyyy, ddmmyyyy, dd.mm.yy, dd mm, etc.
+ * Returns a Date object or null.
  */
+function parseFlexibleDate(input) {
+    if (!input || typeof input !== 'string') return null;
+    const s = input.trim();
+    if (!s) return null;
+
+    const currentYear = new Date().getFullYear();
+    let day, month, year;
+
+    // Pattern 1: No separator — DDMMYYYY (8 digits) or DDMMYY (6 digits)
+    const noSep = s.match(/^(\d{2})(\d{2})(\d{4})$/);
+    if (noSep) {
+        day = parseInt(noSep[1], 10);
+        month = parseInt(noSep[2], 10);
+        year = parseInt(noSep[3], 10);
+    }
+
+    if (!day) {
+        const noSep2 = s.match(/^(\d{2})(\d{2})(\d{2})$/);
+        if (noSep2) {
+            day = parseInt(noSep2[1], 10);
+            month = parseInt(noSep2[2], 10);
+            year = 2000 + parseInt(noSep2[3], 10);
+        }
+    }
+
+    // Pattern 2: DDMM (4 digits, no year) → use current year
+    if (!day) {
+        const noSep3 = s.match(/^(\d{2})(\d{2})$/);
+        if (noSep3) {
+            day = parseInt(noSep3[1], 10);
+            month = parseInt(noSep3[2], 10);
+            year = currentYear;
+        }
+    }
+
+    // Pattern 3: With separator (/ . - or space)
+    if (!day) {
+        const withSep = s.match(/^(\d{1,2})[\/.\-\s](\d{1,2})(?:[\/.\-\s](\d{2,4}))?$/);
+        if (withSep) {
+            day = parseInt(withSep[1], 10);
+            month = parseInt(withSep[2], 10);
+            if (withSep[3]) {
+                year = parseInt(withSep[3], 10);
+                if (year < 100) year += 2000;
+            } else {
+                year = currentYear;
+            }
+        }
+    }
+
+    if (!day || !month || !year) return null;
+    if (month < 1 || month > 12) return null;
+    if (day < 1 || day > 31) return null;
+
+    const d = new Date(year, month - 1, day);
+    // Validate the date is real (e.g., not Feb 30)
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) {
+        return null;
+    }
+    return d;
+}
+
+function toISO(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function DatePicker({ value, onChange, required, className = 'input', style, placeholder }) {
     const inputRef = useRef(null);
     const fpRef = useRef(null);
+    const isInternalUpdate = useRef(false);
+
+    // Stable onChange ref to avoid stale closures
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+
+    const commitDate = useCallback((dateObj) => {
+        isInternalUpdate.current = true;
+        const iso = toISO(dateObj);
+        if (fpRef.current) {
+            fpRef.current.setDate(dateObj, false); // update display, don't trigger onChange
+        }
+        onChangeRef.current(iso);
+        // Reset flag after React has time to process
+        setTimeout(() => { isInternalUpdate.current = false; }, 50);
+    }, []);
 
     useEffect(() => {
         if (!inputRef.current) return;
 
         fpRef.current = flatpickr(inputRef.current, {
-            dateFormat: 'd/m/Y',       // Display format: dd/mm/yyyy
+            dateFormat: 'd/m/Y',
             allowInput: true,
-            disableMobile: true,        // Always use flatpickr, never native
+            disableMobile: true,
             clickOpens: true,
             defaultDate: value || null,
             onChange: (selectedDates) => {
                 if (selectedDates.length > 0) {
-                    // Convert to YYYY-MM-DD for internal state
-                    const d = selectedDates[0];
-                    const yyyy = d.getFullYear();
-                    const mm = String(d.getMonth() + 1).padStart(2, '0');
-                    const dd = String(d.getDate()).padStart(2, '0');
-                    onChange(`${yyyy}-${mm}-${dd}`);
-                } else {
-                    onChange('');
+                    isInternalUpdate.current = true;
+                    onChangeRef.current(toISO(selectedDates[0]));
+                    setTimeout(() => { isInternalUpdate.current = false; }, 50);
                 }
             }
         });
@@ -41,23 +118,55 @@ export default function DatePicker({ value, onChange, required, className = 'inp
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Sync external value changes
+    // Sync external value changes (from parent state)
     useEffect(() => {
-        if (fpRef.current && value) {
+        if (isInternalUpdate.current) return; // skip if we caused this update
+        if (!fpRef.current) return;
+
+        if (value) {
             fpRef.current.setDate(value, false);
-        } else if (fpRef.current && !value) {
+        } else {
             fpRef.current.clear();
         }
     }, [value]);
 
     const handleDoubleClick = () => {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const iso = `${yyyy}-${mm}-${dd}`;
-        onChange(iso);
-        if (fpRef.current) fpRef.current.setDate(today, false);
+        commitDate(new Date());
+    };
+
+    const handleBlur = () => {
+        if (!inputRef.current) return;
+        const val = inputRef.current.value;
+
+        if (!val) {
+            isInternalUpdate.current = true;
+            onChangeRef.current('');
+            if (fpRef.current) fpRef.current.clear();
+            setTimeout(() => { isInternalUpdate.current = false; }, 50);
+            return;
+        }
+
+        // If flatpickr already has a valid selected date, don't re-parse
+        if (fpRef.current && fpRef.current.selectedDates.length > 0) {
+            return;
+        }
+
+        // Try flexible parsing for manual input
+        const parsed = parseFlexibleDate(val);
+        if (parsed) {
+            commitDate(parsed);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const parsed = parseFlexibleDate(e.target.value);
+            if (parsed) {
+                commitDate(parsed);
+                if (fpRef.current) fpRef.current.close();
+            }
+        }
     };
 
     return (
@@ -66,11 +175,12 @@ export default function DatePicker({ value, onChange, required, className = 'inp
                 ref={inputRef}
                 type="text"
                 className={className}
-                style={{ ...style, cursor: 'pointer', paddingRight: '35px' }}
+                style={{ ...style, cursor: 'text', paddingRight: '35px' }}
                 required={required}
                 placeholder={placeholder || 'dd/mm/yyyy'}
                 onDoubleClick={handleDoubleClick}
-                readOnly
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
             />
             <div style={{ 
                 position: 'absolute', 
