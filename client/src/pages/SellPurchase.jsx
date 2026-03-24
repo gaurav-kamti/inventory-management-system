@@ -13,6 +13,7 @@ function SellPurchase() {
     const [customers, setCustomers] = useState([])
     const [showPurchaseModal, setShowPurchaseModal] = useState(false) // Renamed from showAddModal
     const [showSellModal, setShowSellModal] = useState(false)
+    const [companyProfile, setCompanyProfile] = useState({})
 
     // Refs for Focus Management
     const purchaseInvoiceRef = useRef(null)
@@ -181,7 +182,19 @@ function SellPurchase() {
         fetchProducts()
         fetchSuppliers()
         fetchCustomers()
+        fetchCompanyProfile()
     }, [])
+
+    const fetchCompanyProfile = async () => {
+        try {
+            const response = await api.get('/settings/company_profile')
+            if (response.data) {
+                setCompanyProfile(response.data)
+            }
+        } catch (error) {
+            console.error('Error fetching company profile:', error)
+        }
+    }
 
     const fetchProducts = async () => {
         const response = await api.get('/products')
@@ -356,7 +369,14 @@ function SellPurchase() {
                 cgst: addTax / 2,
                 sgst: addTax / 2,
                 total: addTotal,
-                roundOff: addRoundOff
+                roundOff: addRoundOff,
+                deliveryNote: addForm.deliveryNote,
+                paymentTerms: addForm.paymentTerms,
+                supplierRef: addForm.supplierRef,
+                buyerOrderNo: addForm.buyerOrderNo,
+                buyerOrderDate: addForm.buyerOrderDate,
+                despatchedThrough: addForm.despatchedThrough,
+                termsOfDelivery: addForm.termsOfDelivery
             }
 
             setLastPurchaseData(completedPurchase)
@@ -462,6 +482,7 @@ function SellPurchase() {
 
     const handleSellItem = async (e) => {
         e.preventDefault()
+        const selectedCustomer = customers.find(c => c.id === sellForm.customerId)
 
         if (cartItems.length === 0) return alert('Please add items to sell')
 
@@ -522,7 +543,14 @@ function SellPurchase() {
                 cgst: sellTax / 2,
                 sgst: sellTax / 2,
                 total: sellTotal,
-                roundOff: sellRoundOff
+                roundOff: sellRoundOff,
+                deliveryNote: sellForm.deliveryNote,
+                paymentTerms: sellForm.paymentTerms,
+                supplierRef: sellForm.supplierRef,
+                buyerOrderNo: sellForm.buyerOrderNo,
+                buyerOrderDate: sellForm.buyerOrderDate,
+                despatchedThrough: sellForm.despatchedThrough,
+                termsOfDelivery: sellForm.termsOfDelivery
             })
             setShowSuccessModal(true)
 
@@ -851,11 +879,7 @@ function SellPurchase() {
                                         style={{ padding: '6px 8px', fontSize: '0.8rem' }}
                                     />
                                 </div>
-                                <div className="invoice-field">
-                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>DESPATCHED VIA</label>
-                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.despatchedThrough} onChange={e => setAddForm(prev => ({ ...prev, despatchedThrough: e.target.value }))} />
-                                </div>
-                                <div className="invoice-field" style={{ gridColumn: 'span 2' }}>
+                                <div className="invoice-field" style={{ gridColumn: 'span 3' }}>
                                     <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>TERMS OF DELIVERY</label>
                                     <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={addForm.termsOfDelivery} onChange={e => setAddForm(prev => ({ ...prev, termsOfDelivery: e.target.value }))} />
                                 </div>
@@ -1062,7 +1086,7 @@ function SellPurchase() {
 
                                         <td style={{ fontWeight: '800', fontSize: '1.1rem', textAlign: 'center' }}>
                                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7 }}>$</span>
+                                                <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7 }}>₹</span>
                                                 <input
                                                     className="input"
                                                     type="number"
@@ -1111,16 +1135,16 @@ function SellPurchase() {
                                         {purchaseHsnSummary.map((sum, i) => (
                                             <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                                 <td style={{ padding: '8px' }}>{sum.hsn}</td>
-                                                <td style={{ textAlign: 'right', padding: '8px' }}>${sum.taxableValue.toFixed(2)}</td>
+                                                <td style={{ textAlign: 'right', padding: '8px' }}>₹{sum.taxableValue.toFixed(2)}</td>
                                                 {purchaseGstSplit.type === 'CGST/SGST' ? (
                                                     <>
-                                                        <td style={{ textAlign: 'right', padding: '8px' }}>${(sum.totalTax / 2).toFixed(2)}</td>
-                                                        <td style={{ textAlign: 'right', padding: '8px' }}>${(sum.totalTax / 2).toFixed(2)}</td>
+                                                        <td style={{ textAlign: 'right', padding: '8px' }}>₹{(sum.totalTax / 2).toFixed(2)}</td>
+                                                        <td style={{ textAlign: 'right', padding: '8px' }}>₹{(sum.totalTax / 2).toFixed(2)}</td>
                                                     </>
                                                 ) : (
-                                                    <td style={{ textAlign: 'right', padding: '8px' }}>${sum.totalTax.toFixed(2)}</td>
+                                                    <td style={{ textAlign: 'right', padding: '8px' }}>₹{sum.totalTax.toFixed(2)}</td>
                                                 )}
-                                                <td style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>${sum.totalTax.toFixed(2)}</td>
+                                                <td style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>₹{sum.totalTax.toFixed(2)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1136,17 +1160,17 @@ function SellPurchase() {
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Value</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '800' }}>${addTaxable.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '800' }}>₹{addTaxable.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({addForm.gstPercent}%)</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+${addTax.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+₹{addTax.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>After GST</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>${addAfterGST.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹{addAfterGST.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
@@ -1155,17 +1179,17 @@ function SellPurchase() {
                                         value={addForm.discountPercent} 
                                         onChange={e => setAddForm(prev => ({...prev, discountPercent: e.target.value}))} 
                                     />
-                                    <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-${addDiscAmt.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-₹{addDiscAmt.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Round Off</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>${addRoundOff.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>₹{addRoundOff.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right', paddingLeft: '20px', borderLeft: '1px solid var(--glass-border)' }}>
                                     <p style={{ color: 'var(--accent)', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '800', textTransform: 'uppercase' }}>Grand Total</p>
-                                    <p style={{ fontSize: '2.4rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>${addTotal.toFixed(2)}</p>
+                                    <p style={{ fontSize: '2.4rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>₹{addTotal.toFixed(2)}</p>
                                 </div>
                             </div>
 
@@ -1311,11 +1335,7 @@ function SellPurchase() {
                                         style={{ padding: '6px 8px', fontSize: '0.8rem' }}
                                     />
                                 </div>
-                                <div className="invoice-field">
-                                    <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>DESPATCHED VIA</label>
-                                    <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={sellForm.despatchedThrough} onChange={e => setSellForm(prev => ({ ...prev, despatchedThrough: e.target.value }))} />
-                                </div>
-                                <div className="invoice-field" style={{ gridColumn: 'span 2' }}>
+                                <div className="invoice-field" style={{ gridColumn: 'span 3' }}>
                                     <label style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'block' }}>TERMS OF DELIVERY</label>
                                     <input className="input" style={{ padding: '6px 8px', fontSize: '0.8rem' }} value={sellForm.termsOfDelivery} onChange={e => setSellForm(prev => ({ ...prev, termsOfDelivery: e.target.value }))} />
                                 </div>
@@ -1392,7 +1412,7 @@ function SellPurchase() {
                                             <td style={{ textAlign: 'center' }}><input type="number" min="0" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
                                             <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7, fontSize: '0.9rem' }}>$</span>
+                                                    <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7, fontSize: '0.9rem' }}>₹</span>
                                                     <input
                                                         className="input"
                                                         type="number"
@@ -1535,7 +1555,7 @@ function SellPurchase() {
 
                                         <td style={{ fontWeight: '800', fontSize: '1.1rem', textAlign: 'center' }}>
                                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7 }}>$</span>
+                                                <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7 }}>₹</span>
                                                 <input
                                                     className="input"
                                                     type="number"
@@ -1608,12 +1628,12 @@ function SellPurchase() {
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Value</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '800' }}>${sellTaxable.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '800' }}>₹{sellTaxable.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({sellForm.gstPercent}%)</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+${sellTax.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+₹{sellTax.toFixed(2)}</p>
                                 </div>
 
 
@@ -1623,17 +1643,17 @@ function SellPurchase() {
                                         value={sellForm.discountPercent} 
                                         onChange={e => setSellForm(prev => ({...prev, discountPercent: e.target.value}))} 
                                     />
-                                    <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-${sellDiscAmt.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-₹{sellDiscAmt.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Round Off</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>${sellRoundOff.toFixed(2)}</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>₹{sellRoundOff.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right', paddingLeft: '20px', borderLeft: '1px solid var(--glass-border)' }}>
                                     <p style={{ color: 'var(--accent)', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '800', textTransform: 'uppercase' }}>Grand Total</p>
-                                    <p style={{ fontSize: '2.4rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>${sellTotal.toFixed(2)}</p>
+                                    <p style={{ fontSize: '2.4rem', fontWeight: '900', color: 'var(--accent)', letterSpacing: '-1px' }}>₹{sellTotal.toFixed(2)}</p>
                                 </div>
                             </div>
 
@@ -1798,9 +1818,9 @@ function SellPurchase() {
             <div id="invoice-print-template" style={{ display: 'none' }}>
                 {/* Render either Sale or Purchase template depending on what's active/available */}
                 {(showSuccessModal && lastSaleData) ? (
-                    <InvoiceTemplate sale={lastSaleData} customer={lastSaleData?.customer} />
+                    <InvoiceTemplate sale={lastSaleData} customer={lastSaleData?.customer} company={companyProfile} />
                 ) : (showPurchaseSuccessModal && lastPurchaseData) ? (
-                    <InvoiceTemplate sale={lastPurchaseData} customer={lastPurchaseData?.customer} />
+                    <InvoiceTemplate sale={lastPurchaseData} customer={lastPurchaseData?.customer} company={companyProfile} />
                 ) : null}
             </div>
         </div>

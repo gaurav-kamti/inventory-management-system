@@ -15,9 +15,9 @@ function numWords(n) {
     }
     let w = '', r = Math.floor(n);
     if (r >= 10000000) { w += h(Math.floor(r / 10000000)) + 'Crore '; r %= 10000000; }
-    if (r >= 100000)   { w += h(Math.floor(r / 100000)) + 'Lakh '; r %= 100000; }
-    if (r >= 1000)     { w += h(Math.floor(r / 1000)) + 'Thousand '; r %= 1000; }
-    if (r >= 100)      { w += h(Math.floor(r / 100)) + 'Hundred '; r %= 100; }
+    if (r >= 100000) { w += h(Math.floor(r / 100000)) + 'Lakh '; r %= 100000; }
+    if (r >= 1000) { w += h(Math.floor(r / 1000)) + 'Thousand '; r %= 1000; }
+    if (r >= 100) { w += h(Math.floor(r / 100)) + 'Hundred '; r %= 100; }
     if (r > 0) w += h(r);
     return 'INR ' + w.trim() + ' Only';
 }
@@ -48,7 +48,7 @@ function groupByHSN(items, gstPercent) {
         if (!map[hsn]) map[hsn] = { hsn, taxable: 0 };
         map[hsn].taxable += taxable;
     });
-    
+
     return Object.values(map).map(row => {
         const cgstRate = gstPercent / 2;
         const sgstRate = gstPercent / 2;
@@ -109,26 +109,29 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
     const saleAfterGST = sale.afterGST || (Number(taxableAmount) + Number(saleTax));
 
     const co = {
-        name:      'M/s. R.M. TRADING',
-        address:   '2 & 3 Mahendra Nath Roy Lane, Mullick Fatak, Ground Floor, Howrah – 711 101',
-        gstin:     '19ABKFR7112F1Z3',
-        pan:       'ABKFR7112F',
-        phone:     '+91 7003866764 / 8013388430',
-        email:     'rmtrading65@gmail.com',
-        bank:      'IDBI BANK',
-        accno:     '0359102000049443',
-        ifsc:      'IBKL0000359',
-        branch:    'Roy Villa, 240, Panchanantala Road, Howrah Branch',
-        state:     'West Bengal',
-        stateCode: '19',
-        ...company,
+        name: company.name || 'M/s. R.M. TRADING',
+        address: company.address || '2 & 3 Mahendra Nath Roy Lane, Mullick Fatak, Ground Floor, Howrah – 711 101',
+        pincode: company.pincode || company.pinCode || '711 101',
+        gstin: company.gstin || company.gstNumber || '19ABKFR7112F1Z3',
+        pan: company.pan || company.panNumber || 'ABKFR7112F',
+        phone: company.phone || '+91 7003866764',
+        altPhone: company.altPhone || company.alternatePhone || '8013388430',
+        email: company.email || 'rmtrading65@gmail.com',
+        altEmail: company.altEmail || '',
+        bank: company.bankName || company.bank || 'IDBI BANK',
+        accNo: company.accNo || company.accno || '0359102000049443',
+        ifsc: company.ifsc || company.ifscCode || 'IBKL0000359',
+        branch: company.branch || 'Roy Villa, 240, Panchanantala Road, Howrah Branch',
+        state: company.state || 'West Bengal',
+        stateCode: company.stateCode || '19',
+        jurisdiction: company.jurisdiction || 'Howrah',
     };
 
     const isIGST = customer?.stateCode && customer.stateCode !== co.stateCode;
     const isPurchase = type === 'PURCHASE';
-    const isReceipt  = type === 'RECEIPT';
-    const isPayment  = type === 'PAYMENT';
-    const isVoucher  = isReceipt || isPayment;
+    const isReceipt = type === 'RECEIPT';
+    const isPayment = type === 'PAYMENT';
+    const isVoucher = isReceipt || isPayment;
 
     const docTitle = isVoucher ? (isReceipt ? 'Receipt Voucher' : 'Payment Voucher') : 'Tax Invoice';
 
@@ -136,7 +139,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
 
     const displayItems = isVoucher
         ? [{
-            name:   `Amount ${isReceipt ? 'received' : 'paid'} via ${mode || 'Cash'}${notes ? ` (${notes})` : ''}`,
+            name: `Amount ${isReceipt ? 'received' : 'paid'} via ${mode || 'Cash'}${notes ? ` (${notes})` : ''}`,
             hsn: '—', size: '', qty: 1, unit: 'Nos',
             rate: sale.amount || total,
             amount: sale.amount || total,
@@ -146,12 +149,12 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
 
 
     const displayTotal = isVoucher ? (sale.amount || total) : total;
-    
+
     // HSN tax breakdown groups
-    const hsnGroups       = !isVoucher ? groupByHSN(displayItems, gstPercent) : [];
+    const hsnGroups = !isVoucher ? groupByHSN(displayItems, gstPercent) : [];
     const hsnTotalTaxable = hsnGroups.reduce((s, r) => s + r.taxable, 0);
-    const hsnTotalCgst    = hsnGroups.reduce((s, r) => s + r.cgstAmt, 0);
-    const hsnTotalSgst    = hsnGroups.reduce((s, r) => s + r.sgstAmt, 0);
+    const hsnTotalCgst = hsnGroups.reduce((s, r) => s + r.cgstAmt, 0);
+    const hsnTotalSgst = hsnGroups.reduce((s, r) => s + r.sgstAmt, 0);
 
     return (
         <div className="inv-wrap">
@@ -176,9 +179,9 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                 {/* Seller block — left side of header */}
                 <div className="inv-seller">
                     <div className="inv-seller-name">{co.name}</div>
-                    <div className="inv-seller-sub">{co.address}</div>
+                    <div className="inv-seller-sub">{co.address}, {co.pincode}</div>
                     <div className="inv-seller-sub">GSTIN/UIN: {co.gstin}</div>
-                    <div className="inv-seller-sub">Contact No.: {co.phone}</div>
+                    <div className="inv-seller-sub">Contact No.: {co.phone}{co.altPhone ? ` / ${co.altPhone}` : ''}</div>
                     <div className="inv-seller-sub">E-Mail: {co.email}</div>
                 </div>
 
@@ -253,10 +256,10 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                     <div className="inv-buyer-right">
                         <div className="buyer-rcell buyer-rcell--top">
                             <span className="meta-label">Delivery By</span>
-                            <div>{despatchedThrough || 'VAN / TRANSPORT / SELF'}</div>
+                            <div>VAN / TRANSPORT / SELF</div>
                         </div>
                         <div className="buyer-rcell">
-                            Delivery At :- ————— Do —————
+                            Delivery At :- ______________________________ Do _______________________
                         </div>
                     </div>
                 )}
@@ -315,7 +318,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                                     <td className="r subtotal-val" style={{ color: '#ff4757' }}>-{fmt2(discountAmount)}</td>
                                 </tr>
                             )}
-                             <tr className="subtotal-row">
+                            <tr className="subtotal-row">
                                 <td colSpan={7} className="subtotal-label bold-label">Rounded Off</td>
                                 <td className="r subtotal-val">{roundOff >= 0 ? '+' : '-'}{fmt2(Math.abs(roundOff))}</td>
                             </tr>
@@ -444,7 +447,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                     <div className="meta-label">NEFT / RTGS / Transfer Bank Details</div>
                     <div className="bank-name">{co.bank}</div>
                     <div className="bank-line">
-                        A/c No.: {co.accno} &nbsp;|&nbsp; IFSC Code: {co.ifsc}
+                        A/c No.: {co.accNo} &nbsp;|&nbsp; IFSC Code: {co.ifsc}
                     </div>
                     <div className="bank-line">{co.branch}</div>
                     <div className="firm-pan">Firm PAN: {co.pan}</div>
@@ -454,7 +457,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                         and that all particulars are true and correct.
                     </div>
                     <div className="inv-jurisdiction">
-                        Subject to {customer?.state || co.state} Jurisdiction.
+                        Subject to {co.jurisdiction}.
                     </div>
                 </div>
                 <div className="footer-right">

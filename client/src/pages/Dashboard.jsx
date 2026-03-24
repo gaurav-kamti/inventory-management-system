@@ -68,7 +68,7 @@ function Dashboard() {
                         <h3>Total Items</h3>
                         <p className="stat-value">{stats.totalItems}</p>
                         <p className="stat-label" style={{ fontSize: '0.9em', color: '#86efac', marginTop: '5px' }}>
-                            Worth: ${stats.totalItemsWorth.toFixed(2)}
+                            Worth: ₹{stats.totalItemsWorth.toFixed(2)}
                         </p>
                     </div>
                 </div>
@@ -87,13 +87,13 @@ function Dashboard() {
                         <h3>Sales Overview</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             <p style={{ margin: 0, fontSize: '1.2em', fontWeight: 'bold' }}>
-                                Gross Sales: <span style={{ color: 'white' }}>${stats.totalSold.toFixed(2)}</span>
+                                Gross Sales: <span style={{ color: 'white' }}>₹{stats.totalSold.toFixed(2)}</span>
                             </p>
                             <p style={{ margin: 0, fontSize: '0.95em', color: '#86efac' }}>
-                                Total Collections: ${stats.paymentReceived.toFixed(2)}
+                                Total Collections: ₹{stats.paymentReceived.toFixed(2)}
                             </p>
                             <p style={{ margin: 0, fontSize: '0.95em', color: '#fca5a5' }}>
-                                Total Outstanding: ${stats.paymentRemaining.toFixed(2)}
+                                Total Outstanding: ₹{stats.paymentRemaining.toFixed(2)}
                             </p>
                         </div>
                     </div>
@@ -116,7 +116,7 @@ function Dashboard() {
                             <tr key={customer.id}>
                                 <td>{customer.name}</td>
                                 <td>{customer.phone}</td>
-                                <td>${parseFloat(customer.outstandingBalance || 0).toFixed(2)}</td>
+                                <td>₹{parseFloat(customer.outstandingBalance || 0).toFixed(2)}</td>
                                 <td>
                                     {customer.outstandingBalance > 0 ? (
                                         <span className="badge badge-warning">Pending</span>
@@ -134,3 +134,4 @@ function Dashboard() {
 }
 
 export default Dashboard
+Dashboard

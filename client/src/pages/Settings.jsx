@@ -2,6 +2,98 @@ import React, { useState, useEffect } from 'react'
 import api from '../services/api'
 import './Settings.css'
 
+const INDIAN_STATES = [
+  { name: 'Andaman & Nicobar Islands', code: '35' },
+  { name: 'Andhra Pradesh', code: '37' },
+  { name: 'Arunachal Pradesh', code: '12' },
+  { name: 'Assam', code: '18' },
+  { name: 'Bihar', code: '10' },
+  { name: 'Chandigarh', code: '04' },
+  { name: 'Chhattisgarh', code: '22' },
+  { name: 'Dadra & Nagar Haveli and Daman & Diu', code: '26' },
+  { name: 'Delhi', code: '07' },
+  { name: 'Goa', code: '30' },
+  { name: 'Gujarat', code: '24' },
+  { name: 'Haryana', code: '06' },
+  { name: 'Himachal Pradesh', code: '02' },
+  { name: 'Jammu & Kashmir', code: '01' },
+  { name: 'Jharkhand', code: '20' },
+  { name: 'Karnataka', code: '29' },
+  { name: 'Kerala', code: '32' },
+  { name: 'Ladakh', code: '38' },
+  { name: 'Lakshadweep', code: '31' },
+  { name: 'Madhya Pradesh', code: '23' },
+  { name: 'Maharashtra', code: '27' },
+  { name: 'Manipur', code: '14' },
+  { name: 'Meghalaya', code: '17' },
+  { name: 'Mizoram', code: '15' },
+  { name: 'Nagaland', code: '13' },
+  { name: 'Odisha', code: '21' },
+  { name: 'Puducherry', code: '34' },
+  { name: 'Punjab', code: '03' },
+  { name: 'Rajasthan', code: '08' },
+  { name: 'Sikkim', code: '11' },
+  { name: 'Tamil Nadu', code: '33' },
+  { name: 'Telangana', code: '36' },
+  { name: 'Tripura', code: '16' },
+  { name: 'Uttar Pradesh', code: '09' },
+  { name: 'Uttarakhand', code: '05' },
+  { name: 'West Bengal', code: '19' },
+]
+
+function Field({ label, required, hint, error, children, className = '' }) {
+  return (
+    <div className={`cp-field ${className}`}>
+      <label className="cp-label">
+        {label}
+        {required && <span className="cp-label-required">·</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+function Input({ value, onChange, placeholder, maxLength, className = '', ...props }) {
+  const len = value?.length || 0
+  const isValid = value && value.length > 0
+  const stateClass = isValid ? 'valid' : ''
+  return (
+    <div className="cp-input-wrap" style={{ width: '100%' }}>
+      <input
+        className={`cp-input ${stateClass} ${className}`}
+        value={value || ''}
+        onChange={onChange}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        {...props}
+      />
+      {maxLength && len > 0 && (
+        <span className="cp-char-count" style={{
+          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+          pointerEvents: 'none'
+        }}>
+          {len}/{maxLength}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function PrefixInput({ prefix, value, onChange, placeholder }) {
+  const isValid = value && value.length > 0
+  return (
+    <div className="cp-input-prefix">
+      <span className="cp-prefix-tag">{prefix}</span>
+      <input
+        className={`cp-input ${isValid ? 'valid' : ''}`}
+        value={value || ''}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
+    </div>
+  )
+}
+
 function Settings() {
     const [activeTab, setActiveTab] = useState('profile')
     const [customers, setCustomers] = useState([])
@@ -25,9 +117,29 @@ function Settings() {
         prefix: 'RM/', sequence: 1, fiscalYear: '25-26'
     })
     const [companyForm, setCompanyForm] = useState({
-        name: '', address: '', gstNumber: '', panNumber: '', phone: '', email: '',
-        bankName: '', accountNo: '', ifscCode: '', branch: '', jurisdiction: 'Howrah'
+        name: 'R.M.TRADING',
+        address: '2 & 3 MAHENDRA NATH ROY LANE,\nMULLICK FATAK, GROUND FLOOR\nHOWRAH 711101',
+        pincode: '',
+        gstin: '19ABKFR7112F1Z3',
+        pan: 'ABKFR7112F',
+        phone: '7003866764',
+        altPhone: '',
+        email: 'rmtrading65@gmail.com',
+        altEmail: 'manishjee789@gmail.com',
+        state: 'West Bengal',
+        stateCode: '19',
+        bankName: 'IDBI BANK',
+        accNo: '0359102000049443',
+        ifsc: 'IBKL0000359',
+        branch: 'Howrah',
+        jurisdiction: 'Howrah',
     })
+
+    const [saving, setSaving] = useState(false)
+    const [saved, setSaved] = useState(false)
+    const [showToast, setShowToast] = useState(false)
+    const [errors, setErrors] = useState({})
+    const [lastSaved, setLastSaved] = useState(null)
 
     useEffect(() => {
         fetchCustomers()
@@ -51,7 +163,7 @@ function Settings() {
         try {
             const response = await api.get('/settings/company_profile')
             if (response.data) {
-                setCompanyForm(response.data)
+                setCompanyForm(prev => ({ ...prev, ...response.data }))
             }
         } catch (error) {
             console.error('Error fetching company profile:', error)
@@ -160,15 +272,44 @@ function Settings() {
         }
     }
 
+    const validateCompany = () => {
+        const errs = {}
+        if (!companyForm.name.trim()) errs.name = 'Company name is required'
+        if (!companyForm.gstin.trim()) errs.gstin = 'GSTIN is required'
+        else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(companyForm.gstin))
+            errs.gstin = 'Invalid GSTIN format'
+        if (!companyForm.pan.trim()) errs.pan = 'PAN is required'
+        else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(companyForm.pan))
+            errs.pan = 'Invalid PAN format'
+        if (!companyForm.phone.trim()) errs.phone = 'Primary phone is required'
+        if (!companyForm.email.trim()) errs.email = 'Email is required'
+        return errs
+    }
+
     const handleCompanyProfileSubmit = async (e) => {
-        e.preventDefault()
+        if (e) e.preventDefault()
+        const errs = validateCompany()
+        if (Object.keys(errs).length > 0) {
+            setErrors(errs)
+            return
+        }
+        setErrors({})
+        setSaving(true)
         try {
             await api.post('/settings', {
                 key: 'company_profile',
                 value: companyForm
             })
-            alert('Company profile updated successfully!')
+            setSaving(false)
+            setSaved(true)
+            setLastSaved(new Date())
+            setShowToast(true)
+            setTimeout(() => {
+                setSaved(false)
+                setShowToast(false)
+            }, 3000)
         } catch (error) {
+            setSaving(false)
             alert('Error updating company profile')
         }
     }
@@ -211,72 +352,189 @@ function Settings() {
             </div>
 
             {activeTab === 'profile' && (
-                <div className="card">
-                    <div className="section-header">
-                        <h2><span>🏢</span> Company Profile</h2>
+                <div className="cp-container">
+                    <div className="cp-header">
+                        <div className="cp-header-left">
+                            <div className="cp-eyebrow">Settings · Business</div>
+                            <h1 className="cp-title">Company <em>Profile</em></h1>
+                        </div>
+                        <div className="cp-header-badge">
+                            {lastSaved
+                                ? `Last saved: ${String(lastSaved.getDate()).padStart(2, '0')}/${String(lastSaved.getMonth() + 1).padStart(2, '0')}/${lastSaved.getFullYear()}`
+                                : 'Not yet saved'
+                            }
+                        </div>
                     </div>
-                    <form onSubmit={handleCompanyProfileSubmit} className="settings-form company-profile-form">
-                        <div className="settings-grid-form">
-                            <div className="form-group full-width">
-                                <label>Company Name</label>
-                                <input className="input" value={companyForm.name}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })} required />
-                            </div>
-                            <div className="form-group full-width">
-                                <label>Address</label>
-                                <textarea className="input" rows="2" value={companyForm.address}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })} required />
-                            </div>
-                            <div className="form-group">
-                                <label>GSTIN</label>
-                                <input className="input" value={companyForm.gstNumber}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, gstNumber: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>PAN</label>
-                                <input className="input" value={companyForm.panNumber}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, panNumber: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Contact Phone</label>
-                                <input className="input" value={companyForm.phone}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Email Address</label>
-                                <input className="input" value={companyForm.email}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })} />
+
+                    {/* ── Section 1: Identity ── */}
+                    <div className="cp-section">
+                        <div className="cp-section-header">
+                            <div className="cp-section-icon">◈</div>
+                            <span className="cp-section-title">Business Identity</span>
+                            <span className="cp-section-num">01 / 03</span>
+                        </div>
+                        <div className="cp-fields">
+                            <Field label="Company Name" required error={errors.name}>
+                                <Input value={companyForm.name} onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })} placeholder="M/s. Your Trading Co." maxLength={80} />
+                            </Field>
+
+                            <div className="cp-state-row">
+                                <Field label="State" hint="As registered under GST">
+                                    <select
+                                        className={`cp-select ${companyForm.state ? 'valid' : ''}`}
+                                        value={companyForm.state}
+                                        onChange={(e) => {
+                                            const selected = INDIAN_STATES.find(s => s.name === e.target.value)
+                                            setCompanyForm(f => ({ ...f, state: e.target.value, stateCode: selected?.code || '' }))
+                                        }}
+                                    >
+                                        <option value="">Select State</option>
+                                        {INDIAN_STATES.map(s => (
+                                            <option key={s.code} value={s.name}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </Field>
+                                <Field label="Code" hint="Auto">
+                                    <input
+                                        className={`cp-input cp-code-input ${companyForm.stateCode ? 'valid' : ''}`}
+                                        value={companyForm.stateCode || ''}
+                                        readOnly
+                                        placeholder="—"
+                                        style={{ textAlign: 'center', cursor: 'default', opacity: companyForm.stateCode ? 1 : 0.5 }}
+                                    />
+                                </Field>
+                                <Field label="PIN Code">
+                                    <Input value={companyForm.pincode} onChange={(e) => setCompanyForm({ ...companyForm, pincode: e.target.value })} placeholder="700 000" maxLength={6} />
+                                </Field>
                             </div>
 
-                            <h3 className="section-subtitle full-width">Bank Details</h3>
-                            <div className="form-group">
-                                <label>Bank Name</label>
-                                <input className="input" value={companyForm.bankName}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, bankName: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>A/c No.</label>
-                                <input className="input" value={companyForm.accountNo}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, accountNo: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>IFSC Code</label>
-                                <input className="input" value={companyForm.ifscCode}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, ifscCode: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Branch</label>
-                                <input className="input" value={companyForm.branch}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, branch: e.target.value })} />
-                            </div>
-                            <div className="form-group full-width">
-                                <label>Jurisdiction (e.g. Subject to Howrah Jurisdiction)</label>
-                                <input className="input" value={companyForm.jurisdiction}
-                                    onChange={(e) => setCompanyForm({ ...companyForm, jurisdiction: e.target.value })} />
+                            <Field label="Address" required>
+                                <textarea
+                                    className={`cp-input ${companyForm.address ? 'valid' : ''}`}
+                                    value={companyForm.address || ''}
+                                    onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
+                                    placeholder="Street, Area, City"
+                                    rows={3}
+                                />
+                            </Field>
+
+                            <div className="cp-grid-3">
+                                <Field label="GSTIN" required error={errors.gstin} hint="15-character GST number">
+                                    <Input
+                                        value={companyForm.gstin}
+                                        onChange={(e) => setCompanyForm({ ...companyForm, gstin: e.target.value.toUpperCase() })}
+                                        placeholder="19ABCDE1234F1Z5"
+                                        maxLength={15}
+                                        className={errors.gstin ? 'error' : ''}
+                                    />
+                                </Field>
+                                <Field label="PAN" required error={errors.pan} hint="10-character PAN">
+                                    <Input
+                                        value={companyForm.pan}
+                                        onChange={(e) => setCompanyForm({ ...companyForm, pan: e.target.value.toUpperCase() })}
+                                        placeholder="ABCDE1234F"
+                                        maxLength={10}
+                                        className={errors.pan ? 'error' : ''}
+                                    />
+                                </Field>
+                                <Field label="Jurisdiction">
+                                    <Input value={companyForm.jurisdiction} onChange={(e) => setCompanyForm({ ...companyForm, jurisdiction: e.target.value })} placeholder="Howrah" />
+                                </Field>
                             </div>
                         </div>
-                        <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px', marginTop: '20px' }}>Save Company Profile</button>
-                    </form>
+                    </div>
+
+                    {/* ── Section 2: Contact ── */}
+                    <div className="cp-section">
+                        <div className="cp-section-header">
+                            <div className="cp-section-icon">◉</div>
+                            <span className="cp-section-title">Contact Details</span>
+                            <span className="cp-section-num">02 / 03</span>
+                        </div>
+                        <div className="cp-fields">
+                            <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '24px', alignItems: 'start' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                                    <Field label="Primary Phone" required error={errors.phone}>
+                                        <PrefixInput
+                                            prefix="+91"
+                                            value={companyForm.phone}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
+                                            placeholder="9876543210"
+                                        />
+                                    </Field>
+                                    <Field label="Alternate Phone">
+                                        <PrefixInput
+                                            prefix="+91"
+                                            value={companyForm.altPhone}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, altPhone: e.target.value })}
+                                            placeholder="9876543210"
+                                        />
+                                    </Field>
+                                </div>
+                                <Field label="Email" required error={errors.email}>
+                                    <Input
+                                        type="email"
+                                        value={companyForm.email}
+                                        onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
+                                        placeholder="company@email.com"
+                                        className={errors.email ? 'error' : ''}
+                                    />
+                                </Field>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Section 3: Bank ── */}
+                    <div className="cp-section">
+                        <div className="cp-section-header">
+                            <div className="cp-section-icon">⬡</div>
+                            <span className="cp-section-title">Bank Details</span>
+                            <span className="cp-section-num">03 / 03</span>
+                        </div>
+                        <div className="cp-fields">
+                            <div className="cp-grid-2">
+                                <Field label="Bank Name">
+                                    <Input value={companyForm.bankName} onChange={(e) => setCompanyForm({ ...companyForm, bankName: e.target.value })} placeholder="IDBI Bank" />
+                                </Field>
+                                <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+                                    <Field label="Account Number">
+                                        <div style={{ maxWidth: '45%', minWidth: '180px' }}>
+                                            <Input value={companyForm.accNo} onChange={(e) => setCompanyForm({ ...companyForm, accNo: e.target.value })} placeholder="000000000000000" />
+                                        </div>
+                                    </Field>
+                                    <Field label="IFSC Code">
+                                        <Input
+                                            value={companyForm.ifsc}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, ifsc: e.target.value.toUpperCase() })}
+                                            placeholder="IBKL0000359"
+                                            maxLength={11}
+                                        />
+                                    </Field>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="cp-footer">
+                        <div className="cp-footer-note">
+                            Changes apply to all future invoices.<br />
+                            Existing records remain unaffected.
+                        </div>
+                        <button
+                            className={`cp-save-btn ${saving ? 'saving' : ''} ${saved ? 'saved' : ''}`}
+                            onClick={handleCompanyProfileSubmit}
+                            disabled={saving}
+                        >
+                            <span className="btn-text">
+                                {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Profile'}
+                            </span>
+                        </button>
+                    </div>
+
+                    <div className={`cp-toast ${showToast ? 'show' : ''}`}>
+                        ✓ Profile updated successfully
+                    </div>
                 </div>
             )}
 
@@ -359,12 +617,12 @@ function Settings() {
                     <form onSubmit={handleInvoiceSettingsSubmit} className="settings-form">
                         <div className="form-group">
                             <label>Invoice Prefix (e.g. INV/)</label>
-                            <input className="input" value={invoiceForm.prefix}
+                            <input className="input" value={invoiceForm.prefix || ''}
                                 onChange={(e) => setInvoiceForm({ ...invoiceForm, prefix: e.target.value })} />
                         </div>
                         <div className="form-group">
                             <label>Starting Voucher No.</label>
-                            <input type="number" className="input" value={invoiceForm.sequence}
+                            <input type="number" className="input" value={invoiceForm.sequence || ''}
                                 onChange={(e) => setInvoiceForm({ ...invoiceForm, sequence: e.target.value })} />
                             <p style={{ marginTop: '12px', padding: '15px', background: 'rgba(142,182,155,0.05)', borderRadius: '12px', fontSize: '0.9rem', border: '1px solid var(--glass-border)' }}>
                                 <span style={{ color: 'var(--text-secondary)' }}>Preview: </span>
@@ -373,7 +631,7 @@ function Settings() {
                         </div>
                         <div className="form-group">
                             <label>Fiscal Year</label>
-                            <input className="input" value={invoiceForm.fiscalYear}
+                            <input className="input" value={invoiceForm.fiscalYear || ''}
                                 onChange={(e) => setInvoiceForm({ ...invoiceForm, fiscalYear: e.target.value })} />
                         </div>
                         <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Save Configuration</button>
@@ -464,17 +722,17 @@ function Settings() {
                     <form onSubmit={handlePasswordChange} className="settings-form">
                         <div className="form-group">
                             <label>Current Password</label>
-                            <input type="password" className="input" value={passwordForm.currentPassword}
+                            <input type="password" className="input" value={passwordForm.currentPassword || ''}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required />
                         </div>
                         <div className="form-group">
                             <label>New Password</label>
-                            <input type="password" className="input" value={passwordForm.newPassword}
+                            <input type="password" className="input" value={passwordForm.newPassword || ''}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required />
                         </div>
                         <div className="form-group">
                             <label>Confirm Password</label>
-                            <input type="password" className="input" value={passwordForm.confirmPassword}
+                            <input type="password" className="input" value={passwordForm.confirmPassword || ''}
                                 onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required />
                         </div>
                         <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Update Password</button>
@@ -502,51 +760,51 @@ function Settings() {
                             <div className="settings-grid-form">
                                 <div className="form-group full-width">
                                     <label>Name *</label>
-                                    <input className="input" value={showCustomerModal ? customerForm.name : supplierForm.name}
+                                    <input className="input" value={(showCustomerModal ? customerForm.name : supplierForm.name) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })} required />
                                 </div>
                                 <div className="form-group">
                                     <label>Phone Number *</label>
-                                    <input className="input" value={showCustomerModal ? customerForm.phone : supplierForm.phone}
+                                    <input className="input" value={(showCustomerModal ? customerForm.phone : supplierForm.phone) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} required />
                                 </div>
                                 <div className="form-group">
                                     <label>Email Address</label>
-                                    <input className="input" value={showCustomerModal ? customerForm.email : supplierForm.email}
+                                    <input className="input" value={(showCustomerModal ? customerForm.email : supplierForm.email) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} />
                                 </div>
                                 {showSupplierModal && (
                                     <div className="form-group full-width">
                                         <label>Contact Person</label>
-                                        <input className="input" value={supplierForm.contactPerson}
+                                        <input className="input" value={supplierForm.contactPerson || ''}
                                             onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
                                     </div>
                                 )}
                                 <div className="form-group full-width">
                                     <label>Address / Location</label>
-                                    <textarea className="input" rows="3" value={showCustomerModal ? customerForm.address : supplierForm.address}
+                                    <textarea className="input" rows="3" value={(showCustomerModal ? customerForm.address : supplierForm.address) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, address: e.target.value }) : setSupplierForm({ ...supplierForm, address: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label>PIN Code / Zip</label>
-                                    <input className="input" value={showCustomerModal ? customerForm.pinCode : supplierForm.pinCode}
+                                    <input className="input" value={(showCustomerModal ? customerForm.pinCode : supplierForm.pinCode) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pinCode: e.target.value }) : setSupplierForm({ ...supplierForm, pinCode: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label>GSTIN / Tax ID</label>
-                                    <input className="input" value={showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber}
+                                    <input className="input" value={(showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstNumber: e.target.value }) : setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} />
                                 </div>
                                 {showCustomerModal && (
                                     <>
                                         <div className="form-group">
                                             <label>State</label>
-                                            <input className="input" value={customerForm.state}
+                                            <input className="input" value={customerForm.state || ''}
                                                 onChange={(e) => setCustomerForm({ ...customerForm, state: e.target.value })} />
                                         </div>
                                         <div className="form-group">
                                             <label>State Code</label>
-                                            <input className="input" value={customerForm.stateCode}
+                                            <input className="input" value={customerForm.stateCode || ''}
                                                 onChange={(e) => setCustomerForm({ ...customerForm, stateCode: e.target.value })} />
                                         </div>
                                     </>

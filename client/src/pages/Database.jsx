@@ -21,6 +21,7 @@ function Database() {
     // For Bill Details Modal
     const [selectedInvoice, setSelectedInvoice] = useState(null)
     const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+    const [companyProfile, setCompanyProfile] = useState({})
     const [showExportMenu, setShowExportMenu] = useState(false)
 
     // Helper for dd:mm:yyyy date format
@@ -36,11 +37,22 @@ function Database() {
     useEffect(() => {
         const loadData = async () => {
             setLoading(true)
-            await Promise.all([fetchSales(), fetchPurchases(), fetchVouchers()])
+            await Promise.all([fetchSales(), fetchPurchases(), fetchVouchers(), fetchCompanyProfile()])
             setLoading(false)
         }
         loadData()
     }, [])
+
+    const fetchCompanyProfile = async () => {
+        try {
+            const response = await api.get('/settings/company_profile')
+            if (response.data) {
+                setCompanyProfile(response.data)
+            }
+        } catch (error) {
+            console.error('Error fetching company profile:', error)
+        }
+    }
 
     const fetchSales = async () => {
         try {
@@ -62,7 +74,14 @@ function Database() {
                 discountAmount: s.discountAmount || s.discount || 0,
                 amountDue: s.amountDue || 0,
                 items: s.SaleItems,
-                customer: s.Customer
+                customer: s.Customer,
+                deliveryNote: s.deliveryNote,
+                paymentTerms: s.paymentTerms,
+                supplierRef: s.supplierRef,
+                buyerOrderNo: s.buyerOrderNo,
+                buyerOrderDate: s.buyerOrderDate,
+                despatchedThrough: s.despatchedThrough,
+                termsOfDelivery: s.termsOfDelivery
             })).sort((a, b) => new Date(b.date) - new Date(a.date))
             setSales(salesData)
         } catch (error) {
@@ -90,6 +109,13 @@ function Database() {
                         taxableAmount: p.taxableAmount || 0,
                         tax: p.tax || 0,
                         roundOff: p.roundOff || 0,
+                        deliveryNote: p.deliveryNote,
+                        paymentTerms: p.paymentTerms,
+                        supplierRef: p.supplierRef,
+                        buyerOrderNo: p.buyerOrderNo,
+                        buyerOrderDate: p.buyerOrderDate,
+                        despatchedThrough: p.despatchedThrough,
+                        termsOfDelivery: p.termsOfDelivery,
                         items: []
                     }
                 }
@@ -207,7 +233,7 @@ function Database() {
             inv.invoiceNumber || inv.id,
             inv.partyName,
             inv.type,
-            `$${parseFloat(inv.total).toFixed(2)}`
+            `₹${parseFloat(inv.total).toFixed(2)}`
         ])
 
         autoTable(doc, {
@@ -396,11 +422,11 @@ function Database() {
                                         {activeTab === 'vouchers' ? (
                                             <td style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{inv.mode}</td>
                                         ) : (
-                                            <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(inv.total).toFixed(2)}</td>
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)' }}>₹{parseFloat(inv.total).toFixed(2)}</td>
                                         )}
                                         {activeTab === 'vouchers' && (
                                             <td style={{ fontWeight: '800', color: inv.type === 'RECEIPT' ? 'var(--accent)' : '#ff6b6b' }}>
-                                                ${parseFloat(inv.amount).toFixed(2)}
+                                                ₹{parseFloat(inv.amount).toFixed(2)}
                                             </td>
                                         )}
                                         <td style={{ textAlign: 'right' }}>
@@ -473,9 +499,9 @@ function Database() {
                                             <td style={{ textAlign: 'right', fontWeight: '600', whiteSpace: 'nowrap' }}>
                                                 {item.quantity} {item.unit || item.quantityUnit || 'Pcs'}
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>${parseFloat(item.price).toFixed(2)}</td>
+                                            <td style={{ textAlign: 'right' }}>₹{parseFloat(item.price).toFixed(2)}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--accent)' }}>
-                                                ${parseFloat(item.total).toFixed(2)}
+                                                ₹{parseFloat(item.total).toFixed(2)}
                                             </td>
                                         </tr>
                                     ))}
@@ -483,14 +509,14 @@ function Database() {
                                 <tfoot>
                                     <tr>
                                         <td colSpan="5" style={{ textAlign: 'right', padding: '15px', fontWeight: '700', color: 'var(--text-secondary)' }}>Subtotal</td>
-                                        <td style={{ textAlign: 'right', padding: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>${parseFloat(selectedInvoice.taxableAmount || selectedInvoice.subtotal || 0).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right', padding: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>₹{parseFloat(selectedInvoice.taxableAmount || selectedInvoice.subtotal || 0).toFixed(2)}</td>
                                     </tr>
                                     {selectedInvoice.tax > 0 && (
                                         <tr>
                                             <td colSpan="5" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>
                                                 GST ({selectedInvoice.gstPercent || 18}%)
                                             </td>
-                                            <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700' }}>${parseFloat(selectedInvoice.tax).toFixed(2)}</td>
+                                            <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700' }}>₹{parseFloat(selectedInvoice.tax).toFixed(2)}</td>
                                         </tr>
                                     )}
                                     {(selectedInvoice.discountAmount > 0 || selectedInvoice.discountPercent > 0) && (
@@ -499,7 +525,7 @@ function Database() {
                                                 Discount {selectedInvoice.discountPercent > 0 ? `(${selectedInvoice.discountPercent}%)` : ''}
                                             </td>
                                             <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700', color: '#ff4757' }}>
-                                                -${parseFloat(selectedInvoice.discountAmount || 0).toFixed(2)}
+                                                -₹{parseFloat(selectedInvoice.discountAmount || 0).toFixed(2)}
                                             </td>
                                         </tr>
                                     )}
@@ -507,13 +533,13 @@ function Database() {
                                         <tr>
                                             <td colSpan="5" style={{ textAlign: 'right', padding: '10px', fontWeight: '600', color: 'var(--text-secondary)' }}>Rounded Off</td>
                                             <td style={{ textAlign: 'right', padding: '10px', fontWeight: '700' }}>
-                                                {selectedInvoice.roundOff >= 0 ? '+' : '-'}${Math.abs(selectedInvoice.roundOff).toFixed(2)}
+                                                {selectedInvoice.roundOff >= 0 ? '+' : '-'}₹{Math.abs(selectedInvoice.roundOff).toFixed(2)}
                                             </td>
                                         </tr>
                                     )}
                                     <tr style={{ background: 'rgba(142, 182, 155, 0.05)' }}>
                                         <td colSpan="5" style={{ textAlign: 'right', padding: '10px 20px', fontWeight: '900', fontSize: '1.1rem', color: 'var(--accent)' }}>GRAND TOTAL</td>
-                                        <td style={{ textAlign: 'right', padding: '10px 20px', fontWeight: '900', fontSize: '1.4rem', color: 'var(--accent)' }}>${parseFloat(selectedInvoice.total).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right', padding: '10px 20px', fontWeight: '900', fontSize: '1.4rem', color: 'var(--accent)' }}>₹{parseFloat(selectedInvoice.total).toFixed(2)}</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -534,7 +560,7 @@ function Database() {
 
             {/* Hidden Print Template */}
             <div id="invoice-print-template" style={{ display: 'none' }}>
-                <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} />
+                <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} company={companyProfile} />
             </div>
         </div>
     )
