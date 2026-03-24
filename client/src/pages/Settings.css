@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
+
 /* Settings Page Design System - Premium Dark Green Theme */
 :root {
     --cp-bg: #071412;
@@ -14,8 +16,6 @@
     --cp-success: #4caf80;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
-
 .settings-page {
     background: var(--cp-bg);
     min-height: 100vh;
@@ -26,6 +26,18 @@
     max-width: 1200px;
     margin: 0 auto;
     animation: fadeIn 0.6s ease-out;
+}
+
+.settings-sticky-header {
+    position: sticky;
+    top: 0;
+    background: #071412;
+    z-index: 100;
+    padding-top: 35px;
+    padding-bottom: 0;
+    margin: 0 -15px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .settings-page .page-title {
@@ -97,7 +109,8 @@
 .settings-page .tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 25px;
+    margin: 0 auto 0 auto;
+    max-width: 890px;
     background: rgba(255, 255, 255, 0.02);
     padding: 8px;
     border-radius: 20px;
@@ -130,6 +143,10 @@
     color: var(--bg-deep);
 }
 
+.settings-page .card {
+    margin-top: 25px;
+}
+
 .section-subtitle {
     font-size: 1rem;
     font-weight: 700;
@@ -143,7 +160,7 @@
 /* ── Company Profile Premium UI (cp- prefix) ── */
 .cp-container {
     max-width: 860px;
-    margin: 0 auto;
+    margin: 25px auto 0 auto;
     font-family: 'DM Mono', monospace;
 }
 

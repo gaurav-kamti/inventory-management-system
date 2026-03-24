@@ -3,95 +3,95 @@ import api from '../services/api'
 import './Settings.css'
 
 const INDIAN_STATES = [
-  { name: 'Andaman & Nicobar Islands', code: '35' },
-  { name: 'Andhra Pradesh', code: '37' },
-  { name: 'Arunachal Pradesh', code: '12' },
-  { name: 'Assam', code: '18' },
-  { name: 'Bihar', code: '10' },
-  { name: 'Chandigarh', code: '04' },
-  { name: 'Chhattisgarh', code: '22' },
-  { name: 'Dadra & Nagar Haveli and Daman & Diu', code: '26' },
-  { name: 'Delhi', code: '07' },
-  { name: 'Goa', code: '30' },
-  { name: 'Gujarat', code: '24' },
-  { name: 'Haryana', code: '06' },
-  { name: 'Himachal Pradesh', code: '02' },
-  { name: 'Jammu & Kashmir', code: '01' },
-  { name: 'Jharkhand', code: '20' },
-  { name: 'Karnataka', code: '29' },
-  { name: 'Kerala', code: '32' },
-  { name: 'Ladakh', code: '38' },
-  { name: 'Lakshadweep', code: '31' },
-  { name: 'Madhya Pradesh', code: '23' },
-  { name: 'Maharashtra', code: '27' },
-  { name: 'Manipur', code: '14' },
-  { name: 'Meghalaya', code: '17' },
-  { name: 'Mizoram', code: '15' },
-  { name: 'Nagaland', code: '13' },
-  { name: 'Odisha', code: '21' },
-  { name: 'Puducherry', code: '34' },
-  { name: 'Punjab', code: '03' },
-  { name: 'Rajasthan', code: '08' },
-  { name: 'Sikkim', code: '11' },
-  { name: 'Tamil Nadu', code: '33' },
-  { name: 'Telangana', code: '36' },
-  { name: 'Tripura', code: '16' },
-  { name: 'Uttar Pradesh', code: '09' },
-  { name: 'Uttarakhand', code: '05' },
-  { name: 'West Bengal', code: '19' },
+    { name: 'Andaman & Nicobar Islands', code: '35' },
+    { name: 'Andhra Pradesh', code: '37' },
+    { name: 'Arunachal Pradesh', code: '12' },
+    { name: 'Assam', code: '18' },
+    { name: 'Bihar', code: '10' },
+    { name: 'Chandigarh', code: '04' },
+    { name: 'Chhattisgarh', code: '22' },
+    { name: 'Dadra & Nagar Haveli and Daman & Diu', code: '26' },
+    { name: 'Delhi', code: '07' },
+    { name: 'Goa', code: '30' },
+    { name: 'Gujarat', code: '24' },
+    { name: 'Haryana', code: '06' },
+    { name: 'Himachal Pradesh', code: '02' },
+    { name: 'Jammu & Kashmir', code: '01' },
+    { name: 'Jharkhand', code: '20' },
+    { name: 'Karnataka', code: '29' },
+    { name: 'Kerala', code: '32' },
+    { name: 'Ladakh', code: '38' },
+    { name: 'Lakshadweep', code: '31' },
+    { name: 'Madhya Pradesh', code: '23' },
+    { name: 'Maharashtra', code: '27' },
+    { name: 'Manipur', code: '14' },
+    { name: 'Meghalaya', code: '17' },
+    { name: 'Mizoram', code: '15' },
+    { name: 'Nagaland', code: '13' },
+    { name: 'Odisha', code: '21' },
+    { name: 'Puducherry', code: '34' },
+    { name: 'Punjab', code: '03' },
+    { name: 'Rajasthan', code: '08' },
+    { name: 'Sikkim', code: '11' },
+    { name: 'Tamil Nadu', code: '33' },
+    { name: 'Telangana', code: '36' },
+    { name: 'Tripura', code: '16' },
+    { name: 'Uttar Pradesh', code: '09' },
+    { name: 'Uttarakhand', code: '05' },
+    { name: 'West Bengal', code: '19' },
 ]
 
-function Field({ label, required, hint, error, children, className = '' }) {
-  return (
-    <div className={`cp-field ${className}`}>
-      <label className="cp-label">
-        {label}
-        {required && <span className="cp-label-required">·</span>}
-      </label>
-      {children}
-    </div>
-  )
+function Field({ label, required, children, className = '' }) {
+    return (
+        <div className={`cp-field ${className}`}>
+            <label className="cp-label">
+                {label}
+                {required && <span className="cp-label-required">·</span>}
+            </label>
+            {children}
+        </div>
+    )
 }
 
 function Input({ value, onChange, placeholder, maxLength, className = '', ...props }) {
-  const len = value?.length || 0
-  const isValid = value && value.length > 0
-  const stateClass = isValid ? 'valid' : ''
-  return (
-    <div className="cp-input-wrap" style={{ width: '100%' }}>
-      <input
-        className={`cp-input ${stateClass} ${className}`}
-        value={value || ''}
-        onChange={onChange}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        {...props}
-      />
-      {maxLength && len > 0 && (
-        <span className="cp-char-count" style={{
-          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-          pointerEvents: 'none'
-        }}>
-          {len}/{maxLength}
-        </span>
-      )}
-    </div>
-  )
+    const len = value?.length || 0
+    const isValid = value && value.length > 0
+    const stateClass = isValid ? 'valid' : ''
+    return (
+        <div className="cp-input-wrap" style={{ width: '100%', position: 'relative' }}>
+            <input
+                className={`cp-input ${stateClass} ${className}`}
+                value={value || ''}
+                onChange={onChange}
+                placeholder={placeholder}
+                maxLength={maxLength}
+                {...props}
+            />
+            {maxLength && len > 0 && (
+                <span className="cp-char-count" style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    pointerEvents: 'none'
+                }}>
+                    {len}/{maxLength}
+                </span>
+            )}
+        </div>
+    )
 }
 
 function PrefixInput({ prefix, value, onChange, placeholder }) {
-  const isValid = value && value.length > 0
-  return (
-    <div className="cp-input-prefix">
-      <span className="cp-prefix-tag">{prefix}</span>
-      <input
-        className={`cp-input ${isValid ? 'valid' : ''}`}
-        value={value || ''}
-        onChange={onChange}
-        placeholder={placeholder}
-      />
-    </div>
-  )
+    const isValid = value && value.length > 0
+    return (
+        <div className="cp-input-prefix">
+            <span className="cp-prefix-tag">{prefix}</span>
+            <input
+                className={`cp-input ${isValid ? 'valid' : ''}`}
+                value={value || ''}
+                onChange={onChange}
+                placeholder={placeholder}
+            />
+        </div>
+    )
 }
 
 function Settings() {
@@ -151,9 +151,7 @@ function Settings() {
     const fetchInvoiceSettings = async () => {
         try {
             const response = await api.get('/settings/invoice_config')
-            if (response.data) {
-                setInvoiceForm(response.data)
-            }
+            if (response.data) setInvoiceForm(response.data)
         } catch (error) {
             console.error('Error fetching invoice settings:', error)
         }
@@ -162,9 +160,7 @@ function Settings() {
     const fetchCompanyProfile = async () => {
         try {
             const response = await api.get('/settings/company_profile')
-            if (response.data) {
-                setCompanyForm(prev => ({ ...prev, ...response.data }))
-            }
+            if (response.data) setCompanyForm(prev => ({ ...prev, ...response.data }))
         } catch (error) {
             console.error('Error fetching company profile:', error)
         }
@@ -316,39 +312,26 @@ function Settings() {
 
     return (
         <div className="settings-page">
-            <h1 className="page-title">Settings</h1>
+            <div className="settings-sticky-header">
+                <h1 className="page-title">Settings</h1>
 
-            <div className="tabs">
-                <button
-                    className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('profile')}
-                >
-                    <span>🏢</span> Company Profile
-                </button>
-                <button
-                    className={`tab ${activeTab === 'customers' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('customers')}
-                >
-                    <span>👥</span> Customers
-                </button>
-                <button
-                    className={`tab ${activeTab === 'suppliers' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('suppliers')}
-                >
-                    <span>🏢</span> Suppliers
-                </button>
-                <button
-                    className={`tab ${activeTab === 'invoice' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('invoice')}
-                >
-                    <span>🧾</span> Invoice Config
-                </button>
-                <button
-                    className={`tab ${activeTab === 'password' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('password')}
-                >
-                    <span>🔒</span> Security
-                </button>
+                <div className="tabs">
+                    <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+                        <span>🏢</span> Company Profile
+                    </button>
+                    <button className={`tab ${activeTab === 'customers' ? 'active' : ''}`} onClick={() => setActiveTab('customers')}>
+                        <span>👥</span> Customers
+                    </button>
+                    <button className={`tab ${activeTab === 'suppliers' ? 'active' : ''}`} onClick={() => setActiveTab('suppliers')}>
+                        <span>🏢</span> Suppliers
+                    </button>
+                    <button className={`tab ${activeTab === 'invoice' ? 'active' : ''}`} onClick={() => setActiveTab('invoice')}>
+                        <span>🧾</span> Invoice Config
+                    </button>
+                    <button className={`tab ${activeTab === 'password' ? 'active' : ''}`} onClick={() => setActiveTab('password')}>
+                        <span>🔒</span> Security
+                    </button>
+                </div>
             </div>
 
             {activeTab === 'profile' && (
@@ -366,7 +349,6 @@ function Settings() {
                         </div>
                     </div>
 
-                    {/* ── Section 1: Identity ── */}
                     <div className="cp-section">
                         <div className="cp-section-header">
                             <div className="cp-section-icon">◈</div>
@@ -379,7 +361,7 @@ function Settings() {
                             </Field>
 
                             <div className="cp-state-row">
-                                <Field label="State" hint="As registered under GST">
+                                <Field label="State">
                                     <select
                                         className={`cp-select ${companyForm.state ? 'valid' : ''}`}
                                         value={companyForm.state}
@@ -394,7 +376,7 @@ function Settings() {
                                         ))}
                                     </select>
                                 </Field>
-                                <Field label="Code" hint="Auto">
+                                <Field label="Code">
                                     <input
                                         className={`cp-input cp-code-input ${companyForm.stateCode ? 'valid' : ''}`}
                                         value={companyForm.stateCode || ''}
@@ -419,7 +401,7 @@ function Settings() {
                             </Field>
 
                             <div className="cp-grid-3">
-                                <Field label="GSTIN" required error={errors.gstin} hint="15-character GST number">
+                                <Field label="GSTIN" required error={errors.gstin}>
                                     <Input
                                         value={companyForm.gstin}
                                         onChange={(e) => setCompanyForm({ ...companyForm, gstin: e.target.value.toUpperCase() })}
@@ -428,7 +410,7 @@ function Settings() {
                                         className={errors.gstin ? 'error' : ''}
                                     />
                                 </Field>
-                                <Field label="PAN" required error={errors.pan} hint="10-character PAN">
+                                <Field label="PAN" required error={errors.pan}>
                                     <Input
                                         value={companyForm.pan}
                                         onChange={(e) => setCompanyForm({ ...companyForm, pan: e.target.value.toUpperCase() })}
@@ -444,7 +426,6 @@ function Settings() {
                         </div>
                     </div>
 
-                    {/* ── Section 2: Contact ── */}
                     <div className="cp-section">
                         <div className="cp-section-header">
                             <div className="cp-section-icon">◉</div>
@@ -455,36 +436,19 @@ function Settings() {
                             <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '24px', alignItems: 'start' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <Field label="Primary Phone" required error={errors.phone}>
-                                        <PrefixInput
-                                            prefix="+91"
-                                            value={companyForm.phone}
-                                            onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
-                                            placeholder="9876543210"
-                                        />
+                                        <PrefixInput prefix="+91" value={companyForm.phone} onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })} placeholder="9876543210" />
                                     </Field>
                                     <Field label="Alternate Phone">
-                                        <PrefixInput
-                                            prefix="+91"
-                                            value={companyForm.altPhone}
-                                            onChange={(e) => setCompanyForm({ ...companyForm, altPhone: e.target.value })}
-                                            placeholder="9876543210"
-                                        />
+                                        <PrefixInput prefix="+91" value={companyForm.altPhone} onChange={(e) => setCompanyForm({ ...companyForm, altPhone: e.target.value })} placeholder="9876543210" />
                                     </Field>
                                 </div>
                                 <Field label="Email" required error={errors.email}>
-                                    <Input
-                                        type="email"
-                                        value={companyForm.email}
-                                        onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
-                                        placeholder="company@email.com"
-                                        className={errors.email ? 'error' : ''}
-                                    />
+                                    <Input type="email" value={companyForm.email} onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })} placeholder="company@email.com" className={errors.email ? 'error' : ''} />
                                 </Field>
                             </div>
                         </div>
                     </div>
 
-                    {/* ── Section 3: Bank ── */}
                     <div className="cp-section">
                         <div className="cp-section-header">
                             <div className="cp-section-icon">⬡</div>
@@ -503,38 +467,24 @@ function Settings() {
                                         </div>
                                     </Field>
                                     <Field label="IFSC Code">
-                                        <Input
-                                            value={companyForm.ifsc}
-                                            onChange={(e) => setCompanyForm({ ...companyForm, ifsc: e.target.value.toUpperCase() })}
-                                            placeholder="IBKL0000359"
-                                            maxLength={11}
-                                        />
+                                        <Input value={companyForm.ifsc} onChange={(e) => setCompanyForm({ ...companyForm, ifsc: e.target.value.toUpperCase() })} placeholder="IBKL0000359" maxLength={11} />
                                     </Field>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Footer */}
                     <div className="cp-footer">
                         <div className="cp-footer-note">
                             Changes apply to all future invoices.<br />
                             Existing records remain unaffected.
                         </div>
-                        <button
-                            className={`cp-save-btn ${saving ? 'saving' : ''} ${saved ? 'saved' : ''}`}
-                            onClick={handleCompanyProfileSubmit}
-                            disabled={saving}
-                        >
-                            <span className="btn-text">
-                                {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Profile'}
-                            </span>
+                        <button className={`cp-save-btn ${saving ? 'saving' : ''} ${saved ? 'saved' : ''}`} onClick={handleCompanyProfileSubmit} disabled={saving}>
+                            <span className="btn-text">{saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Profile'}</span>
                         </button>
                     </div>
 
-                    <div className={`cp-toast ${showToast ? 'show' : ''}`}>
-                        ✓ Profile updated successfully
-                    </div>
+                    <div className={`cp-toast ${showToast ? 'show' : ''}`}>✓ Profile updated successfully</div>
                 </div>
             )}
 
@@ -546,18 +496,12 @@ function Settings() {
                             setEditingCustomer(null)
                             setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19' })
                             setShowCustomerModal(true)
-                        }}>
-                            + Add New Customer
-                        </button>
+                        }}>+ Add New Customer</button>
                     </div>
                     <div className="table-container">
                         <table className="table">
                             <thead>
-                                <tr>
-                                    <th>Customer Name</th>
-                                    <th>Phone</th>
-                                    <th style={{ textAlign: 'right' }}>Action</th>
-                                </tr>
+                                <tr><th>Customer Name</th><th>Phone</th><th style={{ textAlign: 'right' }}>Action</th></tr>
                             </thead>
                             <tbody>
                                 {customers.map(customer => (
@@ -571,32 +515,17 @@ function Settings() {
                                             </td>
                                             <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }}
-                                                    onClick={(e) => { e.stopPropagation(); editCustomer(customer); }}>
-                                                    Edit
-                                                </button>
+                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={(e) => { e.stopPropagation(); editCustomer(customer); }}>Edit</button>
                                             </td>
                                         </tr>
                                         {expandedId === `c-${customer.id}` && (
                                             <tr style={{ background: 'rgba(142, 182, 155, 0.05)', animation: 'slideDown 0.3s ease-out' }}>
                                                 <td colSpan="3" style={{ padding: '20px' }}>
                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Full Address</p>
-                                                            <p style={{ margin: 0 }}>{customer.address ? `${customer.address}, ${customer.pinCode}` : 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GST Identification Number</p>
-                                                            <p style={{ margin: 0, fontFamily: 'monospace' }}>{customer.gstNumber || 'Not Registered'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email Address</p>
-                                                            <p style={{ margin: 0 }}>{customer.email || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>State & Region</p>
-                                                            <p style={{ margin: 0 }}>{customer.state || 'N/A'} (Code: {customer.stateCode || '--'})</p>
-                                                        </div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Full Address</p><p>{customer.address ? `${customer.address}, ${customer.pinCode}` : 'N/A'}</p></div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GSTIN</p><p style={{ fontFamily: 'monospace' }}>{customer.gstNumber || 'Not Registered'}</p></div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email</p><p>{customer.email || 'N/A'}</p></div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>State</p><p>{customer.state || 'N/A'} (Code: {customer.stateCode || '--'})</p></div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -611,29 +540,13 @@ function Settings() {
 
             {activeTab === 'invoice' && (
                 <div className="card">
-                    <div className="section-header">
-                        <h2><span>🧾</span> Invoice Configuration</h2>
-                    </div>
+                    <div className="section-header"><h2><span>🧾</span> Invoice Configuration</h2></div>
                     <form onSubmit={handleInvoiceSettingsSubmit} className="settings-form">
-                        <div className="form-group">
-                            <label>Invoice Prefix (e.g. INV/)</label>
-                            <input className="input" value={invoiceForm.prefix || ''}
-                                onChange={(e) => setInvoiceForm({ ...invoiceForm, prefix: e.target.value })} />
+                        <div className="form-group"><label>Invoice Prefix</label><input className="input" value={invoiceForm.prefix || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, prefix: e.target.value })} /></div>
+                        <div className="form-group"><label>Starting Voucher No.</label><input type="number" className="input" value={invoiceForm.sequence || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, sequence: e.target.value })} />
+                            <p style={{ marginTop: '12px', padding: '15px', background: 'rgba(142,182,155,0.05)', borderRadius: '12px', fontSize: '0.9rem', border: '1px solid var(--glass-border)' }}>Preview: <strong style={{ color: 'var(--accent)' }}>{invoiceForm.prefix}{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}</strong></p>
                         </div>
-                        <div className="form-group">
-                            <label>Starting Voucher No.</label>
-                            <input type="number" className="input" value={invoiceForm.sequence || ''}
-                                onChange={(e) => setInvoiceForm({ ...invoiceForm, sequence: e.target.value })} />
-                            <p style={{ marginTop: '12px', padding: '15px', background: 'rgba(142,182,155,0.05)', borderRadius: '12px', fontSize: '0.9rem', border: '1px solid var(--glass-border)' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>Preview: </span>
-                                <strong style={{ color: 'var(--accent)' }}>{invoiceForm.prefix}{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}</strong>
-                            </p>
-                        </div>
-                        <div className="form-group">
-                            <label>Fiscal Year</label>
-                            <input className="input" value={invoiceForm.fiscalYear || ''}
-                                onChange={(e) => setInvoiceForm({ ...invoiceForm, fiscalYear: e.target.value })} />
-                        </div>
+                        <div className="form-group"><label>Fiscal Year</label><input className="input" value={invoiceForm.fiscalYear || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, fiscalYear: e.target.value })} /></div>
                         <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Save Configuration</button>
                     </form>
                 </div>
@@ -647,18 +560,12 @@ function Settings() {
                             setEditingSupplier(null)
                             setSupplierForm({ name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
                             setShowSupplierModal(true)
-                        }}>
-                            + Add New Supplier
-                        </button>
+                        }}>+ Add New Supplier</button>
                     </div>
                     <div className="table-container">
                         <table className="table">
                             <thead>
-                                <tr>
-                                    <th>Supplier Name</th>
-                                    <th>Contact Detail</th>
-                                    <th style={{ textAlign: 'right' }}>Action</th>
-                                </tr>
+                                <tr><th>Supplier Name</th><th>Contact Detail</th><th style={{ textAlign: 'right' }}>Action</th></tr>
                             </thead>
                             <tbody>
                                 {suppliers.map(supplier => (
@@ -672,36 +579,18 @@ function Settings() {
                                             </td>
                                             <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone || supplier.email || '--'}</td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }}
-                                                    onClick={(e) => { e.stopPropagation(); editSupplier(supplier); }}>
-                                                    Edit
-                                                </button>
+                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={(e) => { e.stopPropagation(); editSupplier(supplier); }}>Edit</button>
                                             </td>
                                         </tr>
                                         {expandedId === `s-${supplier.id}` && (
                                             <tr style={{ background: 'rgba(142, 182, 155, 0.05)', animation: 'slideDown 0.3s ease-out' }}>
                                                 <td colSpan="3" style={{ padding: '20px' }}>
                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Contact Person</p>
-                                                            <p style={{ margin: 0 }}>{supplier.contactPerson || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GST Identification Number</p>
-                                                            <p style={{ margin: 0, fontFamily: 'monospace' }}>{supplier.gstNumber || 'Not Registered'}</p>
-                                                        </div>
-                                                        <div style={{ gridColumn: 'span 2' }}>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Business Address</p>
-                                                            <p style={{ margin: 0 }}>{supplier.address ? `${supplier.address}, ${supplier.pinCode}` : 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email ID</p>
-                                                            <p style={{ margin: 0 }}>{supplier.email || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Phone Number</p>
-                                                            <p style={{ margin: 0 }}>{supplier.phone || 'N/A'}</p>
-                                                        </div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Contact Person</p><p>{supplier.contactPerson || 'N/A'}</p></div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GSTIN</p><p style={{ fontFamily: 'monospace' }}>{supplier.gstNumber || 'Not Registered'}</p></div>
+                                                        <div style={{ gridColumn: 'span 2' }}><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Address</p><p>{supplier.address ? `${supplier.address}, ${supplier.pinCode}` : 'N/A'}</p></div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email</p><p>{supplier.email || 'N/A'}</p></div>
+                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Phone</p><p>{supplier.phone || 'N/A'}</p></div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -716,106 +605,39 @@ function Settings() {
 
             {activeTab === 'password' && (
                 <div className="card">
-                    <div className="section-header">
-                        <h2><span>🔒</span> Change Password</h2>
-                    </div>
+                    <div className="section-header"><h2><span>🔒</span> Change Password</h2></div>
                     <form onSubmit={handlePasswordChange} className="settings-form">
-                        <div className="form-group">
-                            <label>Current Password</label>
-                            <input type="password" className="input" value={passwordForm.currentPassword || ''}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required />
-                        </div>
-                        <div className="form-group">
-                            <label>New Password</label>
-                            <input type="password" className="input" value={passwordForm.newPassword || ''}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required />
-                        </div>
-                        <div className="form-group">
-                            <label>Confirm Password</label>
-                            <input type="password" className="input" value={passwordForm.confirmPassword || ''}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required />
-                        </div>
+                        <div className="form-group"><label>Current Password</label><input type="password" className="input" value={passwordForm.currentPassword || ''} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required /></div>
+                        <div className="form-group"><label>New Password</label><input type="password" className="input" value={passwordForm.newPassword || ''} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required /></div>
+                        <div className="form-group"><label>Confirm Password</label><input type="password" className="input" value={passwordForm.confirmPassword || ''} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required /></div>
                         <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Update Password</button>
                     </form>
                 </div>
             )}
 
-            {/* Entity Modals */}
             {(showCustomerModal || showSupplierModal) && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                    background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)',
-                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-                }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>
-                    <div className="modal glass settings-modal" style={{
-                        width: '90%', maxWidth: '700px', padding: '45px', background: 'var(--bg-dark)',
-                        borderRadius: '32px', border: '1px solid var(--glass-border)'
-                    }} onClick={(e) => e.stopPropagation()}>
-
-                        <h2 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '35px', color: 'var(--text-primary)' }}>
-                            {showCustomerModal ? (editingCustomer ? 'Edit Customer' : 'Add Customer') : (editingSupplier ? 'Edit Supplier' : 'Add Supplier')}
-                        </h2>
-
+                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>
+                    <div className="modal glass settings-modal" style={{ width: '90%', maxWidth: '700px', padding: '45px', background: 'var(--bg-dark)', borderRadius: '32px', border: '1px solid var(--glass-border)' }} onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '35px', color: 'var(--text-primary)' }}>{showCustomerModal ? (editingCustomer ? 'Edit Customer' : 'Add Customer') : (editingSupplier ? 'Edit Supplier' : 'Add Supplier')}</h2>
                         <form onSubmit={showCustomerModal ? handleCustomerSubmit : handleSupplierSubmit}>
                             <div className="settings-grid-form">
-                                <div className="form-group full-width">
-                                    <label>Name *</label>
-                                    <input className="input" value={(showCustomerModal ? customerForm.name : supplierForm.name) || ''}
-                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>Phone Number *</label>
-                                    <input className="input" value={(showCustomerModal ? customerForm.phone : supplierForm.phone) || ''}
-                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>Email Address</label>
-                                    <input className="input" value={(showCustomerModal ? customerForm.email : supplierForm.email) || ''}
-                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} />
-                                </div>
-                                {showSupplierModal && (
-                                    <div className="form-group full-width">
-                                        <label>Contact Person</label>
-                                        <input className="input" value={supplierForm.contactPerson || ''}
-                                            onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
-                                    </div>
-                                )}
-                                <div className="form-group full-width">
-                                    <label>Address / Location</label>
-                                    <textarea className="input" rows="3" value={(showCustomerModal ? customerForm.address : supplierForm.address) || ''}
-                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, address: e.target.value }) : setSupplierForm({ ...supplierForm, address: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>PIN Code / Zip</label>
-                                    <input className="input" value={(showCustomerModal ? customerForm.pinCode : supplierForm.pinCode) || ''}
-                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pinCode: e.target.value }) : setSupplierForm({ ...supplierForm, pinCode: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>GSTIN / Tax ID</label>
-                                    <input className="input" value={(showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber) || ''}
-                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstNumber: e.target.value }) : setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} />
-                                </div>
+                                <div className="form-group full-width"><label>Name *</label><input className="input" value={(showCustomerModal ? customerForm.name : supplierForm.name) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })} required /></div>
+                                <div className="form-group"><label>Phone *</label><input className="input" value={(showCustomerModal ? customerForm.phone : supplierForm.phone) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} required /></div>
+                                <div className="form-group"><label>Email</label><input className="input" value={(showCustomerModal ? customerForm.email : supplierForm.email) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} /></div>
+                                {showSupplierModal && <div className="form-group full-width"><label>Contact Person</label><input className="input" value={supplierForm.contactPerson || ''} onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} /></div>}
+                                <div className="form-group full-width"><label>Address</label><textarea className="input" rows="3" value={(showCustomerModal ? customerForm.address : supplierForm.address) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, address: e.target.value }) : setSupplierForm({ ...supplierForm, address: e.target.value })} /></div>
+                                <div className="form-group"><label>PIN Code</label><input className="input" value={(showCustomerModal ? customerForm.pinCode : supplierForm.pinCode) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pinCode: e.target.value }) : setSupplierForm({ ...supplierForm, pinCode: e.target.value })} /></div>
+                                <div className="form-group"><label>GSTIN</label><input className="input" value={(showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstNumber: e.target.value }) : setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} /></div>
                                 {showCustomerModal && (
                                     <>
-                                        <div className="form-group">
-                                            <label>State</label>
-                                            <input className="input" value={customerForm.state || ''}
-                                                onChange={(e) => setCustomerForm({ ...customerForm, state: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>State Code</label>
-                                            <input className="input" value={customerForm.stateCode || ''}
-                                                onChange={(e) => setCustomerForm({ ...customerForm, stateCode: e.target.value })} />
-                                        </div>
+                                        <div className="form-group"><label>State</label><input className="input" value={customerForm.state || ''} onChange={(e) => setCustomerForm({ ...customerForm, state: e.target.value })} /></div>
+                                        <div className="form-group"><label>Code</label><input className="input" value={customerForm.stateCode || ''} onChange={(e) => setCustomerForm({ ...customerForm, stateCode: e.target.value })} /></div>
                                     </>
                                 )}
                             </div>
-
                             <div className="modal-actions" style={{ marginTop: '40px', display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>
                                 <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>Cancel</button>
-                                <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 40px' }}>
-                                    {showCustomerModal ? (editingCustomer ? 'Update' : 'Create') : (editingSupplier ? 'Update' : 'Create')}
-                                </button>
+                                <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 40px' }}>{showCustomerModal ? (editingCustomer ? 'Update' : 'Create') : (editingSupplier ? 'Update' : 'Create')}</button>
                             </div>
                         </form>
                     </div>
