@@ -11,7 +11,7 @@ router.get('/:key?', async (req, res) => {
             // Return default structure if not found (specifically for invoice)
             if (!setting && key === 'invoice_config') {
                 return res.json({
-                    prefix: 'RM/',
+                    prefix: 'RM',
                     sequence: 1,
                     fiscalYear: '25-26'
                 });
@@ -28,7 +28,16 @@ router.get('/:key?', async (req, res) => {
 // Update setting
 router.post('/', async (req, res) => {
     try {
-        const { key, value } = req.body;
+        let { key, value } = req.body;
+
+        // Auto-sanitize invoice prefix to remove trailing slashes before saving
+        if (key === 'invoice_config' && value && value.prefix) {
+            value = {
+                ...value,
+                prefix: value.prefix.endsWith('/') ? value.prefix.slice(0, -1) : value.prefix
+            };
+        }
+
         const [setting, created] = await Settings.findOrCreate({
             where: { key },
             defaults: { value }

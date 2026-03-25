@@ -21,10 +21,10 @@ const Customer = sequelize.define('Customer', {
   address: {
     type: DataTypes.TEXT
   },
-  pinCode: {
+  pincode: {
     type: DataTypes.STRING
   },
-  gstNumber: {
+  gstin: {
     type: DataTypes.STRING
   },
   state: {

@@ -24,10 +24,10 @@ const Supplier = sequelize.define('Supplier', {
   address: {
     type: DataTypes.TEXT
   },
-  pinCode: {
+  pincode: {
     type: DataTypes.STRING
   },
-  gstNumber: {
+  gstin: {
     type: DataTypes.STRING
   },
   outstandingBalance: {

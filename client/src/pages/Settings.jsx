@@ -96,20 +96,25 @@ function PrefixInput({ prefix, value, onChange, placeholder }) {
 
 function Settings() {
     const [activeTab, setActiveTab] = useState('profile')
+    const [activeDbSubTab, setActiveDbSubTab] = useState('customers')
     const [customers, setCustomers] = useState([])
     const [suppliers, setSuppliers] = useState([])
+    const [products, setProducts] = useState([])
+
+    // Modals
     const [showCustomerModal, setShowCustomerModal] = useState(false)
     const [showSupplierModal, setShowSupplierModal] = useState(false)
+    const [showProductModal, setShowProductModal] = useState(false)
+
     const [editingCustomer, setEditingCustomer] = useState(null)
     const [editingSupplier, setEditingSupplier] = useState(null)
+    const [editingProduct, setEditingProduct] = useState(null)
+
     const [expandedId, setExpandedId] = useState(null)
 
-    const [customerForm, setCustomerForm] = useState({
-        name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19'
-    })
-    const [supplierForm, setSupplierForm] = useState({
-        name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: ''
-    })
+    const [customerForm, setCustomerForm] = useState({ name: '', phone: '', email: '', address: '', pincode: '', gstin: '', state: 'West Bengal', stateCode: '19' })
+    const [supplierForm, setSupplierForm] = useState({ name: '', contactPerson: '', phone: '', email: '', address: '', pincode: '', gstin: '' })
+    const [productForm, setProductForm] = useState({ name: '', purchasePrice: '', sellingPrice: '', stock: '', hsn: '8301', gst: 18, quantityUnit: 'Pcs' })
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '', newPassword: '', confirmPassword: ''
     })
@@ -142,11 +147,25 @@ function Settings() {
     const [lastSaved, setLastSaved] = useState(null)
 
     useEffect(() => {
-        fetchCustomers()
-        fetchSuppliers()
+        fetchData()
         fetchInvoiceSettings()
         fetchCompanyProfile()
     }, [])
+
+    const fetchData = async () => {
+        try {
+            const [custRes, suppRes, prodRes] = await Promise.all([
+                api.get('/customers'),
+                api.get('/suppliers'),
+                api.get('/products')
+            ])
+            setCustomers(custRes.data)
+            setSuppliers(suppRes.data)
+            setProducts(prodRes.data)
+        } catch (error) {
+            console.error('Error fetching data:', error)
+        }
+    }
 
     const fetchInvoiceSettings = async () => {
         try {
@@ -181,15 +200,12 @@ function Settings() {
         try {
             if (editingCustomer) {
                 await api.put(`/customers/${editingCustomer.id}`, customerForm)
-                alert('Customer updated successfully!')
             } else {
                 await api.post('/customers', customerForm)
-                alert('Customer added successfully!')
             }
             setShowCustomerModal(false)
             setEditingCustomer(null)
-            fetchCustomers()
-            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19' })
+            fetchData()
         } catch (error) {
             alert(error.response?.data?.error || 'Error saving customer')
         }
@@ -200,17 +216,36 @@ function Settings() {
         try {
             if (editingSupplier) {
                 await api.put(`/suppliers/${editingSupplier.id}`, supplierForm)
-                alert('Supplier updated successfully!')
             } else {
                 await api.post('/suppliers', supplierForm)
-                alert('Supplier added successfully!')
             }
             setShowSupplierModal(false)
             setEditingSupplier(null)
-            fetchSuppliers()
-            setSupplierForm({ name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
+            fetchData()
         } catch (error) {
             alert(error.response?.data?.error || 'Error saving supplier')
+        }
+    }
+
+    const deleteCustomer = async (id) => {
+        if (window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+            try {
+                await api.delete(`/customers/${id}`)
+                fetchData()
+            } catch (error) {
+                alert('Error deleting customer: ' + (error.response?.data?.error || error.message))
+            }
+        }
+    }
+
+    const deleteSupplier = async (id) => {
+        if (window.confirm('Are you sure you want to delete this supplier? This action cannot be undone.')) {
+            try {
+                await api.delete(`/suppliers/${id}`)
+                fetchData()
+            } catch (error) {
+                alert('Error deleting supplier: ' + (error.response?.data?.error || error.message))
+            }
         }
     }
 
@@ -221,8 +256,8 @@ function Settings() {
             phone: customer.phone,
             email: customer.email || '',
             address: customer.address || '',
-            pinCode: customer.pinCode || '',
-            gstNumber: customer.gstNumber || '',
+            pincode: customer.pincode || '',
+            gstin: customer.gstin || '',
             state: customer.state || 'West Bengal',
             stateCode: customer.stateCode || '19'
         })
@@ -237,10 +272,51 @@ function Settings() {
             phone: supplier.phone || '',
             email: supplier.email || '',
             address: supplier.address || '',
-            pinCode: supplier.pinCode || '',
-            gstNumber: supplier.gstNumber || ''
+            pincode: supplier.pincode || '',
+            gstin: supplier.gstin || ''
         })
         setShowSupplierModal(true)
+    }
+
+    const handleProductSubmit = async (e) => {
+        e.preventDefault()
+        try {
+            if (editingProduct) {
+                await api.put(`/products/${editingProduct.id}`, productForm)
+            } else {
+                await api.post('/products', productForm)
+            }
+            setShowProductModal(false)
+            setEditingProduct(null)
+            fetchData()
+        } catch (error) {
+            alert(error.response?.data?.error || 'Error saving product')
+        }
+    }
+
+    const deleteProduct = async (id) => {
+        if (window.confirm('Are you sure you want to delete this product?')) {
+            try {
+                await api.delete(`/products/${id}`)
+                fetchData()
+            } catch (error) {
+                alert('Error deleting product')
+            }
+        }
+    }
+
+    const editProduct = (product) => {
+        setEditingProduct(product)
+        setProductForm({
+            name: product.name,
+            purchasePrice: product.purchasePrice,
+            sellingPrice: product.sellingPrice,
+            stock: product.stock,
+            hsn: product.hsn,
+            gst: product.gst,
+            quantityUnit: product.quantityUnit || 'Pcs'
+        })
+        setShowProductModal(true)
     }
 
     const handlePasswordChange = async (e) => {
@@ -319,11 +395,8 @@ function Settings() {
                     <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
                         <span>🏢</span> Company Profile
                     </button>
-                    <button className={`tab ${activeTab === 'customers' ? 'active' : ''}`} onClick={() => setActiveTab('customers')}>
-                        <span>👥</span> Customers
-                    </button>
-                    <button className={`tab ${activeTab === 'suppliers' ? 'active' : ''}`} onClick={() => setActiveTab('suppliers')}>
-                        <span>🏢</span> Suppliers
+                    <button className={`tab ${activeTab === 'database' ? 'active' : ''}`} onClick={() => setActiveTab('database')}>
+                        <span className="icon">📂</span> DataBase
                     </button>
                     <button className={`tab ${activeTab === 'invoice' ? 'active' : ''}`} onClick={() => setActiveTab('invoice')}>
                         <span>🧾</span> Invoice Config
@@ -488,156 +561,445 @@ function Settings() {
                 </div>
             )}
 
-            {activeTab === 'customers' && (
-                <div className="card">
-                    <div className="section-header">
-                        <h2><span>👥</span> Customer List ({customers.length})</h2>
-                        <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={() => {
-                            setEditingCustomer(null)
-                            setCustomerForm({ name: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '', state: 'West Bengal', stateCode: '19' })
-                            setShowCustomerModal(true)
-                        }}>+ Add New Customer</button>
+            {activeTab === 'database' && (
+                <div className="cp-container cp-database-context">
+                    <div className="cp-header">
+                        <div className="cp-header-left">
+                            <div className="cp-eyebrow">Settings · Assets</div>
+                            <h1 className="cp-title">Master <em>DataBase</em></h1>
+                        </div>
+                        <div className="cp-db-nav">
+                            <button className={`cp-sub-tab ${activeDbSubTab === 'customers' ? 'active' : ''}`} onClick={() => setActiveDbSubTab('customers')}>
+                                👥 Customers
+                            </button>
+                            <button className={`cp-sub-tab ${activeDbSubTab === 'suppliers' ? 'active' : ''}`} onClick={() => setActiveDbSubTab('suppliers')}>
+                                🏭 Suppliers
+                            </button>
+                            <button className={`cp-sub-tab ${activeDbSubTab === 'items' ? 'active' : ''}`} onClick={() => setActiveDbSubTab('items')}>
+                                📦 Inventory
+                            </button>
+                        </div>
                     </div>
-                    <div className="table-container">
-                        <table className="table">
-                            <thead>
-                                <tr><th>Customer Name</th><th>Phone</th><th style={{ textAlign: 'right' }}>Action</th></tr>
-                            </thead>
-                            <tbody>
-                                {customers.map(customer => (
-                                    <React.Fragment key={customer.id}>
-                                        <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === `c-${customer.id}` ? null : `c-${customer.id}`)}>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ transition: '0.3s', display: 'inline-block', transform: expandedId === `c-${customer.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
-                                                    <strong style={{ color: 'var(--text-primary)' }}>{customer.name}</strong>
+
+                    <div className="cp-sub-view">
+                        {activeDbSubTab === 'customers' && (
+                            <div className="cp-section">
+                                <div className="cp-section-header">
+                                    <div className="cp-section-icon">👥</div>
+                                    <span className="cp-section-title">Customers</span>
+                                    <span className="cp-section-num">{customers.length} Accounts</span>
+                                    <button className="cp-add-btn mini" onClick={() => { setEditingCustomer(null); setCustomerForm({ name: '', phone: '', altPhone: '', email: '', altEmail: '', address: '', pincode: '', gstin: '', state: 'West Bengal', stateCode: '19' }); setShowCustomerModal(true); }}>
+                                        + Add New
+                                    </button>
+                                </div>
+                                <div className="cp-list">
+                                    {customers.map(customer => (
+                                        <div key={customer.id} className="cp-list-item">
+                                            <div className="cp-list-header" onClick={() => setExpandedId(expandedId === `c-${customer.id}` ? null : `c-${customer.id}`)}>
+                                                <div className="cp-list-toggle">
+                                                    <span className="cp-toggle-arrow" style={{ transform: expandedId === `c-${customer.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
                                                 </div>
-                                            </td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={(e) => { e.stopPropagation(); editCustomer(customer); }}>Edit</button>
-                                            </td>
-                                        </tr>
-                                        {expandedId === `c-${customer.id}` && (
-                                            <tr style={{ background: 'rgba(142, 182, 155, 0.05)', animation: 'slideDown 0.3s ease-out' }}>
-                                                <td colSpan="3" style={{ padding: '20px' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Full Address</p><p>{customer.address ? `${customer.address}, ${customer.pinCode}` : 'N/A'}</p></div>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GSTIN</p><p style={{ fontFamily: 'monospace' }}>{customer.gstNumber || 'Not Registered'}</p></div>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email</p><p>{customer.email || 'N/A'}</p></div>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>State</p><p>{customer.state || 'N/A'} (Code: {customer.stateCode || '--'})</p></div>
+                                                <div className="cp-list-main">
+                                                    <div className="cp-list-name">{customer.name}</div>
+                                                    <div className="cp-list-phone">{customer.phone || '--'}</div>
+                                                </div>
+                                                <div className="cp-list-info">
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">GSTIN</span>
+                                                        <span className="cp-info-value cp-mono">{customer.gstin || '--'}</span>
                                                     </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </tbody>
-                        </table>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">STATE</span>
+                                                        <span className="cp-info-value">{customer.state || '--'}</span>
+                                                    </div>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">PIN</span>
+                                                        <span className="cp-info-value">{customer.pincode || '--'}</span>
+                                                    </div>
+                                                </div>
+                                                <button className="cp-list-action" onClick={(e) => { e.stopPropagation(); editCustomer(customer); }}>Edit</button>
+                                            </div>
+                                            {expandedId === `c-${customer.id}` && (
+                                                <div className="cp-list-details">
+                                                    <div className="cp-detail-grid">
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Phone</div><div className="cp-detail-value">{customer.phone}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Email</div><div className="cp-detail-value">{customer.email || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">GSTIN</div><div className="cp-detail-value cp-mono">{customer.gstin || 'Not registered'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">State</div><div className="cp-detail-value">{customer.state || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">PIN Code</div><div className="cp-detail-value">{customer.pincode || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item" style={{ gridColumn: 'span 3' }}><div className="cp-detail-label">Address</div><div className="cp-detail-value">{customer.address || 'Not provided'}</div></div>
+                                                        <div className="cp-detail-item" style={{ gridColumn: 'span 4', marginTop: '12px', borderTop: '1px solid var(--cp-border)', paddingTop: '16px' }}>
+                                                            <button className="cp-cancel-btn" style={{ borderColor: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }} onClick={() => deleteCustomer(customer.id)}>
+                                                                Delete Customer
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeDbSubTab === 'suppliers' && (
+                            <div className="cp-section">
+                                <div className="cp-section-header">
+                                    <div className="cp-section-icon">🏢</div>
+                                    <span className="cp-section-title">Suppliers</span>
+                                    <span className="cp-section-num">{suppliers.length} Vendors</span>
+                                    <button className="cp-add-btn mini" onClick={() => { setEditingSupplier(null); setSupplierForm({ name: '', contactPerson: '', phone: '', altPhone: '', email: '', altEmail: '', address: '', pincode: '', gstin: '' }); setShowSupplierModal(true); }}>
+                                        + Add New
+                                    </button>
+                                </div>
+                                <div className="cp-list">
+                                    {suppliers.map(supplier => (
+                                        <div key={supplier.id} className="cp-list-item">
+                                            <div className="cp-list-header" onClick={() => setExpandedId(expandedId === `s-${supplier.id}` ? null : `s-${supplier.id}`)}>
+                                                <div className="cp-list-toggle">
+                                                    <span className="cp-toggle-arrow" style={{ transform: expandedId === `s-${supplier.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                                                </div>
+                                                <div className="cp-list-main">
+                                                    <div className="cp-list-name">{supplier.name}</div>
+                                                    <div className="cp-list-phone">{supplier.phone || supplier.email || '--'}</div>
+                                                </div>
+                                                <div className="cp-list-info" style={{ gridTemplateColumns: '160px 140px 80px' }}>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">Contact Person</span>
+                                                        <span className="cp-info-value">{supplier.contactPerson || '--'}</span>
+                                                    </div>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">GSTIN</span>
+                                                        <span className="cp-info-value cp-mono">{supplier.gstin || '--'}</span>
+                                                    </div>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">PIN</span>
+                                                        <span className="cp-info-value">{supplier.pincode || '--'}</span>
+                                                    </div>
+                                                </div>
+                                                <button className="cp-list-action" onClick={(e) => { e.stopPropagation(); editSupplier(supplier); }}>Edit</button>
+                                            </div>
+                                            {expandedId === `s-${supplier.id}` && (
+                                                <div className="cp-list-details">
+                                                    <div className="cp-detail-grid">
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Contact Person</div><div className="cp-detail-value">{supplier.contactPerson || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Phone</div><div className="cp-detail-value">{supplier.phone || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Email</div><div className="cp-detail-value">{supplier.email || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">GSTIN</div><div className="cp-detail-value cp-mono">{supplier.gstin || 'Not registered'}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">PIN Code</div><div className="cp-detail-value">{supplier.pincode || 'N/A'}</div></div>
+                                                        <div className="cp-detail-item" style={{ gridColumn: 'span 3' }}><div className="cp-detail-label">Address</div><div className="cp-detail-value">{supplier.address || 'Not provided'}</div></div>
+                                                        <div className="cp-detail-item" style={{ gridColumn: 'span 4', marginTop: '12px', borderTop: '1px solid var(--cp-border)', paddingTop: '16px' }}>
+                                                            <button className="cp-cancel-btn" style={{ borderColor: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }} onClick={() => deleteSupplier(supplier.id)}>
+                                                                Delete Supplier
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeDbSubTab === 'items' && (
+                            <div className="cp-section">
+                                <div className="cp-section-header">
+                                    <div className="cp-section-icon">📦</div>
+                                    <span className="cp-section-title">Inventory Items</span>
+                                    <span className="cp-section-num">{products.length} Products</span>
+                                    <button className="cp-add-btn mini" onClick={() => { setEditingProduct(null); setProductForm({ name: '', purchasePrice: '', sellingPrice: '', stock: '', hsn: '8301', gst: 18, quantityUnit: 'Pcs' }); setShowProductModal(true); }}>
+                                        + Add New
+                                    </button>
+                                </div>
+                                <div className="cp-list">
+                                    {products.map(item => (
+                                        <div key={item.id} className="cp-list-item">
+                                            <div className="cp-list-header" onClick={() => setExpandedId(expandedId === `i-${item.id}` ? null : `i-${item.id}`)}>
+                                                <div className="cp-list-toggle">
+                                                    <span className="cp-toggle-arrow" style={{ transform: expandedId === `i-${item.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                                                </div>
+                                                <div className="cp-list-main">
+                                                    <div className="cp-list-name">{item.name}</div>
+                                                    <div className="cp-list-phone">{item.stock} {item.quantityUnit || 'Pcs'} available</div>
+                                                </div>
+                                                <div className="cp-list-info" style={{ gridTemplateColumns: '100px 100px 120px' }}>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">HSN</span>
+                                                        <span className="cp-info-value cp-mono">{item.hsn || '--'}</span>
+                                                    </div>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">GST</span>
+                                                        <span className="cp-info-value">{item.gst}%</span>
+                                                    </div>
+                                                    <div className="cp-info-item">
+                                                        <span className="cp-info-label">Sales Price</span>
+                                                        <span className="cp-info-value">₹ {item.sellingPrice}</span>
+                                                    </div>
+                                                </div>
+                                                <button className="cp-list-action" onClick={(e) => { e.stopPropagation(); editProduct(item); }}>Edit</button>
+                                            </div>
+                                            {expandedId === `i-${item.id}` && (
+                                                <div className="cp-list-details">
+                                                    <div className="cp-detail-grid">
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Quantity Unit</div><div className="cp-detail-value">{item.quantityUnit}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Purchase Price</div><div className="cp-detail-value">₹ {item.purchasePrice}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Sales Price</div><div className="cp-detail-value">₹ {item.sellingPrice}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">Current Stock</div><div className="cp-detail-value">{item.stock} {item.quantityUnit}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">HSN Code</div><div className="cp-detail-value cp-mono">{item.hsn}</div></div>
+                                                        <div className="cp-detail-item"><div className="cp-detail-label">GST Rate</div><div className="cp-detail-value">{item.gst}%</div></div>
+                                                        <div className="cp-detail-item" style={{ gridColumn: 'span 4', marginTop: '12px', borderTop: '1px solid var(--cp-border)', paddingTop: '16px' }}>
+                                                            <button className="cp-cancel-btn" style={{ borderColor: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }} onClick={() => deleteProduct(item.id)}>
+                                                                Delete Item
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
             {activeTab === 'invoice' && (
-                <div className="card">
-                    <div className="section-header"><h2><span>🧾</span> Invoice Configuration</h2></div>
-                    <form onSubmit={handleInvoiceSettingsSubmit} className="settings-form">
-                        <div className="form-group"><label>Invoice Prefix</label><input className="input" value={invoiceForm.prefix || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, prefix: e.target.value })} /></div>
-                        <div className="form-group"><label>Starting Voucher No.</label><input type="number" className="input" value={invoiceForm.sequence || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, sequence: e.target.value })} />
-                            <p style={{ marginTop: '12px', padding: '15px', background: 'rgba(142,182,155,0.05)', borderRadius: '12px', fontSize: '0.9rem', border: '1px solid var(--glass-border)' }}>Preview: <strong style={{ color: 'var(--accent)' }}>{invoiceForm.prefix}{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}</strong></p>
+                <div className="cp-container cp-compact">
+                    <div className="cp-header">
+                        <div className="cp-header-left">
+                            <div className="cp-eyebrow">Settings · Configuration</div>
+                            <h1 className="cp-title">Invoice <em>Config</em></h1>
                         </div>
-                        <div className="form-group"><label>Fiscal Year</label><input className="input" value={invoiceForm.fiscalYear || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, fiscalYear: e.target.value })} /></div>
-                        <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Save Configuration</button>
-                    </form>
-                </div>
-            )}
-
-            {activeTab === 'suppliers' && (
-                <div className="card">
-                    <div className="section-header">
-                        <h2><span>🏢</span> Supplier List ({suppliers.length})</h2>
-                        <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={() => {
-                            setEditingSupplier(null)
-                            setSupplierForm({ name: '', contactPerson: '', phone: '', email: '', address: '', pinCode: '', gstNumber: '' })
-                            setShowSupplierModal(true)
-                        }}>+ Add New Supplier</button>
+                        <div style={{ padding: '8px 16px', background: 'rgba(142, 195, 175, 0.1)', border: '1px solid var(--cp-border)', borderRadius: '4px', textAlign: 'right' }}>
+                            <div style={{ fontSize: '9px', color: 'var(--cp-text-muted)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>Invoice Preview</div>
+                            <div style={{ fontSize: '18px', color: 'var(--cp-accent)', fontFamily: 'DM Mono, monospace', fontWeight: '500', letterSpacing: '1px' }}>
+                                {invoiceForm.prefix}/{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}
+                            </div>
+                        </div>
                     </div>
-                    <div className="table-container">
-                        <table className="table">
-                            <thead>
-                                <tr><th>Supplier Name</th><th>Contact Detail</th><th style={{ textAlign: 'right' }}>Action</th></tr>
-                            </thead>
-                            <tbody>
-                                {suppliers.map(supplier => (
-                                    <React.Fragment key={supplier.id}>
-                                        <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === `s-${supplier.id}` ? null : `s-${supplier.id}`)}>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ transition: '0.3s', display: 'inline-block', transform: expandedId === `s-${supplier.id}` ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
-                                                    <strong style={{ color: 'var(--text-primary)' }}>{supplier.name}</strong>
-                                                </div>
-                                            </td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone || supplier.email || '--'}</td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={(e) => { e.stopPropagation(); editSupplier(supplier); }}>Edit</button>
-                                            </td>
-                                        </tr>
-                                        {expandedId === `s-${supplier.id}` && (
-                                            <tr style={{ background: 'rgba(142, 182, 155, 0.05)', animation: 'slideDown 0.3s ease-out' }}>
-                                                <td colSpan="3" style={{ padding: '20px' }}>
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Contact Person</p><p>{supplier.contactPerson || 'N/A'}</p></div>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>GSTIN</p><p style={{ fontFamily: 'monospace' }}>{supplier.gstNumber || 'Not Registered'}</p></div>
-                                                        <div style={{ gridColumn: 'span 2' }}><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Address</p><p>{supplier.address ? `${supplier.address}, ${supplier.pinCode}` : 'N/A'}</p></div>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Email</p><p>{supplier.email || 'N/A'}</p></div>
-                                                        <div><p style={{ margin: '0 0 5px 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '800' }}>Phone</p><p>{supplier.phone || 'N/A'}</p></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </tbody>
-                        </table>
+
+                    <div className="cp-section">
+                        <div className="cp-section-header">
+                            <div className="cp-section-icon">🧾</div>
+                            <span className="cp-section-title">Invoice Settings</span>
+                            <span className="cp-section-num">01 / 01</span>
+                        </div>
+
+                        <form onSubmit={handleInvoiceSettingsSubmit} className="cp-fields" style={{ padding: '28px' }}>
+                            <Field label="Invoice Prefix" required>
+                                <Input
+                                    value={invoiceForm.prefix || ''}
+                                    onChange={(e) => setInvoiceForm({ ...invoiceForm, prefix: e.target.value })}
+                                    placeholder="RM/"
+                                    maxLength={10}
+                                />
+                            </Field>
+
+                            <Field label="Starting Voucher Number" required>
+                                <Input
+                                    type="number"
+                                    value={invoiceForm.sequence || ''}
+                                    onChange={(e) => setInvoiceForm({ ...invoiceForm, sequence: e.target.value })}
+                                    placeholder="1"
+                                />
+                            </Field>
+
+                            <Field label="Fiscal Year" required>
+                                <Input
+                                    value={invoiceForm.fiscalYear || ''}
+                                    onChange={(e) => setInvoiceForm({ ...invoiceForm, fiscalYear: e.target.value })}
+                                    placeholder="25-26"
+                                    maxLength={5}
+                                />
+                            </Field>
+
+                            <div style={{ marginTop: '32px' }}>
+                                <button type="submit" className="cp-save-btn">
+                                    <span className="btn-text">Save Configuration</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
 
             {activeTab === 'password' && (
-                <div className="card">
-                    <div className="section-header"><h2><span>🔒</span> Change Password</h2></div>
-                    <form onSubmit={handlePasswordChange} className="settings-form">
-                        <div className="form-group"><label>Current Password</label><input type="password" className="input" value={passwordForm.currentPassword || ''} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} required /></div>
-                        <div className="form-group"><label>New Password</label><input type="password" className="input" value={passwordForm.newPassword || ''} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required /></div>
-                        <div className="form-group"><label>Confirm Password</label><input type="password" className="input" value={passwordForm.confirmPassword || ''} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required /></div>
-                        <button type="submit" className="btn" style={{ width: '100%', background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px' }}>Update Password</button>
-                    </form>
+                <div className="cp-container cp-compact">
+                    <div className="cp-header">
+                        <div className="cp-header-left">
+                            <div className="cp-eyebrow">Settings · Security</div>
+                            <h1 className="cp-title">Change <em>Password</em></h1>
+                        </div>
+                    </div>
+
+                    <div className="cp-section">
+                        <div className="cp-section-header">
+                            <div className="cp-section-icon">🔒</div>
+                            <span className="cp-section-title">Password & Security</span>
+                            <span className="cp-section-num">01 / 01</span>
+                        </div>
+
+                        <form onSubmit={handlePasswordChange} className="cp-fields" style={{ padding: '28px' }}>
+                            <Field label="Current Password" required>
+                                <Input
+                                    type="password"
+                                    value={passwordForm.currentPassword || ''}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                                    placeholder="••••••••"
+                                />
+                            </Field>
+
+                            <Field label="New Password" required>
+                                <Input
+                                    type="password"
+                                    value={passwordForm.newPassword || ''}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                    placeholder="••••••••"
+                                />
+                            </Field>
+
+                            <Field label="Confirm Password" required>
+                                <Input
+                                    type="password"
+                                    value={passwordForm.confirmPassword || ''}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                    placeholder="••••••••"
+                                />
+                            </Field>
+
+                            <div style={{ marginTop: '32px' }}>
+                                <button type="submit" className="cp-save-btn">
+                                    <span className="btn-text">Update Password</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 
             {(showCustomerModal || showSupplierModal) && (
-                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(5, 31, 32, 0.9)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>
-                    <div className="modal glass settings-modal" style={{ width: '90%', maxWidth: '700px', padding: '45px', background: 'var(--bg-dark)', borderRadius: '32px', border: '1px solid var(--glass-border)' }} onClick={(e) => e.stopPropagation()}>
-                        <h2 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '35px', color: 'var(--text-primary)' }}>{showCustomerModal ? (editingCustomer ? 'Edit Customer' : 'Add Customer') : (editingSupplier ? 'Edit Supplier' : 'Add Supplier')}</h2>
-                        <form onSubmit={showCustomerModal ? handleCustomerSubmit : handleSupplierSubmit}>
-                            <div className="settings-grid-form">
-                                <div className="form-group full-width"><label>Name *</label><input className="input" value={(showCustomerModal ? customerForm.name : supplierForm.name) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })} required /></div>
-                                <div className="form-group"><label>Phone *</label><input className="input" value={(showCustomerModal ? customerForm.phone : supplierForm.phone) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} required /></div>
-                                <div className="form-group"><label>Email</label><input className="input" value={(showCustomerModal ? customerForm.email : supplierForm.email) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} /></div>
-                                {showSupplierModal && <div className="form-group full-width"><label>Contact Person</label><input className="input" value={supplierForm.contactPerson || ''} onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} /></div>}
-                                <div className="form-group full-width"><label>Address</label><textarea className="input" rows="3" value={(showCustomerModal ? customerForm.address : supplierForm.address) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, address: e.target.value }) : setSupplierForm({ ...supplierForm, address: e.target.value })} /></div>
-                                <div className="form-group"><label>PIN Code</label><input className="input" value={(showCustomerModal ? customerForm.pinCode : supplierForm.pinCode) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pinCode: e.target.value }) : setSupplierForm({ ...supplierForm, pinCode: e.target.value })} /></div>
-                                <div className="form-group"><label>GSTIN</label><input className="input" value={(showCustomerModal ? customerForm.gstNumber : supplierForm.gstNumber) || ''} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstNumber: e.target.value }) : setSupplierForm({ ...supplierForm, gstNumber: e.target.value })} /></div>
+                <div className="cp-modal-overlay" onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>
+                    <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="cp-modal-header">
+                            <h2 className="cp-modal-title">{showCustomerModal ? (editingCustomer ? 'Edit' : 'New') : (editingSupplier ? 'Edit' : 'New')} {showCustomerModal ? 'Customer' : 'Supplier'}</h2>
+                        </div>
+                        <form onSubmit={showCustomerModal ? handleCustomerSubmit : handleSupplierSubmit} className="cp-modal-body">
+                            <div className="cp-fields" style={{ padding: 0, gap: '24px' }}>
+                                <Field label="Name" required>
+                                    <Input
+                                        value={(showCustomerModal ? customerForm.name : supplierForm.name) || ''}
+                                        onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })}
+                                        placeholder="Full Name"
+                                        required
+                                    />
+                                </Field>
+
+                                <div className="cp-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '24px' }}>
+                                    <Field label="Phone No" required>
+                                        <PrefixInput prefix="+91" value={(showCustomerModal ? customerForm.phone : supplierForm.phone)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} placeholder="9876543210" />
+                                    </Field>
+                                    <Field label="Email">
+                                        <Input value={(showCustomerModal ? customerForm.email : supplierForm.email)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} placeholder="email@example.com" />
+                                    </Field>
+                                </div>
+
+                                {showSupplierModal && (
+                                    <Field label="Contact Person">
+                                        <Input value={supplierForm.contactPerson} onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} placeholder="Full Name" />
+                                    </Field>
+                                )}
+
+                                <Field label="Full Address">
+                                    <textarea className="cp-input" style={{ height: '80px', paddingTop: '12px' }} value={(showCustomerModal ? customerForm.address : supplierForm.address)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, address: e.target.value }) : setSupplierForm({ ...supplierForm, address: e.target.value })} placeholder="Full billing address..." />
+                                </Field>
+
+                                <div className="cp-grid-2">
+                                    <Field label="GSTIN">
+                                        <Input value={(showCustomerModal ? customerForm.gstin : supplierForm.gstin)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstin: e.target.value.toUpperCase() }) : setSupplierForm({ ...supplierForm, gstin: e.target.value.toUpperCase() })} placeholder="19XXXXX..." />
+                                    </Field>
+                                    <Field label="PIN Code">
+                                        <Input value={(showCustomerModal ? customerForm.pincode : supplierForm.pincode)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pincode: e.target.value }) : setSupplierForm({ ...supplierForm, pincode: e.target.value })} placeholder="711101" />
+                                    </Field>
+                                </div>
+
                                 {showCustomerModal && (
-                                    <>
-                                        <div className="form-group"><label>State</label><input className="input" value={customerForm.state || ''} onChange={(e) => setCustomerForm({ ...customerForm, state: e.target.value })} /></div>
-                                        <div className="form-group"><label>Code</label><input className="input" value={customerForm.stateCode || ''} onChange={(e) => setCustomerForm({ ...customerForm, stateCode: e.target.value })} /></div>
-                                    </>
+                                    <div className="cp-grid" style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '24px' }}>
+                                        <Field label="State">
+                                            <select
+                                                className={`cp-select ${customerForm.state ? 'valid' : ''}`}
+                                                value={customerForm.state}
+                                                onChange={(e) => {
+                                                    const selected = INDIAN_STATES.find(s => s.name === e.target.value)
+                                                    setCustomerForm(f => ({ ...f, state: e.target.value, stateCode: selected?.code || '' }))
+                                                }}
+                                            >
+                                                <option value="">Select State</option>
+                                                {INDIAN_STATES.map(s => (
+                                                    <option key={s.code} value={s.name}>{s.name}</option>
+                                                ))}
+                                            </select>
+                                        </Field>
+                                        <Field label="State Code">
+                                            <Input value={customerForm.stateCode} readOnly style={{ textAlign: 'center' }} />
+                                        </Field>
+                                    </div>
                                 )}
                             </div>
-                            <div className="modal-actions" style={{ marginTop: '40px', display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>
-                                <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>Cancel</button>
-                                <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 40px' }}>{showCustomerModal ? (editingCustomer ? 'Update' : 'Create') : (editingSupplier ? 'Update' : 'Create')}</button>
+
+                            <div className="cp-modal-footer">
+                                <button type="button" className="cp-cancel-btn" onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>Cancel</button>
+                                <button type="submit" className="cp-btn-primary" style={{ padding: '12px 32px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                                    {showCustomerModal ? (editingCustomer ? 'Update' : 'Create') : (editingSupplier ? 'Update' : 'Create')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Product Modal */}
+            {showProductModal && (
+                <div className="cp-modal-overlay" onClick={() => setShowProductModal(false)}>
+                    <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="cp-modal-header">
+                            <h2 className="cp-modal-title">{editingProduct ? 'Edit' : 'New'} Inventory <em>Item</em></h2>
+                        </div>
+                        <form onSubmit={handleProductSubmit} className="cp-modal-body">
+                            <div className="cp-fields" style={{ padding: 0, gap: '24px' }}>
+                                <Field label="Item Name" required>
+                                    <Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="Steel Bolt 12mm" />
+                                </Field>
+                                <div className="cp-grid-2">
+                                    <Field label="Purchase Price" required>
+                                        <PrefixInput prefix="₹" value={productForm.purchasePrice} onChange={(e) => setProductForm({ ...productForm, purchasePrice: e.target.value })} placeholder="0.00" />
+                                    </Field>
+                                    <Field label="Sales Price" required>
+                                        <PrefixInput prefix="₹" value={productForm.sellingPrice} onChange={(e) => setProductForm({ ...productForm, sellingPrice: e.target.value })} placeholder="0.00" />
+                                    </Field>
+                                </div>
+                                <div className="cp-grid-2">
+                                    <Field label="Opening Stock">
+                                        <Input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} placeholder="0" />
+                                    </Field>
+                                    <Field label="Quantity Unit">
+                                        <Input value={productForm.quantityUnit} onChange={(e) => setProductForm({ ...productForm, quantityUnit: e.target.value })} placeholder="Pcs / Box / kg" />
+                                    </Field>
+                                </div>
+                                <div className="cp-grid-2">
+                                    <Field label="HSN Code">
+                                        <Input value={productForm.hsn} onChange={(e) => setProductForm({ ...productForm, hsn: e.target.value })} placeholder="8301" />
+                                    </Field>
+                                    <Field label="GST Rate (%)">
+                                        <Input type="number" value={productForm.gst} onChange={(e) => setProductForm({ ...productForm, gst: e.target.value })} placeholder="18" />
+                                    </Field>
+                                </div>
+                            </div>
+                            <div className="cp-modal-footer">
+                                <button type="button" className="cp-cancel-btn" onClick={() => setShowProductModal(false)}>Cancel</button>
+                                <button type="submit" className="cp-btn-primary" style={{ padding: '12px 32px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                                    {editingProduct ? 'Save Changes' : 'Create Item'}
+                                </button>
                             </div>
                         </form>
                     </div>

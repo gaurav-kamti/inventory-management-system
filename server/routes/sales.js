@@ -136,7 +136,8 @@ router.post("/", auth, async (req, res) => {
     // Self-healing: Ensure uniqueness
     let isUnique = false;
     while (!isUnique) {
-      invoiceNumber = `${config.prefix}${String(config.sequence).padStart(
+      const cleanPrefix = config.prefix.endsWith('/') ? config.prefix.slice(0, -1) : config.prefix;
+      invoiceNumber = `${cleanPrefix}/${String(config.sequence).padStart(
         3,
         "0",
       )}/${config.fiscalYear}`;

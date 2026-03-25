@@ -45,15 +45,28 @@ sequelize
   .then(() => {
     console.log("Database synced successfully");
     
-    // Inline Migration to fix 500 errors from missing GST columns
+    // Inline Migration to fix Schema and Names
     const runMigrations = async () => {
+      // 1. Column renames/adds for standardization
+      const tables = ['Customers', 'Suppliers'];
+      const newCols = ['gstin TEXT', 'pincode TEXT'];
+      for (let table of tables) {
+        for (let colDef of newCols) {
+          try { await sequelize.query(`ALTER TABLE ${table} ADD COLUMN ${colDef}`); } catch (e) {}
+        }
+        // Transfer data
+        try { await sequelize.query(`UPDATE ${table} SET gstin = gstNumber WHERE gstin IS NULL AND gstNumber IS NOT NULL`); } catch (e) {}
+        try { await sequelize.query(`UPDATE ${table} SET pincode = pinCode WHERE pincode IS NULL AND pinCode IS NOT NULL`); } catch (e) {}
+      }
+
+      // 2. Original missions (Fixing missing GST columns)
       const salesCols = ['cgst', 'sgst', 'gstPercent', 'discountPercent', 'discountAmount', 'taxableAmount'];
       const purchCols = ['subtotal', 'taxableAmount', 'gstPercent', 'discountPercent', 'discountAmount', 'cgst', 'sgst', 'total', 'roundOff'];
       for (let col of salesCols) {
-        try { await sequelize.query(`ALTER TABLE Sales ADD COLUMN ${col} REAL DEFAULT 0`); } catch (e) { /* ignores if exists */ }
+        try { await sequelize.query(`ALTER TABLE Sales ADD COLUMN ${col} REAL DEFAULT 0`); } catch (e) {}
       }
       for (let col of purchCols) {
-        try { await sequelize.query(`ALTER TABLE Purchases ADD COLUMN ${col} REAL DEFAULT 0`); } catch (e) { /* ignores if exists */ }
+        try { await sequelize.query(`ALTER TABLE Purchases ADD COLUMN ${col} REAL DEFAULT 0`); } catch (e) {}
       }
       try { await sequelize.query(`UPDATE Sales SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
       try { await sequelize.query(`UPDATE Purchases SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
