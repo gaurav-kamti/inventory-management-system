@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
-import { downloadPDF } from '../utils/pdfExport'
+
 import './POS.css'
 
 function POS() {
@@ -166,10 +166,7 @@ function POS() {
         window.print()
     }
 
-    const handleDownloadPDF = async () => {
-        const fileName = `SALE_${lastSale.invoiceNumber}.pdf`;
-        await downloadPDF('invoice-print-template', fileName);
-    }
+
 
     const closeSuccessModal = () => {
         setShowSuccessModal(false)
@@ -364,9 +361,7 @@ function POS() {
                             <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px' }} onClick={handlePrint}>
                                 🖨️ Print Invoice
                             </button>
-                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px' }} onClick={handleDownloadPDF}>
-                                📥 Download PDF
-                            </button>
+
                             <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '15px' }} onClick={closeSuccessModal}>
                                 New Sale
                             </button>
@@ -377,7 +372,12 @@ function POS() {
 
             {/* Hidden Print Template */}
             <div id="invoice-print-template" style={{ display: 'none' }}>
-                <InvoiceTemplate sale={lastSale} customer={lastSale?.customer} />
+                <div className="print-page">
+                    <InvoiceTemplate sale={lastSale} customer={lastSale?.customer} copyType="Buyer's Copy" />
+                </div>
+                <div className="print-page">
+                    <InvoiceTemplate sale={lastSale} customer={lastSale?.customer} copyType="Seller's Copy" />
+                </div>
             </div>
         </div>
     )

@@ -72,7 +72,26 @@ sequelize
       try { await sequelize.query(`UPDATE Purchases SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
     };
 
-    runMigrations().then(() => {
+    runMigrations().then(async () => {
+      // Auto-Seed Admin if missing
+      const { User } = require("./models");
+      try {
+        const admin = await User.findOne({ where: { username: "admin" } });
+        if (!admin) {
+          console.log("Admin user not found. Auto-creating...");
+          await User.create({
+            username: "admin",
+            password: "admin123",
+            role: "admin",
+          });
+          console.log("Admin user created.");
+        } else {
+            console.log("Admin user exists.");
+        }
+      } catch (err) {
+        console.error("Error auto-seeding admin:", err);
+      }
+
       app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
       });

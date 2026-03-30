@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
 import DatePicker from '../components/DatePicker'
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { downloadPDF } from '../utils/pdfExport'
+
 import './Inventory.css' // Reusing inventory styles for standard look
 
 function Database() {
@@ -23,6 +24,8 @@ function Database() {
     const [showInvoiceModal, setShowInvoiceModal] = useState(false)
     const [companyProfile, setCompanyProfile] = useState({})
     const [showExportMenu, setShowExportMenu] = useState(false)
+    const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, record: null })
+    const navigate = useNavigate()
 
     // Helper for dd:mm:yyyy date format
     const formatDate = (dateStr) => {
@@ -41,6 +44,12 @@ function Database() {
             setLoading(false)
         }
         loadData()
+    }, [])
+
+    useEffect(() => {
+        const handleClick = () => setContextMenu({ show: false, x: 0, y: 0, record: null })
+        window.addEventListener('click', handleClick)
+        return () => window.removeEventListener('click', handleClick)
     }, [])
 
     const fetchCompanyProfile = async () => {
@@ -192,14 +201,44 @@ function Database() {
         setShowInvoiceModal(true)
     }
 
+    const handleContextMenu = (e, record) => {
+        e.preventDefault()
+        setContextMenu({
+            show: true,
+            x: e.pageX,
+            y: e.pageY,
+            record
+        })
+    }
+
+    const handleDeleteRecord = async (inv) => {
+        if (!window.confirm(`Are you sure you want to delete this ${inv.type.toLowerCase()} record? This action cannot be undone.`)) return
+
+        try {
+            if (activeTab === 'sales') {
+                await api.delete(`/sales/${inv.id}`)
+                setSales(prev => prev.filter(s => s.id !== inv.id))
+            } else if (activeTab === 'purchases') {
+                await api.delete(`/purchases/${encodeURIComponent(inv.invoiceNumber)}`)
+                setPurchases(prev => prev.filter(p => p.invoiceNumber !== inv.invoiceNumber))
+            } else if (activeTab === 'vouchers') {
+                await api.delete(`/vouchers/${encodeURIComponent(inv.id)}`)
+                setVouchers(prev => prev.filter(v => v.id !== inv.id))
+            }
+            // Use native alert or existing toast (using alert for simplicity if no toast exists here)
+            alert("Record deleted successfully")
+        } catch (error) {
+            console.error('Error deleting record:', error)
+            alert('Failed to delete record: ' + (error.response?.data?.error || error.message))
+        }
+        setContextMenu({ show: false, x: 0, y: 0, record: null })
+    }
+
     const handlePrint = () => {
         window.print();
     }
 
-    const downloadInvoice = async () => {
-        const fileName = `${selectedInvoice.type}_${selectedInvoice.invoiceNumber || selectedInvoice.id}.pdf`;
-        await downloadPDF('invoice-print-template', fileName);
-    }
+
 
     const exportToExcel = () => {
         const data = filteredInvoices.map(inv => ({
@@ -404,7 +443,7 @@ function Database() {
                             </thead>
                             <tbody>
                                 {filteredInvoices.map(inv => (
-                                    <tr key={inv.id}>
+                                    <tr key={inv.id} onContextMenu={(e) => handleContextMenu(e, inv)} style={{ cursor: 'context-menu' }}>
                                         <td style={{ fontSize: '0.85rem' }}>{formatDate(inv.date)}</td>
                                         <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>
                                             {activeTab === 'vouchers' ? (
@@ -430,7 +469,7 @@ function Database() {
                                             </td>
                                         )}
                                         <td style={{ textAlign: 'right' }}>
-                                            <button className="btn" style={{ padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
+                                            <button className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }} onClick={() => openInvoiceDetails(inv)}>
                                                 {inv.type === 'SALE' ? 'View Invoice' : (inv.type === 'PURCHASE' ? 'View Bill' : 'View Voucher')}
                                             </button>
                                         </td>
@@ -549,9 +588,7 @@ function Database() {
                             <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 30px', fontWeight: '800' }} onClick={handlePrint}>
                                 🖨️ Print
                             </button>
-                            <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '15px 30px', fontWeight: '800' }} onClick={downloadInvoice}>
-                                📥 Download PDF
-                            </button>
+
                             <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', padding: '15px 40px', fontWeight: '800' }} onClick={() => setShowInvoiceModal(false)}>Close</button>
                         </div>
                     </div>
@@ -560,8 +597,54 @@ function Database() {
 
             {/* Hidden Print Template */}
             <div id="invoice-print-template" style={{ display: 'none' }}>
-                <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} company={companyProfile} />
+                <div className="print-page">
+                    <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} company={companyProfile} copyType="Buyer's Copy" />
+                </div>
+                <div className="print-page">
+                    <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} company={companyProfile} copyType="Seller's Copy" />
+                </div>
             </div>
+
+            {/* Context Menu (Right Click) */}
+            {contextMenu.show && (
+                <div style={{
+                    position: 'absolute',
+                    top: contextMenu.y,
+                    left: contextMenu.x,
+                    background: 'rgba(5, 31, 32, 0.95)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '8px',
+                    padding: '5px 0',
+                    zIndex: 2000,
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                    minWidth: '150px'
+                }}>
+                    <button 
+                        style={{ width: '100%', textAlign: 'left', padding: '10px 15px', background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', gap: '10px', alignItems: 'center' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => {
+                            if (contextMenu.record.type === 'VOUCHER') {
+                                alert("Voucher editing coming soon!");
+                            } else {
+                                navigate('/sell-purchase', { state: { editRecord: { type: contextMenu.record.type, record: contextMenu.record } } });
+                            }
+                            setContextMenu({ ...contextMenu, show: false });
+                        }}
+                    >
+                        <span>✏️</span> Edit
+                    </button>
+                    <button 
+                        style={{ width: '100%', textAlign: 'left', padding: '10px 15px', background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', gap: '10px', alignItems: 'center' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => handleDeleteRecord(contextMenu.record)}
+                    >
+                        <span>🗑️</span> Delete
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

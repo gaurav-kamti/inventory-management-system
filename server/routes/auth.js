@@ -6,11 +6,21 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+    console.log(`Login attempt for username: ${username}`);
     const user = await User.findOne({ where: { username } });
     
-    if (!user || !(await user.comparePassword(password))) {
+    if (!user) {
+      console.log(`User not found: ${username}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    const passwordMatch = await user.comparePassword(password);
+    if (!passwordMatch) {
+      console.log(`Password mismatch for user: ${username}`);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    console.log(`Login successful for user: ${username}`);
 
     // Use environment variable or fallback for consistency
     const secret = process.env.JWT_SECRET || 'superGK108';

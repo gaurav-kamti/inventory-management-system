@@ -291,4 +291,44 @@ router.post("/receipt", auth, async (req, res) => {
   }
 });
 
+// Delete a voucher
+router.delete("/:id", auth, async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { id } = req.params;
+    if (id.startsWith('R-')) {
+      // Receipt (CreditTransaction)
+      const ctId = id.split('-')[1];
+      const ct = await CreditTransaction.findByPk(ctId, { transaction: t });
+      if (!ct) return res.status(404).json({ error: "Receipt not found" });
+      
+      const customer = await Customer.findByPk(ct.customerId, { transaction: t });
+      if (customer) {
+        await customer.update({ outstandingBalance: round2(parseFloat(customer.outstandingBalance || 0) + parseFloat(ct.amount)) }, { transaction: t });
+      }
+      await ct.destroy({ transaction: t });
+    } else if (id.startsWith('P-')) {
+      // Payment (SupplierTransaction)
+      const stId = id.split('-')[1];
+      const st = await SupplierTransaction.findByPk(stId, { transaction: t });
+      if (!st) return res.status(404).json({ error: "Payment not found" });
+
+      const supplier = await Supplier.findByPk(st.supplierId, { transaction: t });
+      if (supplier) {
+         await supplier.update({ outstandingBalance: round2(parseFloat(supplier.outstandingBalance || 0) + parseFloat(st.amount)) }, { transaction: t });
+      }
+      await st.destroy({ transaction: t });
+    } else {
+      return res.status(400).json({ error: "Invalid voucher ID" });
+    }
+    
+    await t.commit();
+    res.json({ message: "Voucher deleted successfully" });
+  } catch (error) {
+    if (t) await t.rollback();
+    console.error("Error deleting voucher:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

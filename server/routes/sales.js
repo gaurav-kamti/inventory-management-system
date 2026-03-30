@@ -123,8 +123,7 @@ router.post("/", auth, async (req, res) => {
     );
     const due = round2(total - paid);
 
-    // Generate invoice number from settings
-    let invoiceNumber;
+    let invoiceNumber = req.body.invoiceNumber;
     const setting = await Settings.findOne({
       where: { key: "invoice_config" },
       transaction: t,
@@ -133,42 +132,52 @@ router.post("/", auth, async (req, res) => {
       ? setting.value
       : { prefix: "RM/", sequence: 1, fiscalYear: "25-26" };
 
-    // Self-healing: Ensure uniqueness
-    let isUnique = false;
-    while (!isUnique) {
-      const cleanPrefix = config.prefix.endsWith('/') ? config.prefix.slice(0, -1) : config.prefix;
-      invoiceNumber = `${cleanPrefix}/${String(config.sequence).padStart(
-        3,
-        "0",
-      )}/${config.fiscalYear}`;
-
-      const existing = await Sale.findOne({
-        where: { invoiceNumber },
-        transaction: t,
-      });
-
-      if (!existing) {
-        isUnique = true;
-      } else {
-        config.sequence += 1; // Increment and retry
-      }
+    // If manual invoice is provided, verify uniqueness
+    if (invoiceNumber) {
+        const existing = await Sale.findOne({ where: { invoiceNumber }, transaction: t });
+        if (existing) {
+            invoiceNumber = null; // Collision! Fallback to auto-generation
+        }
     }
 
-    // Update sequence for next time
-    config.sequence += 1;
-    if (setting) {
-      await setting.update({ value: config }, { transaction: t });
-    } else {
-      await Settings.create(
-        { key: "invoice_config", value: config },
-        { transaction: t },
-      );
+    if (!invoiceNumber) {
+        let isUnique = false;
+        while (!isUnique) {
+          const cleanPrefix = config.prefix.endsWith('/') ? config.prefix.slice(0, -1) : config.prefix;
+          invoiceNumber = `${cleanPrefix}/${String(config.sequence).padStart(
+            3,
+            "0",
+          )}/${config.fiscalYear}`;
+    
+          const existing = await Sale.findOne({
+            where: { invoiceNumber },
+            transaction: t,
+          });
+    
+          if (!existing) {
+            isUnique = true;
+          } else {
+            config.sequence += 1; // Increment and retry
+          }
+        }
+        
+        // Update sequence for next time since we used it
+        config.sequence += 1;
+        if (setting) {
+          await setting.update({ value: config }, { transaction: t });
+        } else {
+          await Settings.create(
+            { key: "invoice_config", value: config },
+            { transaction: t },
+          );
+        }
     }
 
     // Create sale
     const sale = await Sale.create(
       {
         invoiceNumber,
+        createdAt: req.body.date ? new Date(req.body.date) : new Date(),
         customerId: customerId || null,
         userId: req.user.id,
         subtotal: providedSubtotal || subtotal,
@@ -251,6 +260,7 @@ router.post("/", auth, async (req, res) => {
           amount: total, // The full bill amount is a credit/liability initially
           method: "New Ref",
           notes: `Credit from sale ${invoiceNumber}`,
+          createdAt: req.body.date ? new Date(req.body.date) : new Date()
         },
         { transaction: t },
       );
@@ -284,6 +294,7 @@ router.post("/", auth, async (req, res) => {
                 amount: adjAmt,
                 method: "Agst Ref",
                 notes: `Adjusted against Advance id: ${adj.id}`,
+                createdAt: req.body.date ? new Date(req.body.date) : new Date()
               },
               { transaction: t },
             );
@@ -298,6 +309,161 @@ router.post("/", auth, async (req, res) => {
     await t.rollback();
     console.error("Sale processing error:", error); // Log full error
     res.status(400).json({ error: error.message, details: error.errors });
+  }
+});
+
+// Delete a sale
+router.delete("/:id", auth, async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const sale = await Sale.findByPk(req.params.id, {
+      include: [SaleItem],
+      transaction: t
+    });
+    if (!sale) return res.status(404).json({ error: "Sale not found" });
+
+    // Revert stock
+    if (sale.SaleItems) {
+      for (const item of sale.SaleItems) {
+        const product = await Product.findByPk(item.productId, { transaction: t });
+        if (product) {
+          await product.update({ stock: product.stock + item.quantity }, { transaction: t });
+        }
+      }
+    }
+
+    // Revert customer balance
+    if (sale.customerId && sale.amountDue > 0) {
+      const customer = await Customer.findByPk(sale.customerId, { transaction: t });
+      if (customer) {
+        await customer.update({ outstandingBalance: round2(parseFloat(customer.outstandingBalance) - sale.amountDue) }, { transaction: t });
+      }
+    }
+
+    // Delete associated CreditTransactions
+    await CreditTransaction.destroy({ where: { saleId: sale.id }, transaction: t });
+
+    // Delete SaleItems
+    await SaleItem.destroy({ where: { saleId: sale.id }, transaction: t });
+    
+    // Delete Sale
+    await sale.destroy({ transaction: t });
+
+    await t.commit();
+    res.json({ message: "Sale deleted successfully" });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error deleting sale:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update a sale
+router.put('/:id', auth, async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const saleId = req.params.id;
+    const sale = await Sale.findByPk(saleId, { include: [SaleItem], transaction: t });
+    if (!sale) return res.status(404).json({ error: "Sale not found" });
+
+// REVERT LOGIC
+    if (sale.SaleItems) {
+      for (const item of sale.SaleItems) {
+        const product = await Product.findByPk(item.productId, { transaction: t });
+        if (product) await product.update({ stock: product.stock + item.quantity }, { transaction: t });
+      }
+    }
+    if (sale.customerId && sale.amountDue > 0) {
+      const customer = await Customer.findByPk(sale.customerId, { transaction: t });
+      if (customer) await customer.update({ outstandingBalance: round2(parseFloat(customer.outstandingBalance) - sale.amountDue) }, { transaction: t });
+    }
+
+    const paymentAdjustments = await CreditTransaction.findAll({ where: { saleId: sale.id, type: 'payment', method: 'Agst Ref' }, transaction: t });
+    for (const payment of paymentAdjustments) {
+        const match = payment.notes && payment.notes.match(/Advance id: (\d+)/);
+        if (match && match[1]) {
+            const advTrans = await CreditTransaction.findByPk(match[1], { transaction: t });
+            if (advTrans) await advTrans.update({ remainingAdvance: round2(parseFloat(advTrans.remainingAdvance) + parseFloat(payment.amount)) }, { transaction: t });
+        }
+    }
+    await CreditTransaction.destroy({ where: { saleId: sale.id }, transaction: t });
+    await SaleItem.destroy({ where: { saleId: sale.id }, transaction: t });
+
+// NEW DATA LOGIC
+    const {
+      items, customerId, paymentMode, amountPaid, discount, roundOff, notes,
+      deliveryNote, paymentTerms, supplierRef, buyerOrderNo, buyerOrderDate,
+      despatchedThrough, termsOfDelivery, cgst, sgst, gstPercent, discountPercent,
+      discountAmount, taxableAmount, subtotal: providedSubtotal, total: providedTotal
+    } = req.body;
+
+    let subtotal = 0;
+    for (const item of items) {
+      let product;
+      if (item.productId) product = await Product.findByPk(item.productId, { transaction: t });
+      if (!product && item.name) product = await Product.findOne({ where: { name: item.name }, transaction: t });
+      if (!product && item.name) product = await Product.create({ name: item.name, stock: 0, sellingPrice: parseFloat(item.price || 0), purchasePrice: 0, hsn: item.hsn || "8301" }, { transaction: t });
+      item.productId = product.id;
+      subtotal += item.quantity * parseFloat(item.price || product.sellingPrice);
+    }
+    subtotal = round2(subtotal);
+    const tax = !isNaN(parseFloat(req.body.tax)) ? round2(parseFloat(req.body.tax)) : round2(subtotal * (parseFloat(gstPercent || 18)/100));
+    const total = !isNaN(parseFloat(providedTotal)) ? round2(parseFloat(providedTotal)) : round2(subtotal + tax - round2(discount || 0));
+    const paid = round2(parseFloat(amountPaid) || (paymentMode === "credit" ? 0 : total));
+    const due = round2(total - paid);
+
+    await sale.update({
+        invoiceNumber: invoiceNumber || sale.invoiceNumber,
+        createdAt: date ? new Date(date) : sale.createdAt,
+        customerId: customerId || null,
+        subtotal: providedSubtotal || subtotal,
+        tax: parseFloat(cgst || 0) + parseFloat(sgst || 0) || tax,
+        discount: discountAmount || 0,
+        total: providedTotal || total,
+        paymentMode,
+        amountPaid: amountPaid || 0,
+        amountDue: due,
+        roundOff: roundOff || 0,
+        notes, deliveryNote, paymentTerms, supplierRef, buyerOrderNo, buyerOrderDate,
+        despatchedThrough, termsOfDelivery, cgst: cgst || 0, sgst: sgst || 0,
+        gstPercent: gstPercent || 18, discountPercent: discountPercent || 0,
+        discountAmount: discountAmount || 0, taxableAmount: taxableAmount || subtotal
+    }, { transaction: t });
+
+    for (const item of items) {
+      const product = await Product.findByPk(item.productId, { transaction: t });
+      const itemPrice = round2(item.price || product.sellingPrice);
+      await SaleItem.create({
+          saleId: sale.id, productId: item.productId, quantity: item.quantity,
+          price: itemPrice, total: round2(item.quantity * itemPrice), hsn: item.hsn || product.hsn || "8301",
+          gst: round2(item.gst || product.gst || 18), discount: round2(item.discount || 0),
+      }, { transaction: t });
+      await product.update({ stock: product.stock - item.quantity, sellingPrice: itemPrice }, { transaction: t });
+    }
+
+    if (due > 0 && customerId) {
+      const customer = await Customer.findByPk(customerId, { transaction: t });
+      await customer.update({ outstandingBalance: round2(parseFloat(customer.outstandingBalance) + due) }, { transaction: t });
+      await CreditTransaction.create({ customerId, saleId: sale.id, type: "credit", amount: total, method: "New Ref", notes: `Credit from sale ${sale.invoiceNumber}`, createdAt: date ? new Date(date) : new Date() }, { transaction: t });
+
+      if (req.body.advanceAdjustments && req.body.advanceAdjustments.length > 0) {
+        for (const adj of req.body.advanceAdjustments) {
+          const advTrans = await CreditTransaction.findByPk(adj.id, { transaction: t });
+          if (advTrans) {
+            const adjAmt = round2(parseFloat(adj.amount));
+            await advTrans.update({ remainingAdvance: round2(parseFloat(advTrans.remainingAdvance) - adjAmt) }, { transaction: t });
+            await CreditTransaction.create({ customerId, saleId: sale.id, type: "payment", amount: adjAmt, method: "Agst Ref", notes: `Adjusted against Advance id: ${adj.id}`, createdAt: date ? new Date(date) : new Date() }, { transaction: t });
+          }
+        }
+      }
+    }
+
+    await t.commit();
+    res.json(sale);
+  } catch (error) {
+    await t.rollback();
+    console.error("Sale update error:", error);
+    res.status(400).json({ error: error.message });
   }
 });
 

@@ -10,8 +10,8 @@
     width: 210mm;
     max-width: 100%;
     padding: 8mm 10mm;
-    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
-    font-size: 11px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10.5px;
     color: #111111;
     line-height: 1.5;
     border: 1px solid #cccccc;
@@ -42,7 +42,7 @@
 /* ── Title ─────────────────────────────────────────────────────────────────── */
 .inv-title-row {
     text-align: center;
-    font-family: 'Tinos', Georgia, serif;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 15px;
     font-weight: 700;
     text-transform: uppercase;
@@ -67,10 +67,11 @@
     border-right: 1px solid #000;
 }
 .inv-seller-name {
-    font-family: 'Tinos', Georgia, serif;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 17px;
     font-weight: 700;
     margin-bottom: 3px;
+    text-transform: uppercase;
 }
 .inv-seller-sub {
     font-size: 10px;
@@ -124,8 +125,9 @@
 .party-name {
     font-size: 14px;
     font-weight: 700;
-    font-family: 'Tinos', Georgia, serif;
+    font-family: 'Courier New', Courier, monospace;
     margin: 3px 0;
+    text-transform: uppercase;
 }
 .party-line {
     font-size: 10px;
@@ -200,9 +202,9 @@
 .inv-table tr.subtotal-row:first-of-type td:last-child {
     border-top: 1px solid #000;
 }
-.subtotal-label  { text-align: right; font-size: 10px; }
+.subtotal-label  { text-align: right; font-size: 10px; text-transform: uppercase; }
 .subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; }
-.subtotal-rate   { font-size: 10px; text-align: right; color: #555; }
+.subtotal-rate   { font-size: 10px; text-align: right; color: #555; text-transform: uppercase; }
 .bold-label      { font-weight: 700; }
 .italic          { font-style: italic; }
 
@@ -213,9 +215,9 @@
     background: #ffffff;
     font-weight: 700;
 }
-.total-label { text-align: right; font-size: 11px; }
+.total-label { text-align: right; font-size: 11px; text-transform: uppercase; }
 .total-rs    { text-align: right; font-size: 11px; width: 30px; }
-.total-val   { text-align: right; font-size: 12px; font-family: 'Tinos', serif; }
+.total-val   { text-align: right; font-size: 12px; font-family: 'Courier New', Courier, monospace; }
 
 /* ── Amount in words + E. & O.E ────────────────────────────────────────────── */
 .inv-words-row {
@@ -231,7 +233,7 @@
 .inv-words-text {
     font-size: 11px;
     font-weight: 700;
-    font-family: 'Tinos', Georgia, serif;
+    font-family: 'Courier New', Courier, monospace;
     margin-top: 2px;
 }
 .inv-eoe {
@@ -317,7 +319,7 @@
     margin-top: 3px;
     font-style: italic;
 }
-.sig-for  { font-size: 11px; font-weight: 700; font-family: 'Tinos', Georgia, serif; }
+.sig-for  { font-size: 11px; font-weight: 700; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
 .sig-line {
     border-top: 1px solid #999;
     margin-top: 38px;
@@ -340,6 +342,8 @@
 /* ── Print ───────────────────────────────────────────────────────────────────── */
 @media print {
     .inv-wrap { box-shadow: none; border: none; width: 100%; padding: 6mm 8mm; }
+    .print-page { page-break-after: always; }
+    .print-page:last-child { page-break-after: auto; }
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */

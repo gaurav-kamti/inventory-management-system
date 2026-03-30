@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { numberToWords, calculateGSTSplit, generateHSNSummary, round2 } from '../utils/invoiceUtils'
 import { formatDate } from '../utils/formatters'
 import InvoiceTemplate from '../components/InvoiceTemplate'
 import DatePicker from '../components/DatePicker'
-import { downloadPDF } from '../utils/pdfExport'
+
 import './Inventory.css' // We might need to create a separate CSS or share it
 
 function SellPurchase() {
@@ -14,6 +15,12 @@ function SellPurchase() {
     const [showPurchaseModal, setShowPurchaseModal] = useState(false) // Renamed from showAddModal
     const [showSellModal, setShowSellModal] = useState(false)
     const [companyProfile, setCompanyProfile] = useState({})
+    
+    // Edit state checks
+    const location = useLocation()
+    const navigate = useNavigate()
+    const [isEditing, setIsEditing] = useState(false)
+    const [editId, setEditId] = useState(null)
 
     // Refs for Focus Management
     const purchaseInvoiceRef = useRef(null)
@@ -185,6 +192,83 @@ function SellPurchase() {
         fetchCompanyProfile()
     }, [])
 
+    useEffect(() => {
+        if (location.state?.editRecord) {
+            const { record, type } = location.state.editRecord;
+            setIsEditing(true);
+            setEditId(type === 'PURCHASE' ? record.invoiceNumber : record.id);
+
+            if (type === 'SALE') {
+                setShowSellModal(true);
+                setSellForm({
+                    invoice: record.invoiceNumber,
+                    date: record.date ? record.date.split('T')[0] : '',
+                    customerId: record.customer?.id || '',
+                    customerName: record.partyName || record.customer?.name || '',
+                    roundOff: record.roundOff || 0,
+                    deliveryNote: record.deliveryNote || '',
+                    paymentTerms: record.paymentTerms || '',
+                    supplierRef: record.supplierRef || '',
+                    buyerOrderNo: record.buyerOrderNo || '',
+                    buyerOrderDate: record.buyerOrderDate || '',
+                    despatchedThrough: record.despatchedThrough || '',
+                    termsOfDelivery: record.termsOfDelivery || '',
+                    gstPercent: record.gstPercent || 18,
+                    discountPercent: record.discountPercent || 0
+                });
+                
+                setCartItems(record.items.map(item => ({
+                    productId: item.productId,
+                    name: item.name || item.Product?.name,
+                    size: item.size || '',
+                    sizeUnit: item.sizeUnit || 'mm',
+                    hsn: item.hsn || '8301',
+                    gst: item.gst || 18,
+                    quantity: item.quantity,
+                    rate: item.price || item.rate || 0,
+                    discount: item.discount || 0,
+                    quantityUnit: item.quantityUnit || 'Pcs'
+                })));
+            } else if (type === 'PURCHASE') {
+                setShowPurchaseModal(true);
+                setAddForm({
+                    invoice: record.invoiceNumber, // Wait, backend is using invoiceNumber
+                    supplierInvoice: record.invoiceNumber,
+                    date: record.date ? record.date.split('T')[0] : '',
+                    supplierId: record.party?.id || record.customer?.id || '',
+                    supplierName: record.partyName || record.customer?.name || '',
+                    deliveryNote: record.deliveryNote || '',
+                    paymentTerms: record.paymentTerms || '',
+                    supplierRef: record.supplierRef || '',
+                    buyerOrderNo: record.buyerOrderNo || '',
+                    buyerOrderDate: record.buyerOrderDate || '',
+                    despatchedThrough: record.despatchedThrough || '',
+                    termsOfDelivery: record.termsOfDelivery || '',
+                    gstPercent: record.gstPercent || 18,
+                    discountPercent: record.discountPercent || 0,
+                    items: []
+                });
+
+                setAddedItems(record.items.map(item => ({
+                    productId: item.productId,
+                    name: item.name || item.Product?.name,
+                    size: item.size || '',
+                    sizeUnit: item.sizeUnit || 'mm',
+                    hsn: item.hsn || '8301',
+                    quantity: item.quantity,
+                    rate: item.price || item.rate || 0,
+                    amount: item.total || item.amount || 0,
+                    quantityUnit: item.quantityUnit || 'Pcs',
+                    gst: item.gst || 18,
+                    discount: item.discount || 0
+                })));
+            }
+
+            // Clear state so a reload doesn't trigger edit mode again
+            navigate('/sell-purchase', { replace: true, state: {} });
+        }
+    }, [location.state, navigate]);
+
     const fetchCompanyProfile = async () => {
         try {
             const response = await api.get('/settings/company_profile')
@@ -344,7 +428,12 @@ function SellPurchase() {
                 })
             }
 
-            const response = await api.post('/purchases', purchaseData)
+            let response;
+            if (isEditing && editId) {
+                response = await api.put(`/purchases/${editId}`, purchaseData);
+            } else {
+                response = await api.post('/purchases', purchaseData);
+            }
 
             const completedPurchase = {
                 ...response.data,
@@ -398,6 +487,8 @@ function SellPurchase() {
             })
             setAddedItems([])
             setShowPurchaseModal(false)
+            setIsEditing(false)
+            setEditId(null)
             fetchProducts()
             fetchSuppliers() // Refresh suppliers to reflect any meaningful updates if needed
         } catch (error) {
@@ -514,6 +605,7 @@ function SellPurchase() {
                 amountPaid: sellForm.customerId ? 0 : sellTotal,
                 salesChannel: 'in-store',
                 invoiceNumber: sellForm.invoice,
+                date: sellForm.date,
                 deliveryNote: sellForm.deliveryNote,
                 paymentTerms: sellForm.paymentTerms,
                 supplierRef: sellForm.supplierRef,
@@ -527,7 +619,12 @@ function SellPurchase() {
                 })
             }
 
-            const response = await api.post('/sales', saleData)
+            let response;
+            if (isEditing && editId) {
+                response = await api.put(`/sales/${editId}`, saleData)
+            } else {
+                response = await api.post('/sales', saleData)
+            }
             setLastSaleData({ 
                 ...response.data, 
                 items: cartItems.map(i => ({ ...i, total: (parseFloat(i.quantity) || 0) * (parseFloat(i.rate) || 0) })), 
@@ -556,6 +653,8 @@ function SellPurchase() {
 
             setCartItems([])
             setShowSellModal(false)
+            setIsEditing(false)
+            setEditId(null)
             setSellForm({
                 invoice: '',
                 date: '',
@@ -581,11 +680,7 @@ function SellPurchase() {
         window.print();
     }
 
-    const handleDownloadPDF = async (type) => {
-        const data = type === 'sale' ? lastSaleData : lastPurchaseData;
-        const fileName = `${type.toUpperCase()}_${data.invoiceNumber}.pdf`;
-        await downloadPDF('invoice-print-template', fileName);
-    }
+
 
     const addItemToSellList = () => {
         if (!sellItemInput.name || !sellItemInput.quantity || !sellItemInput.rate) {
@@ -628,7 +723,7 @@ function SellPurchase() {
     }
 
     useEffect(() => {
-        if (showSellModal) {
+        if (showSellModal && !isEditing) {
             setSellForm(prev => ({ ...prev, invoice: 'Generating...' }))
             const fetchInvoice = async () => {
                 try {
@@ -1770,9 +1865,7 @@ function SellPurchase() {
                                 <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={handlePrint}>
                                     🖨️ Print Invoice
                                 </button>
-                                <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={() => handleDownloadPDF('sale')}>
-                                    📥 Download PDF
-                                </button>
+
                                 <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '15px' }} onClick={() => setShowSuccessModal(false)}>
                                     Proceed to New Sale
                                 </button>
@@ -1803,9 +1896,7 @@ function SellPurchase() {
                                 <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={handlePrint}>
                                     🖨️ Print Invoice
                                 </button>
-                                <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '20px', fontWeight: '800' }} onClick={() => handleDownloadPDF('purchase')}>
-                                    📥 Download PDF
-                                </button>
+
                                 <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '15px' }} onClick={() => setShowPurchaseSuccessModal(false)}>
                                     Proceed to New Purchase
                                 </button>
@@ -1818,9 +1909,23 @@ function SellPurchase() {
             <div id="invoice-print-template" style={{ display: 'none' }}>
                 {/* Render either Sale or Purchase template depending on what's active/available */}
                 {(showSuccessModal && lastSaleData) ? (
-                    <InvoiceTemplate sale={lastSaleData} customer={lastSaleData?.customer} company={companyProfile} />
+                    <>
+                        <div className="print-page">
+                            <InvoiceTemplate sale={lastSaleData} customer={lastSaleData?.customer} company={companyProfile} copyType="Buyer's Copy" />
+                        </div>
+                        <div className="print-page">
+                            <InvoiceTemplate sale={lastSaleData} customer={lastSaleData?.customer} company={companyProfile} copyType="Seller's Copy" />
+                        </div>
+                    </>
                 ) : (showPurchaseSuccessModal && lastPurchaseData) ? (
-                    <InvoiceTemplate sale={lastPurchaseData} customer={lastPurchaseData?.customer} company={companyProfile} />
+                    <>
+                        <div className="print-page">
+                            <InvoiceTemplate sale={lastPurchaseData} customer={lastPurchaseData?.customer} company={companyProfile} copyType="Buyer's Copy" />
+                        </div>
+                        <div className="print-page">
+                            <InvoiceTemplate sale={lastPurchaseData} customer={lastPurchaseData?.customer} company={companyProfile} copyType="Seller's Copy" />
+                        </div>
+                    </>
                 ) : null}
             </div>
         </div>
