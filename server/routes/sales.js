@@ -224,6 +224,10 @@ router.post("/", auth, async (req, res) => {
           hsn: item.hsn || product.hsn || "8301",
           gst: round2(item.gst || product.gst || 18),
           discount: round2(item.discount || 0),
+          name: item.name || product.name || '',
+          size: item.size || '',
+          sizeUnit: item.sizeUnit || 'mm',
+          quantityUnit: item.quantityUnit || 'Pcs',
         },
 
         { transaction: t },
@@ -437,6 +441,10 @@ router.put('/:id', auth, async (req, res) => {
           saleId: sale.id, productId: item.productId, quantity: item.quantity,
           price: itemPrice, total: round2(item.quantity * itemPrice), hsn: item.hsn || product.hsn || "8301",
           gst: round2(item.gst || product.gst || 18), discount: round2(item.discount || 0),
+          name: item.name || product.name || '',
+          size: item.size || '',
+          sizeUnit: item.sizeUnit || 'mm',
+          quantityUnit: item.quantityUnit || 'Pcs',
       }, { transaction: t });
       await product.update({ stock: product.stock - item.quantity, sellingPrice: itemPrice }, { transaction: t });
     }

@@ -22,7 +22,7 @@ function SellPurchase() {
     const [showPurchaseModal, setShowPurchaseModal] = useState(false) // Renamed from showAddModal
     const [showSellModal, setShowSellModal] = useState(false)
     const [companyProfile, setCompanyProfile] = useState({})
-    
+
     // Edit state checks
     const location = useLocation()
     const navigate = useNavigate()
@@ -48,8 +48,8 @@ function SellPurchase() {
     const sellAddBtnRef = useRef(null)
 
     const formatDateDisplay = (dateStr) => {
-    return formatDate(dateStr, 'dd/mm/yyyy');
-}
+        return formatDate(dateStr, 'dd/mm/yyyy');
+    }
 
     // Purchase Item Form (formerly Add Item)
     const [addForm, setAddForm] = useState({
@@ -175,7 +175,8 @@ function SellPurchase() {
             return alert('Please fill required fields')
         }
 
-        setAddedItems([...addedItems, { ...addItemRow, amount: (parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0) }])
+        const finalAmount = addItemRow.amount || (parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0);
+        setAddedItems([...addedItems, { ...addItemRow, amount: finalAmount.toString() }])
         setAddItemRow({
             name: '',
             size: '',
@@ -227,19 +228,25 @@ function SellPurchase() {
                     gstPercent: record.gstPercent || 18,
                     discountPercent: record.discountPercent || 0
                 });
-                
-                setCartItems(record.items.map(item => ({
-                    productId: item.productId,
-                    name: item.name || item.Product?.name,
-                    size: item.size || '',
-                    sizeUnit: item.sizeUnit || 'mm',
-                    hsn: item.hsn || '8301',
-                    gst: item.gst || 18,
-                    quantity: item.quantity,
-                    rate: item.price || item.rate || 0,
-                    discount: item.discount || 0,
-                    quantityUnit: item.quantityUnit || 'Pcs'
-                })));
+
+                setCartItems(record.items.map(item => {
+                    const price = item.price || item.rate || 0;
+                    const qty = item.quantity || 0;
+                    const amt = item.amount || item.total || (qty * price).toString();
+                    return {
+                        productId: item.productId,
+                        name: item.name || item.Product?.name,
+                        size: item.size || '',
+                        sizeUnit: item.sizeUnit || 'mm',
+                        hsn: item.hsn || '8301',
+                        gst: item.gst || 18,
+                        quantity: qty,
+                        rate: price,
+                        amount: amt.toString(),
+                        discount: item.discount || 0,
+                        quantityUnit: item.quantityUnit || 'Pcs'
+                    };
+                }));
             } else if (type === 'PURCHASE') {
                 setShowPurchaseModal(true);
                 setAddForm({
@@ -260,19 +267,24 @@ function SellPurchase() {
                     items: []
                 });
 
-                setAddedItems(record.items.map(item => ({
-                    productId: item.productId,
-                    name: item.name || item.Product?.name,
-                    size: item.size || '',
-                    sizeUnit: item.sizeUnit || 'mm',
-                    hsn: item.hsn || '8301',
-                    quantity: item.quantity,
-                    rate: item.price || item.rate || 0,
-                    amount: item.total || item.amount || 0,
-                    quantityUnit: item.quantityUnit || 'Pcs',
-                    gst: item.gst || 18,
-                    discount: item.discount || 0
-                })));
+                setAddedItems(record.items.map(item => {
+                    const price = item.price || item.rate || 0;
+                    const qty = item.quantity || 0;
+                    const amt = item.total || item.amount || (qty * price).toString();
+                    return {
+                        productId: item.productId,
+                        name: item.name || item.Product?.name,
+                        size: item.size || '',
+                        sizeUnit: item.sizeUnit || 'mm',
+                        hsn: item.hsn || '8301',
+                        quantity: qty,
+                        rate: price,
+                        amount: amt.toString(),
+                        quantityUnit: item.quantityUnit || 'Pcs',
+                        gst: item.gst || 18,
+                        discount: item.discount || 0
+                    };
+                }));
             }
 
             // Clear state so a reload doesn't trigger edit mode again
@@ -427,7 +439,10 @@ function SellPurchase() {
                 total: addTotal,
                 roundOff: addRoundOff,
                 items: addedItems.map(item => ({
-                    name: `${item.name} ${item.size}${item.sizeUnit}`.trim(),
+                    name: item.name,
+                    size: item.size || '',
+                    sizeUnit: item.sizeUnit || '',
+                    quantityUnit: item.quantityUnit || 'Pcs',
                     rate: item.rate,
                     quantity: item.quantity,
                     amount: item.amount,
@@ -514,11 +529,7 @@ function SellPurchase() {
     }
 
     const addToCart = (product) => {
-        const existing = cartItems.find(item => item.productId === product.id && item.size === '' && item.sizeUnit === 'mm')
-        if (existing) {
-            return alert('Item already in cart')
-        } else {
-            setCartItems([...cartItems, {
+        setCartItems([...cartItems, {
                 productId: product.id,
                 name: product.name,
                 size: '',
@@ -527,27 +538,34 @@ function SellPurchase() {
                 gst: product.gst || 18,
                 quantity: 1,
                 rate: product.sellingPrice,
-                discount: 0,
-                stock: product.stock
-            }])
-        }
+            stock: product.stock
+        }])
     }
 
-    const updateCartItem = (productId, field, value) => {
-        setCartItems(cartItems.map(item =>
-            item.productId === productId ? { ...item, [field]: value } : item
-        ))
+    const updateCartItem = (index, field, value) => {
+        setCartItems(cartItems.map((item, idx) => {
+            if (idx === index) {
+                const updated = { ...item, [field]: value };
+                if (field === 'quantity' || field === 'rate') {
+                    const q = parseFloat(updated.quantity) || 0;
+                    const r = parseFloat(updated.rate) || 0;
+                    updated.amount = q && r ? (q * r).toFixed(2) : '';
+                }
+                return updated;
+            }
+            return item;
+        }))
     }
 
-    const removeFromCart = (productId) => {
-        setCartItems(cartItems.filter(item => item.productId !== productId))
+    const removeFromCart = (index) => {
+        setCartItems(cartItems.filter((item, idx) => idx !== index))
     }
 
-    const updateCartItemAmount = (productId, amount) => {
-        setCartItems(cartItems.map(item => {
-            if (item.productId === productId) {
+    const updateCartItemAmount = (index, amount) => {
+        setCartItems(cartItems.map((item, idx) => {
+            if (idx === index) {
                 const q = parseFloat(item.quantity) || 1;
-                const newRate = (parseFloat(amount) / q).toFixed(2);
+                const newRate = amount ? (parseFloat(amount) / q).toString() : '';
                 return { ...item, amount, rate: newRate };
             }
             return item;
@@ -555,16 +573,25 @@ function SellPurchase() {
     }
 
     const updateAddedItem = (index, field, value) => {
-        setAddedItems(addedItems.map((item, i) =>
-            i === index ? { ...item, [field]: value } : item
-        ))
+        setAddedItems(addedItems.map((item, i) => {
+            if (i === index) {
+                const updated = { ...item, [field]: value };
+                if (field === 'quantity' || field === 'rate') {
+                    const q = parseFloat(updated.quantity) || 0;
+                    const r = parseFloat(updated.rate) || 0;
+                    updated.amount = q && r ? (q * r).toFixed(2) : '';
+                }
+                return updated;
+            }
+            return item;
+        }))
     }
 
     const updateAddedItemAmount = (index, amount) => {
         setAddedItems(addedItems.map((item, i) => {
             if (i === index) {
                 const q = parseFloat(item.quantity) || 1;
-                const newRate = (parseFloat(amount) / q).toFixed(2);
+                const newRate = amount ? (parseFloat(amount) / q).toString() : '';
                 return { ...item, amount, rate: newRate };
             }
             return item;
@@ -600,6 +627,8 @@ function SellPurchase() {
                 items: cartItems.map(item => ({
                     productId: item.productId || null,
                     name: item.name,
+                    size: item.size || '',
+                    sizeUnit: item.sizeUnit || '',
                     quantity: item.quantity || 0,
                     price: item.rate,
                     hsn: item.hsn || '8301',
@@ -642,10 +671,10 @@ function SellPurchase() {
             } else {
                 response = await api.post('/sales', saleData)
             }
-            setLastSaleData({ 
-                ...response.data, 
-                items: cartItems.map(i => ({ ...i, total: (parseFloat(i.quantity) || 0) * (parseFloat(i.rate) || 0) })), 
-                customer: selectedCustomer, 
+            setLastSaleData({
+                ...response.data,
+                items: cartItems.map(i => ({ ...i, total: (parseFloat(i.quantity) || 0) * (parseFloat(i.rate) || 0) })),
+                customer: selectedCustomer,
                 type: 'SALE',
                 subtotal: sellTaxable,
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
@@ -700,7 +729,17 @@ function SellPurchase() {
     }
 
     const handlePrint = () => {
-        window.print();
+        const originalTitle = document.title;
+        const invoiceNumber = lastSaleData ? lastSaleData.invoiceNumber : (lastPurchaseData ? lastPurchaseData.invoiceNumber : "Invoice");
+        // Replace slashes with underscores to avoid file path issues in PDF name
+        const safeName = (invoiceNumber || "Invoice").replace(/\//g, '_');
+        document.title = safeName;
+
+        // Give browser a moment to register the new title before opening the print dialog
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => { document.title = originalTitle; }, 500);
+        }, 100);
     }
 
 
@@ -714,19 +753,6 @@ function SellPurchase() {
             ...sellItemInput,
             // If productId is empty string, keep it simplified or make sure it's null logic downstream handles it
             productId: sellItemInput.productId ? parseInt(sellItemInput.productId) : null
-        }
-
-        // Check if item with same ID (if exists) or same NAME is already in cart?
-        // simple duplicate check
-        const existingIndex = cartItems.findIndex(i =>
-            ((newItem.productId && i.productId === newItem.productId) ||
-                (!newItem.productId && i.name === newItem.name)) &&
-            i.size === newItem.size &&
-            i.sizeUnit === newItem.sizeUnit
-        )
-
-        if (existingIndex >= 0) {
-            return alert('Item already in cart')
         }
 
         setCartItems([...cartItems, newItem])
@@ -1082,7 +1108,7 @@ function SellPurchase() {
                                                         type="number"
                                                         min="0"
                                                         style={{ padding: '8px 5px 8px 20px', width: '100%', textAlign: 'center', color: 'var(--accent)', fontWeight: '800', background: 'rgba(142,182,155,0.05)', border: '1px solid rgba(142,182,155,0.2)', fontSize: '1rem' }}
-                                                        value={parseFloat(item.amount).toFixed(2)}
+                                                        value={item.amount !== undefined ? item.amount : ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)).toString()}
                                                         onChange={(e) => updateAddedItemAmount(index, e.target.value)}
                                                     />
                                                 </div>
@@ -1106,7 +1132,7 @@ function SellPurchase() {
                                                         if (val && match) {
                                                             const q = parseFloat(addItemRow.quantity) || 0;
                                                             const r = parseFloat(match.purchasePrice) || 0;
-                                                            const amt = (q * r).toFixed(2);
+                                                            const amt = (q * r).toString();
                                                             setAddItemRow(prev => ({ ...prev, name: match.name, size: match.size || '', sizeUnit: match.sizeUnit || 'mm', hsn: match.hsn || '', rate: match.purchasePrice || '', amount: amt }))
                                                         }
                                                     }
@@ -1121,7 +1147,7 @@ function SellPurchase() {
                                                     if (product) {
                                                         const q = parseFloat(addItemRow.quantity) || 0;
                                                         const r = parseFloat(product.purchasePrice) || 0;
-                                                        const amt = (q * r).toFixed(2);
+                                                        const amt = (q * r).toString();
                                                         setAddItemRow({ ...addItemRow, name: product.name, size: product.size || '', sizeUnit: product.sizeUnit || 'mm', hsn: product.hsn || '', rate: product.purchasePrice || '', amount: amt })
                                                     } else {
                                                         setAddItemRow({ ...addItemRow, name: val })
@@ -1170,7 +1196,7 @@ function SellPurchase() {
                                                     onChange={e => {
                                                         const q = e.target.value;
                                                         const r = parseFloat(addItemRow.rate) || 0;
-                                                        const amt = ((parseFloat(q) || 0) * r).toFixed(2);
+                                                        const amt = ((parseFloat(q) || 0) * r).toString();
                                                         setAddItemRow({ ...addItemRow, quantity: q, amount: amt })
                                                     }}
                                                 />
@@ -1196,7 +1222,7 @@ function SellPurchase() {
                                                 onChange={e => {
                                                     const r = e.target.value;
                                                     const q = parseFloat(addItemRow.quantity) || 0;
-                                                    const amt = (q * (parseFloat(r) || 0)).toFixed(2);
+                                                    const amt = (q * (parseFloat(r) || 0)).toString();
                                                     setAddItemRow({ ...addItemRow, rate: r, amount: amt })
                                                 }}
                                             />
@@ -1215,7 +1241,7 @@ function SellPurchase() {
                                                         const amt = e.target.value;
                                                         const newTotal = parseFloat(amt) || 0;
                                                         const qty = parseFloat(addItemRow.quantity) || 1;
-                                                        const newRate = (newTotal / qty).toFixed(2);
+                                                        const newRate = amt ? (newTotal / qty).toString() : '';
                                                         setAddItemRow({ ...addItemRow, amount: amt, rate: newRate });
                                                     }}
                                                 />
@@ -1293,9 +1319,9 @@ function SellPurchase() {
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Disc (%)</p>
-                                    <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }} 
-                                        value={addForm.discountPercent} 
-                                        onChange={e => setAddForm(prev => ({...prev, discountPercent: e.target.value}))} 
+                                    <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }}
+                                        value={addForm.discountPercent}
+                                        onChange={e => setAddForm(prev => ({ ...prev, discountPercent: e.target.value }))}
                                     />
                                     <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-₹{addDiscAmt.toFixed(2)}</p>
                                 </div>
@@ -1475,11 +1501,11 @@ function SellPurchase() {
                                 </thead>
                                 <tbody>
                                     {cartItems.map((item, index) => (
-                                        <tr key={item.productId || index}>
+                                        <tr key={index}>
                                             <td style={{ textAlign: 'center' }}>
                                                 <input className="input" style={{ width: '100%', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: '700' }}
                                                     value={item.name}
-                                                    onChange={e => updateCartItem(item.productId, 'name', e.target.value)}
+                                                    onChange={e => updateCartItem(index, 'name', e.target.value)}
                                                 />
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
@@ -1489,12 +1515,12 @@ function SellPurchase() {
                                                         min="0"
                                                         style={{ width: '100%', padding: '10px 45px 10px 10px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'center', color: 'var(--text-primary)', outline: 'none' }}
                                                         value={item.size}
-                                                        onChange={e => updateCartItem(item.productId, 'size', e.target.value)}
+                                                        onChange={e => updateCartItem(index, 'size', e.target.value)}
                                                     />
                                                     <select
                                                         style={{ position: 'absolute', right: '5px', width: 'auto', fontSize: '0.8rem', border: 'none', background: 'transparent', appearance: 'none', cursor: 'pointer', color: 'var(--accent)', fontWeight: 'bold', outline: 'none', opacity: 0.8 }}
                                                         value={item.sizeUnit}
-                                                        onChange={e => updateCartItem(item.productId, 'sizeUnit', e.target.value)}
+                                                        onChange={e => updateCartItem(index, 'sizeUnit', e.target.value)}
                                                     >
                                                         <option value="mm">mm</option>
                                                         <option value="cm">cm</option>
@@ -1503,7 +1529,7 @@ function SellPurchase() {
                                                 </div>
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <select className="input" style={{ padding: '8px', width: '80px', fontSize: '0.8rem', textAlign: 'center' }} value={item.hsn} onChange={e => updateCartItem(item.productId, 'hsn', e.target.value)}>
+                                                <select className="input" style={{ padding: '8px', width: '80px', fontSize: '0.8rem', textAlign: 'center' }} value={item.hsn} onChange={e => updateCartItem(index, 'hsn', e.target.value)}>
                                                     {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
                                                 </select>
                                             </td>
@@ -1515,11 +1541,11 @@ function SellPurchase() {
                                                         value={item.quantity}
                                                         onChange={e => {
                                                             const q = e.target.value;
-                                                            updateCartItem(item.productId, 'quantity', q);
+                                                            updateCartItem(index, 'quantity', q);
                                                         }}
                                                     />
                                                     <select className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.75rem' }}
-                                                        value={item.quantityUnit} onChange={e => updateCartItem(item.productId, 'quantityUnit', e.target.value)}>
+                                                        value={item.quantityUnit} onChange={e => updateCartItem(index, 'quantityUnit', e.target.value)}>
                                                         <option value="Pcs">Pcs</option>
                                                         <option value="Set">Set</option>
                                                         <option value="Box">Box</option>
@@ -1527,7 +1553,7 @@ function SellPurchase() {
                                                     </select>
                                                 </div>
                                             </td>
-                                            <td style={{ textAlign: 'center' }}><input type="number" min="0" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateCartItem(item.productId, 'rate', e.target.value)} /></td>
+                                            <td style={{ textAlign: 'center' }}><input type="number" min="0" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateCartItem(index, 'rate', e.target.value)} /></td>
                                             <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                     <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7, fontSize: '0.9rem' }}>₹</span>
@@ -1536,13 +1562,13 @@ function SellPurchase() {
                                                         type="number"
                                                         min="0"
                                                         style={{ padding: '8px 5px 8px 20px', width: '100%', textAlign: 'center', color: 'var(--accent)', fontWeight: '800', background: 'rgba(142,182,155,0.05)', border: '1px solid rgba(142,182,155,0.2)', fontSize: '1rem' }}
-                                                        value={((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)).toFixed(2)}
-                                                        onChange={(e) => updateCartItemAmount(item.productId, e.target.value)}
+                                                        value={item.amount !== undefined ? item.amount : ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)).toString()}
+                                                        onChange={(e) => updateCartItemAmount(index, e.target.value)}
                                                     />
                                                 </div>
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <button type="button" className="btn" style={{ minWidth: 'auto', padding: '8px', background: 'rgba(255,71,87,0.1)', color: '#ff4757', border: '1px solid rgba(255,71,87,0.2)' }} onClick={() => removeFromCart(item.productId)}>✕</button>
+                                                <button type="button" className="btn" style={{ minWidth: 'auto', padding: '8px', background: 'rgba(255,71,87,0.1)', color: '#ff4757', border: '1px solid rgba(255,71,87,0.2)' }} onClick={() => removeFromCart(index)}>✕</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -1560,7 +1586,7 @@ function SellPurchase() {
                                                         if (val && match) {
                                                             const q = parseFloat(sellItemInput.quantity) || 0;
                                                             const r = parseFloat(match.sellingPrice) || 0;
-                                                            const amt = (q * r).toFixed(2);
+                                                            const amt = (q * r).toString();
                                                             setSellItemInput(prev => ({
                                                                 ...prev,
                                                                 productId: String(match.id),
@@ -1582,7 +1608,7 @@ function SellPurchase() {
                                                     if (product) {
                                                         const q = parseFloat(sellItemInput.quantity) || 0;
                                                         const r = parseFloat(product.sellingPrice) || 0;
-                                                        const amt = (q * r).toFixed(2);
+                                                        const amt = (q * r).toString();
                                                         setSellItemInput(prev => ({
                                                             ...prev,
                                                             productId: String(product.id),
@@ -1639,7 +1665,7 @@ function SellPurchase() {
                                                     onChange={e => {
                                                         const q = e.target.value;
                                                         const r = parseFloat(sellItemInput.rate) || 0;
-                                                        const amt = ((parseFloat(q) || 0) * r).toFixed(2);
+                                                        const amt = ((parseFloat(q) || 0) * r).toString();
                                                         setSellItemInput({ ...sellItemInput, quantity: q, amount: amt })
                                                     }}
                                                 />
@@ -1665,7 +1691,7 @@ function SellPurchase() {
                                                 onChange={e => {
                                                     const r = e.target.value;
                                                     const q = parseFloat(sellItemInput.quantity) || 0;
-                                                    const amt = (q * (parseFloat(r) || 0)).toFixed(2);
+                                                    const amt = (q * (parseFloat(r) || 0)).toString();
                                                     setSellItemInput({ ...sellItemInput, rate: r, amount: amt })
                                                 }}
                                             />
@@ -1757,9 +1783,9 @@ function SellPurchase() {
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Disc (%)</p>
-                                    <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }} 
-                                        value={sellForm.discountPercent} 
-                                        onChange={e => setSellForm(prev => ({...prev, discountPercent: e.target.value}))} 
+                                    <input className="input" type="number" style={{ width: '80px', textAlign: 'right', padding: '5px' }}
+                                        value={sellForm.discountPercent}
+                                        onChange={e => setSellForm(prev => ({ ...prev, discountPercent: e.target.value }))}
                                     />
                                     <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-₹{sellDiscAmt.toFixed(2)}</p>
                                 </div>

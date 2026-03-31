@@ -70,6 +70,13 @@ sequelize
       }
       try { await sequelize.query(`UPDATE Sales SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
       try { await sequelize.query(`UPDATE Purchases SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
+
+      // 3. New Size and Name cols
+      const sizeCols = ['name', 'size', 'sizeUnit', 'quantityUnit'];
+      for (let col of sizeCols) {
+        try { await sequelize.query(`ALTER TABLE SaleItems ADD COLUMN ${col} TEXT`); } catch (e) {}
+        try { await sequelize.query(`ALTER TABLE Purchases ADD COLUMN ${col} TEXT`); } catch (e) {}
+      }
     };
 
     runMigrations().then(async () => {

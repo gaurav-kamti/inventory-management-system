@@ -1,7 +1,8 @@
 /* InvoiceTemplate.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;500;600;700&display=swap');
 /*
-  Add to your index.html or global CSS:
-  @import url('https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+  Professional Invoice Stylesheet — A4 Optimized
+  Fonts: Inter (labels, text) + Roboto Mono (numbers, amounts)
 */
 
 /* ── Wrapper ───────────────────────────────────────────────────────────────── */
@@ -9,15 +10,16 @@
     background: #ffffff;
     width: 210mm;
     max-width: 100%;
-    padding: 2mm 10mm 8mm 10mm;
-    font-family: 'Courier New', Courier, monospace;
+    padding: 0mm 10mm 8mm 10mm; /* Removed 3mm top padding from here */
+    font-family: 'Inter', -apple-system, sans-serif;
     font-size: 10.5px;
     color: #000000;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 1.5;
-    border: 2px solid #000000;
+    /* Removed main border to allow multi-page sections to close themselves */
     margin: 0 auto;
     box-sizing: border-box;
+    position: relative;
 }
 
 /* ── Top bar ───────────────────────────────────────────────────────────────── */
@@ -25,15 +27,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1px;
+    margin-bottom: 2px;
     font-size: 10px;
 }
 .inv-credit-memo {
     font-style: italic;
     color: #000;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 10px;
-    min-height: 14px; /* keeps layout even when empty */
+    min-height: 14px;
 }
 .inv-copy-badge {
     font-style: italic;
@@ -45,11 +47,11 @@
 /* ── Title ─────────────────────────────────────────────────────────────────── */
 .inv-title-row {
     text-align: center;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 15px;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     padding: 6px 0;
     border: 2px solid #000;
     border-bottom: none;
@@ -61,7 +63,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     border: 2px solid #000;
-    border-bottom: none;
 }
 
 /* Seller block */
@@ -70,16 +71,17 @@
     border-right: 2px solid #000;
 }
 .inv-seller-name {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 17px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
     font-weight: 900;
     margin-bottom: 3px;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 .inv-seller-sub {
     font-size: 10px;
     color: #000;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: 1px;
 }
 
@@ -109,19 +111,19 @@
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: #000;
-    font-weight: 800;
+    font-weight: 700;
     display: block;
     margin-bottom: 2px;
 }
-.meta-val       { font-size: 11px; font-weight: 700; }
-.meta-val.light { font-weight: 700; }
+.meta-val       { font-size: 11px; font-weight: 700; font-family: 'Roboto Mono', monospace; }
+.meta-val.light { font-weight: 500; font-family: 'Inter', sans-serif; }
 
 /* ── Buyer section ─────────────────────────────────────────────────────────── */
 .inv-buyer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     border: 2px solid #000;
-    border-bottom: none;
+    margin-top: -2px;
 }
 .inv-buyer-left {
     padding: 8px 10px;
@@ -130,14 +132,15 @@
 .party-name {
     font-size: 14px;
     font-weight: 900;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Inter', sans-serif;
     margin: 3px 0;
     text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 .party-line {
     font-size: 10px;
     color: #000;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: 2px;
 }
 .inv-buyer-right {
@@ -147,7 +150,7 @@
 .buyer-rcell {
     padding: 3px 8px;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     border-bottom: 2px solid #000;
     line-height: 1.4;
     display: flex;
@@ -171,8 +174,8 @@
     width: 100%;
     border-collapse: collapse;
     border: 2px solid #000;
-    border-bottom: none;
     font-size: 10.5px;
+    margin-top: -2px;
 }
 .inv-table th {
     background: #ffffff;
@@ -186,45 +189,68 @@
 }
 .inv-table th.r  { text-align: right; }
 .inv-table th.c  { text-align: center; }
-.inv-table td    { padding: 4px 6px; border: 2px solid #000; vertical-align: middle; font-weight: 700; }
-.inv-table td.r  { text-align: right; font-variant-numeric: tabular-nums; }
+.inv-table td    { padding: 4px 6px; border: none; border-bottom: 2px solid #000; border-right: 2px solid #000; vertical-align: middle; font-weight: 500; }
+.inv-table td:first-child { border-left: 2px solid #000; }
+.inv-table td.r  { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; font-family: 'Roboto Mono', monospace; font-weight: 600; }
 .inv-table td.c  { text-align: center; }
+
+/* Amount column — right-aligned with consistent padding */
+.inv-table th.r:last-child,
+.inv-table td.r:last-child {
+    padding-right: 12px;
+}
 
 /* Spacer row */
 .inv-table tr.spacer-row td { border: none; height: 18px; }
 
-/* Subtotal rows (Taxable Value / CGST / SGST / Total Value / Rounded Off) */
+/* Only the LAST cell (amount column) gets internal borders to stay connected */
 .inv-table tr.subtotal-row td {
     border: none;
     padding: 2px 6px;
+    border-bottom: none;
 }
-
-/* Only the LAST cell (amount column) gets borders to stay connected */
+.inv-table tr.subtotal-row td:first-child {
+    border-left: 2px solid #000;
+}
 .inv-table tr.subtotal-row td:last-child {
     border-left: 2px solid #000;
     border-right: 2px solid #000;
+    padding-right: 12px;
 }
-
-/* First subtotal row needs top border to connect with item rows above */
-.inv-table tr.subtotal-row:first-of-type td:last-child {
+/* First subtotal row needs top border if items didn't have one */
+.inv-table tr.subtotal-row:first-of-type td {
     border-top: 2px solid #000;
 }
-.subtotal-label  { text-align: right; font-size: 10px; text-transform: uppercase; font-weight: 800; }
-.subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; font-weight: 700; }
-.subtotal-rate   { font-size: 10px; text-align: right; color: #000; font-weight: 700; text-transform: uppercase; }
+.subtotal-label  { text-align: right; font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: 'Inter', sans-serif; }
+.subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; font-weight: 600; font-family: 'Roboto Mono', monospace; }
+.subtotal-rate   { font-size: 10px; text-align: right; color: #000; font-weight: 500; text-transform: uppercase; font-family: 'Roboto Mono', monospace; }
 .bold-label      { font-weight: 700; }
 .italic          { font-style: italic; }
 
+/* ── Tax row highlighting ── */
+.inv-table tr.subtotal-row.tax-row td {
+    background: #f5f5f5;
+}
+.inv-table tr.subtotal-row.tax-row td:last-child {
+    background: #f5f5f5;
+    font-weight: 700;
+}
+
 /* Total Invoice Value row */
 .inv-table tr.total-row td {
-    border: 2px solid #000;
-    padding: 5px 6px;
+    border: none;
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    padding: 6px 6px;
     background: #ffffff;
     font-weight: 900;
 }
-.total-label { text-align: right; font-size: 11px; text-transform: uppercase; }
-.total-rs    { text-align: right; font-size: 11px; width: 30px; }
-.total-val   { text-align: right; font-size: 12px; font-family: 'Courier New', Courier, monospace; }
+.inv-table tr.total-row td:first-child { border-left: 2px solid #000; }
+.inv-table tr.total-row td:last-child { border-left: 2px solid #000; border-right: 2px solid #000; }
+
+.total-label { text-align: right; font-size: 11px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+.total-rs    { text-align: right; font-size: 11px; width: 30px; font-family: 'Roboto Mono', monospace; }
+.total-val   { text-align: right; font-size: 13px; font-family: 'Roboto Mono', monospace; padding-right: 12px; }
 
 /* ── Amount in words + E. & O.E ────────────────────────────────────────────── */
 .inv-words-row {
@@ -232,22 +258,21 @@
     justify-content: space-between;
     align-items: flex-end;
     border: 2px solid #000;
-    border-top: none;
-    border-bottom: none;
     padding: 6px 10px;
+    margin-top: -2px;
 }
 .inv-words-left { flex: 1; }
 .inv-words-text {
     font-size: 11px;
-    font-weight: 800;
-    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
     margin-top: 2px;
 }
 .inv-eoe {
     font-size: 10px;
     font-style: italic;
     color: #000;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
     padding-left: 12px;
 }
@@ -257,9 +282,9 @@
     width: 100%;
     border-collapse: collapse;
     border: 2px solid #000;
-    border-top: none;
-    border-bottom: none;
     font-size: 10px;
+    margin-top: -2px;
+    page-break-inside: avoid;
 }
 .inv-hsn-table th {
     border: 2px solid #000;
@@ -274,24 +299,32 @@
     border: 2px solid #000;
     padding: 4px 6px;
     vertical-align: middle;
-    font-weight: 700;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace;
 }
-.inv-hsn-table td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.inv-hsn-table td.r { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; font-weight: 600; }
 .inv-hsn-table td.c { text-align: center; }
 .inv-hsn-table tr.hsn-total-row td {
     border-top: 2px solid #000;
-    background: #ffffff;
+    background: #f5f5f5;
+    font-weight: 700;
 }
 
 /* ── Tax amount in words ────────────────────────────────────────────────────── */
 .inv-tax-words-row {
     border: 2px solid #000;
-    border-top: none;
-    border-bottom: none;
     padding: 5px 10px;
     font-size: 10px;
     color: #000;
-    font-weight: 700;
+    font-weight: 600;
+    margin-top: -2px;
+    page-break-after: avoid; /* Keep tax words with HSN table that follows */
+}
+
+/* ── Page 2 wrapper (HSN table, footer) ──────────────────────────────────────── */
+.page-2 {
+    page-break-before: always; /* Force new page before this section */
+    margin-top: 3mm; /* Match page 1 top breathing room for consistency */
 }
 
 /* ── Footer ─────────────────────────────────────────────────────────────────── */
@@ -300,6 +333,8 @@
     grid-template-columns: 1fr 1fr;
     border: 2px solid #000;
     min-height: 100px;
+    margin-top: -2px;
+    page-break-inside: avoid;
 }
 .footer-left {
     padding: 8px 10px;
@@ -312,33 +347,36 @@
     align-items: flex-end;
     justify-content: space-between;
 }
-.bank-name   { font-weight: 800; font-size: 12px; margin: 3px 0 2px; }
-.bank-line   { font-size: 10px; color: #000; font-weight: 700; margin-bottom: 1px; }
-.firm-pan    { font-size: 10px; font-weight: 800; margin-top: 6px; color: #000; }
+.bank-name   { font-weight: 700; font-size: 12px; margin: 3px 0 2px; font-family: 'Inter', sans-serif; }
+.bank-line   { font-size: 10px; color: #000; font-weight: 500; margin-bottom: 1px; font-family: 'Roboto Mono', monospace; }
+.firm-pan    { font-size: 10px; font-weight: 700; margin-top: 6px; color: #000; font-family: 'Roboto Mono', monospace; }
 .inv-decl {
     font-size: 9.5px;
     color: #000;
-    font-weight: 700;
+    font-weight: 400;
     margin-top: 6px;
     border-top: 2px dashed #000;
     padding-top: 5px;
     line-height: 1.5;
 }
+.inv-decl strong {
+    font-weight: 700;
+}
 .inv-jurisdiction {
     font-size: 9px;
     color: #000;
     margin-top: 3px;
-    font-weight: 700;
+    font-weight: 600;
     font-style: italic;
 }
-.sig-for  { font-size: 11px; font-weight: 900; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
+.sig-for  { font-size: 11px; font-weight: 900; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; }
 .sig-line {
     border-top: 2px solid #000;
     margin-top: 38px;
     padding-top: 4px;
     font-size: 9.5px;
     color: #000;
-    font-weight: 800;
+    font-weight: 700;
     text-align: center;
     width: 150px;
 }
@@ -348,29 +386,83 @@
     text-align: center;
     font-size: 9px;
     color: #000;
-    font-weight: 700;
+    font-weight: 600;
     margin-top: 8px;
     letter-spacing: 0.05em;
 }
 
-/* ── Print ───────────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════════
+   DRAFT WATERMARK (optional — add class .inv-draft to .inv-wrap)
+   ══════════════════════════════════════════════════════════════════════════════ */
+.inv-wrap.inv-draft::after {
+    content: 'DRAFT';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 90px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.06);
+    letter-spacing: 20px;
+    pointer-events: none;
+    z-index: 0;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PRINT — A4 single-page optimized
+   ══════════════════════════════════════════════════════════════════════════════ */
 @media print {
-    @page { 
-        size: A4; 
-        margin: 0; 
+    @page {
+        size: A4;
+        margin: 3mm 0 0 0;  /* 3mm top on EVERY page */
     }
-    body {
+    html, body {
         margin: 0 !important;
         padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
-    .inv-wrap { 
-        box-shadow: none; 
-        border: none; 
-        width: 100%; 
-        padding: 3mm 8mm 6mm 8mm; 
+
+    .inv-wrap {
+        box-shadow: none;
+        border: none;
+        width: 100%;
+        padding: 0mm 8mm 6mm 8mm;
     }
+
+    /* Page break handling — prevent broken tables */
+    .inv-table,
+    .inv-hsn-table,
+    .inv-footer {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .inv-table tr,
+    .inv-hsn-table tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .inv-words-row,
+    .inv-tax-words-row {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
     .print-page { page-break-after: always; }
     .print-page:last-child { page-break-after: auto; }
+
+    /* Ensure backgrounds print */
+    .inv-table tr.subtotal-row.tax-row td,
+    .inv-hsn-table tr.hsn-total-row td {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .inv-wrap.inv-draft::after {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
@@ -384,4 +476,5 @@
     .inv-footer         { grid-template-columns: 1fr; }
     .footer-left        { border-right: none; border-bottom: 1px solid #000; }
     .footer-right       { align-items: flex-start; }
+    .inv-wrap.inv-draft::after { font-size: 40px; letter-spacing: 10px; }
 }

@@ -38,6 +38,22 @@ const SaleItem = sequelize.define('SaleItem', {
   discount: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 0
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  size: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  sizeUnit: {
+    type: DataTypes.STRING,
+    defaultValue: 'mm'
+  },
+  quantityUnit: {
+    type: DataTypes.STRING,
+    defaultValue: 'Pcs'
   }
 });
 

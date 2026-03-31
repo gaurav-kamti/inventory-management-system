@@ -157,7 +157,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
     const hsnTotalSgst = hsnGroups.reduce((s, r) => s + r.sgstAmt, 0);
 
     return (
-        <div className="inv-wrap">
+        <div className={`inv-wrap${sale.draft ? ' inv-draft' : ''}`}>
 
             {/* ── Top bar: Credit Memo label + Copy badge ── */}
             <div className="inv-topbar">
@@ -308,14 +308,14 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                                 <td colSpan={7} className="subtotal-label">Taxable Value</td>
                                 <td className="r subtotal-val">{fmt2(taxableAmount)}</td>
                             </tr>
-                            <tr className="subtotal-row">
+                            <tr className="subtotal-row tax-row">
                                 <td colSpan={7} className="subtotal-label">GST ({gstPercent}%)</td>
                                 <td className="r subtotal-val">{fmt2(saleTax)}</td>
                             </tr>
                             {discountAmount > 0 && (
-                                <tr className="subtotal-row">
+                                <tr className="subtotal-row tax-row">
                                     <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>
-                                    <td className="r subtotal-val" style={{ color: '#000000', fontWeight: 'bold' }}>-{fmt2(discountAmount)}</td>
+                                    <td className="r subtotal-val">-{fmt2(discountAmount)}</td>
                                 </tr>
                             )}
                             <tr className="subtotal-row">
@@ -340,129 +340,120 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                 </tbody>
             </table>
 
-            {/* ══════════════════════════════════════════════════════════════
-                AMOUNT IN WORDS + E. & O.E
-            ══════════════════════════════════════════════════════════════ */}
-            <div className="inv-words-row">
-                <div className="inv-words-left">
-                    <div className="meta-label">Amount Chargeable Indian Rupees (in words)</div>
-                    <div className="inv-words-text">
-                        (Rupees: {numWords(Math.round(displayTotal))})
+            {/* ── Financials Summary Block (Words, HSN, Tax, Footer) ── */}
+            <div className="inv-financials">
+                <div className="inv-words-row">
+                    <div className="inv-words-left">
+                        <div className="meta-label">Amount Chargeable Indian Rupees (in words)</div>
+                        <div className="inv-words-text">
+                            (Rupees: {numWords(Math.round(displayTotal))})
+                        </div>
                     </div>
+                    <div className="inv-eoe">E. & O.E</div>
                 </div>
-                <div className="inv-eoe">E. & O.E</div>
-            </div>
 
-            {/* ══════════════════════════════════════════════════════════════
-                HSN/SAC TAX BREAKDOWN TABLE
-            ══════════════════════════════════════════════════════════════ */}
-            {!isVoucher && hsnGroups.length > 0 && (
-                <table className="inv-hsn-table">
-                    <thead>
-                        {isIGST ? (
-                            <tr>
-                                <th style={{ width: 100 }}>HSN/SAC</th>
-                                <th className="r" style={{ width: 120 }}>Taxable Value</th>
-                                <th colSpan={2} className="c">IGST</th>
-                            </tr>
-                        ) : (
-                            <tr>
-                                <th rowSpan={2} style={{ width: 100 }}>HSN/SAC</th>
-                                <th rowSpan={2} className="r" style={{ width: 120 }}>Taxable Value</th>
-                                <th colSpan={2} className="c">CGST</th>
-                                <th colSpan={2} className="c">SGST</th>
-                            </tr>
-                        )}
-                        {!isIGST && (
-                            <tr>
-                                <th className="c" style={{ width: 60 }}>Rate</th>
-                                <th className="r" style={{ width: 90 }}>Amount</th>
-                                <th className="c" style={{ width: 60 }}>Rate</th>
-                                <th className="r" style={{ width: 90 }}>Amount</th>
-                            </tr>
-                        )}
-                        {isIGST && (
-                            <tr>
-                                <th className="c" style={{ width: 60 }}>Rate</th>
-                                <th className="r" style={{ width: 240 }}>Amount</th>
-                            </tr>
-                        )}
-                    </thead>
-                    <tbody>
-                        {hsnGroups.map((row, i) => (
-                            <tr key={i}>
-                                <td>{row.hsn}</td>
-                                <td className="r">{fmt2(row.taxable)}</td>
+                {!isVoucher && hsnGroups.length > 0 && (
+                    <table className="inv-hsn-table">
+                        <thead>
+                            {isIGST ? (
+                                <tr>
+                                    <th style={{ width: 100 }}>HSN/SAC</th>
+                                    <th className="r" style={{ width: 120 }}>Taxable Value</th>
+                                    <th colSpan={2} className="c">IGST</th>
+                                </tr>
+                            ) : (
+                                <tr>
+                                    <th rowSpan={2} style={{ width: 100 }}>HSN/SAC</th>
+                                    <th rowSpan={2} className="r" style={{ width: 120 }}>Taxable Value</th>
+                                    <th colSpan={2} className="c">CGST</th>
+                                    <th colSpan={2} className="c">SGST</th>
+                                </tr>
+                            )}
+                            {!isIGST && (
+                                <tr>
+                                    <th className="c" style={{ width: 60 }}>Rate</th>
+                                    <th className="r" style={{ width: 90 }}>Amount</th>
+                                    <th className="c" style={{ width: 60 }}>Rate</th>
+                                    <th className="r" style={{ width: 90 }}>Amount</th>
+                                </tr>
+                            )}
+                            {isIGST && (
+                                <tr>
+                                    <th className="c" style={{ width: 60 }}>Rate</th>
+                                    <th className="r" style={{ width: 240 }}>Amount</th>
+                                </tr>
+                            )}
+                        </thead>
+                        <tbody>
+                            {hsnGroups.map((row, i) => (
+                                <tr key={i}>
+                                    <td>{row.hsn}</td>
+                                    <td className="r">{fmt2(row.taxable)}</td>
+                                    {isIGST ? (
+                                        <>
+                                            <td className="c">{gstPercent}%</td>
+                                            <td className="r">{fmt2(row.cgstAmt + row.sgstAmt)}</td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td className="c">{row.cgstRate}%</td>
+                                            <td className="r">{fmt2(row.cgstAmt)}</td>
+                                            <td className="c">{row.sgstRate}%</td>
+                                            <td className="r">{fmt2(row.sgstAmt)}</td>
+                                        </>
+                                    )}
+                                </tr>
+                            ))}
+                            <tr className="hsn-total-row">
+                                <td><strong>Total</strong></td>
+                                <td className="r"><strong>{fmt2(hsnTotalTaxable)}</strong></td>
                                 {isIGST ? (
                                     <>
-                                        <td className="c">{gstPercent}%</td>
-                                        <td className="r">{fmt2(row.cgstAmt + row.sgstAmt)}</td>
+                                        <td></td>
+                                        <td className="r"><strong>{fmt2(hsnTotalCgst + hsnTotalSgst)}</strong></td>
                                     </>
                                 ) : (
                                     <>
-                                        <td className="c">{row.cgstRate}%</td>
-                                        <td className="r">{fmt2(row.cgstAmt)}</td>
-                                        <td className="c">{row.sgstRate}%</td>
-                                        <td className="r">{fmt2(row.sgstAmt)}</td>
+                                        <td></td>
+                                        <td className="r"><strong>{fmt2(hsnTotalCgst)}</strong></td>
+                                        <td></td>
+                                        <td className="r"><strong>{fmt2(hsnTotalSgst)}</strong></td>
                                     </>
                                 )}
                             </tr>
-                        ))}
-                        <tr className="hsn-total-row">
-                            <td><strong>Total</strong></td>
-                            <td className="r"><strong>{fmt2(hsnTotalTaxable)}</strong></td>
-                            {isIGST ? (
-                                <>
-                                    <td></td>
-                                    <td className="r"><strong>{fmt2(hsnTotalCgst + hsnTotalSgst)}</strong></td>
-                                </>
-                            ) : (
-                                <>
-                                    <td></td>
-                                    <td className="r"><strong>{fmt2(hsnTotalCgst)}</strong></td>
-                                    <td></td>
-                                    <td className="r"><strong>{fmt2(hsnTotalSgst)}</strong></td>
-                                </>
-                            )}
-                        </tr>
-                    </tbody>
-                </table>
-            )}
+                        </tbody>
+                    </table>
+                )}
 
-            {/* ══════════════════════════════════════════════════════════════
-                TAX AMOUNT IN WORDS
-            ══════════════════════════════════════════════════════════════ */}
-            {!isVoucher && saleTax > 0 && (
-                <div className="inv-tax-words-row">
-                    <span className="meta-label" style={{ marginRight: 6 }}>Tax Amount (in words) INR:</span>
-                    <span>({numWords(Math.round(saleTax))})</span>
-                </div>
-            )}
+                {!isVoucher && saleTax > 0 && (
+                    <div className="inv-tax-words-row">
+                        <span className="meta-label" style={{ marginRight: 6 }}>Tax Amount (in words) INR:</span>
+                        <span>({numWords(Math.round(saleTax))})</span>
+                    </div>
+                )}
 
-            {/* ══════════════════════════════════════════════════════════════
-                BANK DETAILS + FIRM PAN + DECLARATION + SIGNATURE
-            ══════════════════════════════════════════════════════════════ */}
-            <div className="inv-footer">
-                <div className="footer-left">
-                    <div className="meta-label">NEFT / RTGS / Transfer Bank Details</div>
-                    <div className="bank-name">{co.bank}</div>
-                    <div className="bank-line">
-                        A/c No.: {co.accNo} &nbsp;|&nbsp; IFSC Code: {co.ifsc}
+                <div className="inv-footer">
+                    <div className="footer-left">
+                        <div className="meta-label">NEFT / RTGS / Transfer Bank Details</div>
+                        <div className="bank-name">{co.bank}</div>
+                        <div className="bank-line">
+                            A/c No.: {co.accNo} &nbsp;|&nbsp; IFSC Code: {co.ifsc}
+                        </div>
+                        <div className="bank-line">{co.branch}</div>
+                        <div className="firm-pan">Firm PAN: {co.pan}</div>
+                        <div className="inv-decl">
+                            <strong>Declaration</strong><br />
+                            We declare that this invoice shows the actual price of the goods described
+                            and that all particulars are true and correct.
+                        </div>
+                        <div className="inv-jurisdiction">
+                            Subject to {co.jurisdiction}.
+                        </div>
                     </div>
-                    <div className="bank-line">{co.branch}</div>
-                    <div className="firm-pan">Firm PAN: {co.pan}</div>
-                    <div className="inv-decl">
-                        <strong>Declaration</strong><br />
-                        We declare that this invoice shows the actual price of the goods described
-                        and that all particulars are true and correct.
+                    <div className="footer-right">
+                        <div className="sig-for">for {co.name}</div>
+                        <div className="sig-line">Authorised Signatory</div>
                     </div>
-                    <div className="inv-jurisdiction">
-                        Subject to {co.jurisdiction}.
-                    </div>
-                </div>
-                <div className="footer-right">
-                    <div className="sig-for">for {co.name}</div>
-                    <div className="sig-line">Authorised Signatory</div>
                 </div>
             </div>
 

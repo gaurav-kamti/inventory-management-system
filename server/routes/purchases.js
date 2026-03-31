@@ -110,7 +110,11 @@ router.post("/", auth, async (req, res) => {
           sgst: sgst || 0,
           tax: (parseFloat(cgst || 0) + parseFloat(sgst || 0)),
           total: total || 0,
-          roundOff: roundOff || 0
+          roundOff: roundOff || 0,
+          name: item.name || product.name || '',
+          size: item.size || '',
+          sizeUnit: item.sizeUnit || 'mm',
+          quantityUnit: item.quantityUnit || 'Pcs'
         },
         { transaction: t },
       );
@@ -363,7 +367,9 @@ router.put('/:invoiceNumber', auth, async (req, res) => {
           taxableAmount: taxableAmount || subtotal || 0, gstPercent: gstPercent || 18,
           discountPercent: discountPercent || 0, discountAmount: discountAmount || 0,
           cgst: cgst || 0, sgst: sgst || 0, tax: (parseFloat(cgst || 0) + parseFloat(sgst || 0)),
-          total: total || 0, roundOff: roundOff || 0
+          total: total || 0, roundOff: roundOff || 0,
+          name: item.name || product.name || '', size: item.size || '',
+          sizeUnit: item.sizeUnit || 'mm', quantityUnit: item.quantityUnit || 'Pcs'
       }, { transaction: t });
       distinctItems.push(product);
     }
