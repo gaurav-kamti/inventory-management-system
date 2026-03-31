@@ -8,6 +8,13 @@ import DatePicker from '../components/DatePicker'
 
 import './Inventory.css' // We might need to create a separate CSS or share it
 
+const normalizeISODate = (isoStr) => {
+    if (!isoStr || typeof isoStr !== 'string') return null;
+    const match = isoStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    return `${match[1]}-${match[2]}-${match[3]}`;
+};
+
 function SellPurchase() {
     const [products, setProducts] = useState([])
     const [suppliers, setSuppliers] = useState([])
@@ -21,6 +28,7 @@ function SellPurchase() {
     const navigate = useNavigate()
     const [isEditing, setIsEditing] = useState(false)
     const [editId, setEditId] = useState(null)
+    const previousLocationRef = useRef(null)
 
     // Refs for Focus Management
     const purchaseInvoiceRef = useRef(null)
@@ -194,6 +202,9 @@ function SellPurchase() {
 
     useEffect(() => {
         if (location.state?.editRecord) {
+            // Save return path
+            previousLocationRef.current = location.state.previousLocation || null;
+
             const { record, type } = location.state.editRecord;
             setIsEditing(true);
             setEditId(type === 'PURCHASE' ? record.invoiceNumber : record.id);
@@ -202,7 +213,7 @@ function SellPurchase() {
                 setShowSellModal(true);
                 setSellForm({
                     invoice: record.invoiceNumber,
-                    date: record.date ? record.date.split('T')[0] : '',
+                    date: normalizeISODate(record.date) || '',
                     customerId: record.customer?.id || '',
                     customerName: record.partyName || record.customer?.name || '',
                     roundOff: record.roundOff || 0,
@@ -210,7 +221,7 @@ function SellPurchase() {
                     paymentTerms: record.paymentTerms || '',
                     supplierRef: record.supplierRef || '',
                     buyerOrderNo: record.buyerOrderNo || '',
-                    buyerOrderDate: record.buyerOrderDate || '',
+                    buyerOrderDate: normalizeISODate(record.buyerOrderDate) || '',
                     despatchedThrough: record.despatchedThrough || '',
                     termsOfDelivery: record.termsOfDelivery || '',
                     gstPercent: record.gstPercent || 18,
@@ -234,14 +245,14 @@ function SellPurchase() {
                 setAddForm({
                     invoice: record.invoiceNumber, // Wait, backend is using invoiceNumber
                     supplierInvoice: record.invoiceNumber,
-                    date: record.date ? record.date.split('T')[0] : '',
+                    date: normalizeISODate(record.date) || '',
                     supplierId: record.party?.id || record.customer?.id || '',
                     supplierName: record.partyName || record.customer?.name || '',
                     deliveryNote: record.deliveryNote || '',
                     paymentTerms: record.paymentTerms || '',
                     supplierRef: record.supplierRef || '',
                     buyerOrderNo: record.buyerOrderNo || '',
-                    buyerOrderDate: record.buyerOrderDate || '',
+                    buyerOrderDate: normalizeISODate(record.buyerOrderDate) || '',
                     despatchedThrough: record.despatchedThrough || '',
                     termsOfDelivery: record.termsOfDelivery || '',
                     gstPercent: record.gstPercent || 18,
@@ -491,6 +502,12 @@ function SellPurchase() {
             setEditId(null)
             fetchProducts()
             fetchSuppliers() // Refresh suppliers to reflect any meaningful updates if needed
+
+            // Return to previous location if exists
+            const returnPath = previousLocationRef.current || '/sell-purchase';
+            setTimeout(() => {
+                navigate(returnPath, { replace: true, state: {} });
+            }, 2000);
         } catch (error) {
             alert(error.response?.data?.error || 'Error recording purchase')
         }
@@ -671,6 +688,12 @@ function SellPurchase() {
             })
             fetchProducts()
             fetchCustomers() // Refresh customers to ensure outstanding balance is updated locally if displayed
+
+            // Return to previous location if exists
+            const returnPath = previousLocationRef.current || '/sell-purchase';
+            setTimeout(() => {
+                navigate(returnPath, { replace: true, state: {} });
+            }, 2000);
         } catch (error) {
             alert(error.response?.data?.error || 'Error processing sale')
         }
@@ -875,7 +898,7 @@ function SellPurchase() {
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{formatDateDisplay(new Date())}</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{formatDateDisplay(addForm.date || new Date())}</p>
                                 </div>
                             </div>
 
@@ -1332,7 +1355,7 @@ function SellPurchase() {
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Date</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{formatDateDisplay(new Date())}</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: '700' }}>{formatDateDisplay(sellForm.date || new Date())}</p>
                                 </div>
                             </div>
 

@@ -9,12 +9,13 @@
     background: #ffffff;
     width: 210mm;
     max-width: 100%;
-    padding: 8mm 10mm;
+    padding: 2mm 10mm 8mm 10mm;
     font-family: 'Courier New', Courier, monospace;
     font-size: 10.5px;
-    color: #111111;
+    color: #000000;
+    font-weight: 700;
     line-height: 1.5;
-    border: 1px solid #cccccc;
+    border: 2px solid #000000;
     margin: 0 auto;
     box-sizing: border-box;
 }
@@ -24,18 +25,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 1px;
     font-size: 10px;
 }
 .inv-credit-memo {
     font-style: italic;
-    color: #555;
+    color: #000;
+    font-weight: 700;
     font-size: 10px;
     min-height: 14px; /* keeps layout even when empty */
 }
 .inv-copy-badge {
     font-style: italic;
-    color: #333;
+    color: #000;
+    font-weight: 700;
     font-size: 10px;
 }
 
@@ -44,11 +47,11 @@
     text-align: center;
     font-family: 'Courier New', Courier, monospace;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.1em;
     padding: 6px 0;
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-bottom: none;
     margin-bottom: 0;
 }
@@ -57,25 +60,26 @@
 .inv-header {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-bottom: none;
 }
 
 /* Seller block */
 .inv-seller {
     padding: 8px 10px;
-    border-right: 1px solid #000;
+    border-right: 2px solid #000;
 }
 .inv-seller-name {
     font-family: 'Courier New', Courier, monospace;
     font-size: 17px;
-    font-weight: 700;
+    font-weight: 900;
     margin-bottom: 3px;
     text-transform: uppercase;
 }
 .inv-seller-sub {
     font-size: 10px;
-    color: #333;
+    color: #000;
+    font-weight: 700;
     margin-bottom: 1px;
 }
 
@@ -87,13 +91,13 @@
 .inv-meta-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border-bottom: 1px solid #000;
+    border-bottom: 2px solid #000;
     flex: 1;
 }
 .inv-meta-row.no-bottom { border-bottom: none; }
 .inv-meta-cell {
     padding: 5px 7px;
-    border-right: 1px solid #000;
+    border-right: 2px solid #000;
 }
 .inv-meta-cell.no-right  { border-right: none; }
 .inv-meta-cell.full-span {
@@ -104,34 +108,36 @@
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: #888;
+    color: #000;
+    font-weight: 800;
     display: block;
     margin-bottom: 2px;
 }
-.meta-val       { font-size: 11px; font-weight: 600; }
-.meta-val.light { font-weight: 400; }
+.meta-val       { font-size: 11px; font-weight: 700; }
+.meta-val.light { font-weight: 700; }
 
 /* ── Buyer section ─────────────────────────────────────────────────────────── */
 .inv-buyer {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-bottom: none;
 }
 .inv-buyer-left {
     padding: 8px 10px;
-    border-right: 1px solid #000;
+    border-right: 2px solid #000;
 }
 .party-name {
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 900;
     font-family: 'Courier New', Courier, monospace;
     margin: 3px 0;
     text-transform: uppercase;
 }
 .party-line {
     font-size: 10px;
-    color: #333;
+    color: #000;
+    font-weight: 700;
     margin-bottom: 2px;
 }
 .inv-buyer-right {
@@ -141,7 +147,8 @@
 .buyer-rcell {
     padding: 3px 8px;
     font-size: 10px;
-    border-bottom: 1px solid #ccc;
+    font-weight: 700;
+    border-bottom: 2px solid #000;
     line-height: 1.4;
     display: flex;
     align-items: center;
@@ -163,23 +170,23 @@
 .inv-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-bottom: none;
     font-size: 10.5px;
 }
 .inv-table th {
     background: #ffffff;
-    border: 1px solid #000;
+    border: 2px solid #000;
     padding: 4px 6px;
     text-align: left;
     font-size: 9.5px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 900;
 }
 .inv-table th.r  { text-align: right; }
 .inv-table th.c  { text-align: center; }
-.inv-table td    { padding: 4px 6px; border: 1px solid #000; vertical-align: middle; }
+.inv-table td    { padding: 4px 6px; border: 2px solid #000; vertical-align: middle; font-weight: 700; }
 .inv-table td.r  { text-align: right; font-variant-numeric: tabular-nums; }
 .inv-table td.c  { text-align: center; }
 
@@ -194,26 +201,26 @@
 
 /* Only the LAST cell (amount column) gets borders to stay connected */
 .inv-table tr.subtotal-row td:last-child {
-    border-left: 1px solid #000;
-    border-right: 1px solid #000;
+    border-left: 2px solid #000;
+    border-right: 2px solid #000;
 }
 
 /* First subtotal row needs top border to connect with item rows above */
 .inv-table tr.subtotal-row:first-of-type td:last-child {
-    border-top: 1px solid #000;
+    border-top: 2px solid #000;
 }
-.subtotal-label  { text-align: right; font-size: 10px; text-transform: uppercase; }
-.subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; }
-.subtotal-rate   { font-size: 10px; text-align: right; color: #555; text-transform: uppercase; }
+.subtotal-label  { text-align: right; font-size: 10px; text-transform: uppercase; font-weight: 800; }
+.subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; font-weight: 700; }
+.subtotal-rate   { font-size: 10px; text-align: right; color: #000; font-weight: 700; text-transform: uppercase; }
 .bold-label      { font-weight: 700; }
 .italic          { font-style: italic; }
 
 /* Total Invoice Value row */
 .inv-table tr.total-row td {
-    border: 1px solid #000;
+    border: 2px solid #000;
     padding: 5px 6px;
     background: #ffffff;
-    font-weight: 700;
+    font-weight: 900;
 }
 .total-label { text-align: right; font-size: 11px; text-transform: uppercase; }
 .total-rs    { text-align: right; font-size: 11px; width: 30px; }
@@ -224,7 +231,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-top: none;
     border-bottom: none;
     padding: 6px 10px;
@@ -232,14 +239,15 @@
 .inv-words-left { flex: 1; }
 .inv-words-text {
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     font-family: 'Courier New', Courier, monospace;
     margin-top: 2px;
 }
 .inv-eoe {
     font-size: 10px;
     font-style: italic;
-    color: #333;
+    color: #000;
+    font-weight: 700;
     white-space: nowrap;
     padding-left: 12px;
 }
@@ -248,52 +256,54 @@
 .inv-hsn-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-top: none;
     border-bottom: none;
     font-size: 10px;
 }
 .inv-hsn-table th {
-    border: 1px solid #000;
+    border: 2px solid #000;
     padding: 4px 6px;
     text-align: center;
     font-size: 9.5px;
-    font-weight: 700;
+    font-weight: 900;
     text-transform: uppercase;
     background: #ffffff;
 }
 .inv-hsn-table td {
-    border: 1px solid #000;
+    border: 2px solid #000;
     padding: 4px 6px;
     vertical-align: middle;
+    font-weight: 700;
 }
 .inv-hsn-table td.r { text-align: right; font-variant-numeric: tabular-nums; }
 .inv-hsn-table td.c { text-align: center; }
 .inv-hsn-table tr.hsn-total-row td {
-    border-top: 1px solid #000;
-    background: #fafafa;
+    border-top: 2px solid #000;
+    background: #ffffff;
 }
 
 /* ── Tax amount in words ────────────────────────────────────────────────────── */
 .inv-tax-words-row {
-    border: 1px solid #000;
+    border: 2px solid #000;
     border-top: none;
     border-bottom: none;
     padding: 5px 10px;
     font-size: 10px;
-    color: #333;
+    color: #000;
+    font-weight: 700;
 }
 
 /* ── Footer ─────────────────────────────────────────────────────────────────── */
 .inv-footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border: 1px solid #000;
+    border: 2px solid #000;
     min-height: 100px;
 }
 .footer-left {
     padding: 8px 10px;
-    border-right: 1px solid #000;
+    border-right: 2px solid #000;
 }
 .footer-right {
     padding: 8px 10px;
@@ -302,30 +312,33 @@
     align-items: flex-end;
     justify-content: space-between;
 }
-.bank-name   { font-weight: 700; font-size: 12px; margin: 3px 0 2px; }
-.bank-line   { font-size: 10px; color: #333; margin-bottom: 1px; }
-.firm-pan    { font-size: 10px; font-weight: 600; margin-top: 6px; color: #111; }
+.bank-name   { font-weight: 800; font-size: 12px; margin: 3px 0 2px; }
+.bank-line   { font-size: 10px; color: #000; font-weight: 700; margin-bottom: 1px; }
+.firm-pan    { font-size: 10px; font-weight: 800; margin-top: 6px; color: #000; }
 .inv-decl {
     font-size: 9.5px;
-    color: #444;
+    color: #000;
+    font-weight: 700;
     margin-top: 6px;
-    border-top: 1px dashed #ccc;
+    border-top: 2px dashed #000;
     padding-top: 5px;
     line-height: 1.5;
 }
 .inv-jurisdiction {
     font-size: 9px;
-    color: #666;
+    color: #000;
     margin-top: 3px;
+    font-weight: 700;
     font-style: italic;
 }
-.sig-for  { font-size: 11px; font-weight: 700; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
+.sig-for  { font-size: 11px; font-weight: 900; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
 .sig-line {
-    border-top: 1px solid #999;
+    border-top: 2px solid #000;
     margin-top: 38px;
     padding-top: 4px;
     font-size: 9.5px;
-    color: #555;
+    color: #000;
+    font-weight: 800;
     text-align: center;
     width: 150px;
 }
@@ -334,14 +347,28 @@
 .inv-computer {
     text-align: center;
     font-size: 9px;
-    color: #888;
+    color: #000;
+    font-weight: 700;
     margin-top: 8px;
     letter-spacing: 0.05em;
 }
 
 /* ── Print ───────────────────────────────────────────────────────────────────── */
 @media print {
-    .inv-wrap { box-shadow: none; border: none; width: 100%; padding: 6mm 8mm; }
+    @page { 
+        size: A4; 
+        margin: 0; 
+    }
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .inv-wrap { 
+        box-shadow: none; 
+        border: none; 
+        width: 100%; 
+        padding: 3mm 8mm 6mm 8mm; 
+    }
     .print-page { page-break-after: always; }
     .print-page:last-child { page-break-after: auto; }
 }

@@ -315,7 +315,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                             {discountAmount > 0 && (
                                 <tr className="subtotal-row">
                                     <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>
-                                    <td className="r subtotal-val" style={{ color: '#ff4757' }}>-{fmt2(discountAmount)}</td>
+                                    <td className="r subtotal-val" style={{ color: '#000000', fontWeight: 'bold' }}>-{fmt2(discountAmount)}</td>
                                 </tr>
                             )}
                             <tr className="subtotal-row">

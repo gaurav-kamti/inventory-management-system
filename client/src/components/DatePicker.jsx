@@ -3,6 +3,30 @@ import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 /**
+ * Normalize ISO date string to local midnight (YYYY-MM-DD)
+ * Handles both "2026-06-20" and "2026-06-20T00:00:00Z" formats
+ */
+function normalizeISODate(isoStr) {
+    if (!isoStr || typeof isoStr !== 'string') return null;
+    // Extract just the date part (YYYY-MM-DD)
+    const match = isoStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+/**
+ * Convert ISO date string to local Date object (avoiding timezone issues)
+ * "2026-06-20" → Date object set to local midnight on 2026-06-20
+ */
+function isoToLocalDate(isoStr) {
+    const normalized = normalizeISODate(isoStr);
+    if (!normalized) return null;
+    const [year, month, day] = normalized.split('-').map(Number);
+    // Create date in LOCAL timezone, not UTC
+    return new Date(year, month - 1, day);
+}
+
+/**
  * Parse flexible date input: supports dd/mm/yyyy, ddmmyyyy, dd.mm.yy, dd mm, etc.
  * Returns a Date object or null.
  */
@@ -68,7 +92,11 @@ function parseFlexibleDate(input) {
     return d;
 }
 
-function toISO(d) {
+/**
+ * Convert Date object to ISO string (YYYY-MM-DD)
+ * Always uses the date's own day/month/year without timezone conversion
+ */
+function dateToISO(d) {
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
@@ -78,21 +106,16 @@ function toISO(d) {
 export default function DatePicker({ value, onChange, required, className = 'input', style, placeholder }) {
     const inputRef = useRef(null);
     const fpRef = useRef(null);
-    const isInternalUpdate = useRef(false);
+    const lastCommittedValue = useRef(null); // Track last value we sent to parent
 
     // Stable onChange ref to avoid stale closures
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
 
     const commitDate = useCallback((dateObj) => {
-        isInternalUpdate.current = true;
-        const iso = toISO(dateObj);
-        if (fpRef.current) {
-            fpRef.current.setDate(dateObj, false); // update display, don't trigger onChange
-        }
+        const iso = dateToISO(dateObj);
+        lastCommittedValue.current = iso;
         onChangeRef.current(iso);
-        // Reset flag after React has time to process
-        setTimeout(() => { isInternalUpdate.current = false; }, 50);
     }, []);
 
     useEffect(() => {
@@ -103,12 +126,10 @@ export default function DatePicker({ value, onChange, required, className = 'inp
             allowInput: true,
             disableMobile: true,
             clickOpens: true,
-            defaultDate: value || null,
+            defaultDate: value ? isoToLocalDate(value) : null,
             onChange: (selectedDates) => {
                 if (selectedDates.length > 0) {
-                    isInternalUpdate.current = true;
-                    onChangeRef.current(toISO(selectedDates[0]));
-                    setTimeout(() => { isInternalUpdate.current = false; }, 50);
+                    commitDate(selectedDates[0]);
                 }
             }
         });
@@ -120,13 +141,22 @@ export default function DatePicker({ value, onChange, required, className = 'inp
 
     // Sync external value changes (from parent state)
     useEffect(() => {
-        if (isInternalUpdate.current) return; // skip if we caused this update
         if (!fpRef.current) return;
-
-        if (value) {
-            fpRef.current.setDate(value, false);
-        } else {
+        if (!value) {
             fpRef.current.clear();
+            lastCommittedValue.current = null;
+            return;
+        }
+
+        // Only update if parent's value differs from what we last sent
+        // This prevents unnecessary re-syncing
+        if (lastCommittedValue.current === value) {
+            return;
+        }
+
+        const localDate = isoToLocalDate(value);
+        if (localDate) {
+            fpRef.current.setDate(localDate, false);
         }
     }, [value]);
 
@@ -139,10 +169,9 @@ export default function DatePicker({ value, onChange, required, className = 'inp
         const val = inputRef.current.value;
 
         if (!val) {
-            isInternalUpdate.current = true;
+            lastCommittedValue.current = '';
             onChangeRef.current('');
             if (fpRef.current) fpRef.current.clear();
-            setTimeout(() => { isInternalUpdate.current = false; }, 50);
             return;
         }
 

@@ -628,7 +628,12 @@ function Database() {
                             if (contextMenu.record.type === 'VOUCHER') {
                                 alert("Voucher editing coming soon!");
                             } else {
-                                navigate('/sell-purchase', { state: { editRecord: { type: contextMenu.record.type, record: contextMenu.record } } });
+                                navigate('/sell-purchase', { 
+                                    state: { 
+                                        editRecord: { type: contextMenu.record.type, record: contextMenu.record },
+                                        previousLocation: '/database'
+                                    } 
+                                });
                             }
                             setContextMenu({ ...contextMenu, show: false });
                         }}

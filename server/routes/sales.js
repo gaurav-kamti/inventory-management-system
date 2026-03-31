@@ -391,7 +391,7 @@ router.put('/:id', auth, async (req, res) => {
 
 // NEW DATA LOGIC
     const {
-      items, customerId, paymentMode, amountPaid, discount, roundOff, notes,
+      invoiceNumber, date, items, customerId, paymentMode, amountPaid, discount, roundOff, notes,
       deliveryNote, paymentTerms, supplierRef, buyerOrderNo, buyerOrderDate,
       despatchedThrough, termsOfDelivery, cgst, sgst, gstPercent, discountPercent,
       discountAmount, taxableAmount, subtotal: providedSubtotal, total: providedTotal
