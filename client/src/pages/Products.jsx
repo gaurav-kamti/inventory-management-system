@@ -131,7 +131,7 @@ function Products() {
                     boxShadow: '0 10px 25px rgba(0,0,0,0.5)', zIndex: 10000, overflow: 'hidden',
                     minWidth: '150px'
                 }}>
-                    <div 
+                    <div
                         className="context-item"
                         style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', color: '#fff' }}
                         onClick={() => openEditModal(contextMenu.product)}
@@ -140,7 +140,7 @@ function Products() {
                     >
                         <span>✏️</span> Edit Update
                     </div>
-                    <div 
+                    <div
                         className="context-item"
                         style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', borderTop: '1px solid #334155', color: '#fca5a5' }}
                         onClick={() => handleDelete(contextMenu.product.id)}
@@ -162,7 +162,7 @@ function Products() {
                                 <input className="input" placeholder="Name" value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                             </div>
-                            
+
                             <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <div className="form-group">
                                     <label>Purchase Price (₹)</label>
