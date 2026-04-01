@@ -220,6 +220,7 @@ router.post("/", auth, async (req, res) => {
           productId: item.productId,
           quantity: item.quantity,
           price: itemPrice, // Use manual price or store price
+          purchasePrice: product.purchasePrice || 0, // Store buying price at the time of sale for profit tracking
           total: itemTotal,
           hsn: item.hsn || product.hsn || "8301",
           gst: round2(item.gst || product.gst || 18),

@@ -7,6 +7,11 @@ const SaleItem = sequelize.define('SaleItem', {
     primaryKey: true,
     autoIncrement: true
   },
+  purchasePrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: 0
+  },
   saleId: {
     type: DataTypes.INTEGER,
     references: { model: 'Sales', key: 'id' }

@@ -15,6 +15,13 @@ const normalizeISODate = (isoStr) => {
     return `${match[1]}-${match[2]}-${match[3]}`;
 };
 
+const getLocalDateString = () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+};
+
 function SellPurchase() {
     const [products, setProducts] = useState([])
     const [suppliers, setSuppliers] = useState([])
@@ -54,7 +61,7 @@ function SellPurchase() {
     // Purchase Item Form (formerly Add Item)
     const [addForm, setAddForm] = useState({
         invoice: `INV-${Date.now()}`,
-        date: '',
+        date: getLocalDateString(),
         supplierId: '',
         supplierName: '',
         deliveryNote: '',
@@ -85,7 +92,7 @@ function SellPurchase() {
     // Sell Item Form
     const [sellForm, setSellForm] = useState({
         invoice: '',
-        date: '',
+        date: getLocalDateString(),
         customerId: '',
         customerName: '',
         roundOff: '',

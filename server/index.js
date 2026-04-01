@@ -72,10 +72,21 @@ sequelize
       try { await sequelize.query(`UPDATE Purchases SET gstPercent = 18 WHERE gstPercent = 0`); } catch (e) {}
 
       // 3. New Size and Name cols
-      const sizeCols = ['name', 'size', 'sizeUnit', 'quantityUnit'];
+      const sizeCols = ['name', 'size', 'sizeUnit', 'quantityUnit', 'purchasePrice'];
       for (let col of sizeCols) {
         try { await sequelize.query(`ALTER TABLE SaleItems ADD COLUMN ${col} TEXT`); } catch (e) {}
         try { await sequelize.query(`ALTER TABLE Purchases ADD COLUMN ${col} TEXT`); } catch (e) {}
+      }
+
+      // Update historical purchase price for existing SaleItems as current product purchasePrice
+      try {
+          await sequelize.query(`
+            UPDATE SaleItems 
+            SET purchasePrice = (SELECT purchasePrice FROM Products WHERE Products.id = SaleItems.productId)
+            WHERE purchasePrice IS NULL OR purchasePrice = 0
+          `);
+      } catch (e) {
+          console.log("Migration sub-step failed: Historical purchasePrice sync", e.message);
       }
     };
 

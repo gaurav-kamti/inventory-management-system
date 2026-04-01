@@ -15,13 +15,16 @@ const Analytics = () => {
         stockData: [],
         salesTrend: [],
         paymentStatus: [],
-        purchaseVsSales: []
+        purchaseVsSales: [],
+        profitData: [],
+        topProfitProducts: []
     });
 
     const tabs = [
         { id: 'all', label: 'All Overview' },
         { id: 'stock', label: 'Top 10 Stock Levels' },
         { id: 'sales', label: 'Recent Sales Trend' },
+        { id: 'profit', label: 'Profit Analysis' },
         { id: 'collections', label: 'Collection Status' },
         { id: 'procurement', label: 'Revenue vs Procurement' }
     ];
@@ -39,7 +42,7 @@ const Analytics = () => {
                 api.get('/purchases')
             ]);
 
-            // 1. Stock Data (Top 10 products by stock)
+            // 1. Stock Data
             const stockData = productsRes.data
                 .sort((a, b) => b.stock - a.stock)
                 .slice(0, 10)
@@ -48,16 +51,48 @@ const Analytics = () => {
                     stock: p.stock
                 }));
 
-            // 2. Sales Trend (Last 10 entries)
+            // 2. Sales & Profit Trends
             const salesByDate = {};
+            const profitByDate = {};
+            const productProfit = {};
+
             salesRes.data.forEach(sale => {
-                const date = new Date(sale.createdAt).toLocaleDateString();
+                const date = new Date(sale.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                
+                // Revenue
                 salesByDate[date] = (salesByDate[date] || 0) + parseFloat(sale.total);
+                
+                // Profit Calculation
+                let saleProfit = 0;
+                if (sale.SaleItems) {
+                    sale.SaleItems.forEach(item => {
+                        const cost = parseFloat(item.purchasePrice || 0);
+                        const price = parseFloat(item.price || 0);
+                        const margin = (price - cost) * parseInt(item.quantity);
+                        saleProfit += margin;
+
+                        // Per product profit
+                        const pName = item.name || 'Unknown Item';
+                        productProfit[pName] = (productProfit[pName] || 0) + margin;
+                    });
+                }
+                profitByDate[date] = (profitByDate[date] || 0) + saleProfit;
             });
+
             const salesTrend = Object.keys(salesByDate).map(date => ({
                 date,
                 amount: salesByDate[date]
             })).slice(-10);
+
+            const profitData = Object.keys(profitByDate).map(date => ({
+                date,
+                profit: profitByDate[date]
+            })).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const topProfitProducts = Object.keys(productProfit)
+                .map(name => ({ name, profit: productProfit[name] }))
+                .sort((a, b) => b.profit - a.profit)
+                .slice(0, 10);
 
             // 3. Payment Status
             let totalPaid = 0;
@@ -85,40 +120,10 @@ const Analytics = () => {
             });
             const purchaseVsSales = Object.values(comparison).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-6);
 
-            // 5. Check if it's all zeros/empty and provide demo data if needed
-            const isDataEmpty = stockData.length === 0 && salesTrend.length === 0 && totalPaid === 0;
-
-            if (isDataEmpty) {
-                console.log('Using demo data for analytics');
-                setData({
-                    stockData: [
-                        { name: 'iPhone 15', stock: 45 },
-                        { name: 'MacBook Pro', stock: 32 },
-                        { name: 'AirPods', stock: 78 },
-                        { name: 'iPad Air', stock: 24 },
-                        { name: 'Apple Watch', stock: 56 }
-                    ],
-                    salesTrend: [
-                        { date: '01/20', amount: 1200 },
-                        { date: '01/21', amount: 1900 },
-                        { date: '01/22', amount: 1500 },
-                        { date: '01/23', amount: 2800 },
-                        { date: '01/24', amount: 2200 }
-                    ],
-                    paymentStatus: [
-                        { name: 'Collected', value: 8500 },
-                        { name: 'Outstanding', value: 1500 }
-                    ],
-                    purchaseVsSales: [
-                        { date: 'Jan 25', sales: 15000, purchases: 11000 },
-                        { date: 'Feb 25', sales: 18000, purchases: 12000 },
-                        { date: 'Mar 25', sales: 16000, purchases: 14000 }
-                    ],
-                    isDemo: true
-                });
-            } else {
-                setData({ stockData, salesTrend, paymentStatus, purchaseVsSales, isDemo: false });
-            }
+            setData({ 
+                stockData, salesTrend, paymentStatus, purchaseVsSales, profitData, topProfitProducts,
+                isDemo: stockData.length === 0 && salesTrend.length === 0 
+            });
             setLoading(false);
         } catch (error) {
             console.error('Error fetching analytics data:', error);
@@ -126,13 +131,12 @@ const Analytics = () => {
         }
     };
 
-
     if (loading) return <div className="loading">Gathering insights...</div>;
 
     return (
         <div className="analytics-container" style={{ padding: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
-                <h1 className="page-title" style={{ margin: 0 }}>Business Analytics</h1>
+                <h1 className="page-title" style={{ margin: 0 }}>Business Intelligence</h1>
                 {data.isDemo && (
                     <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Demo Preview</span>
                 )}
@@ -193,6 +197,46 @@ const Analytics = () => {
                     </div>
                 )}
 
+                {/* Profit Trend Chart */}
+                {(activeTab === 'all' || activeTab === 'profit') && (
+                    <div className="chart-card glass">
+                        <h3>Monthly Gross Profit</h3>
+                        <div className="chart-wrapper">
+                            <ResponsiveContainer width="100%" height={activeTab === 'all' ? 300 : 500}>
+                                <AreaChart data={data.profitData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                                    <XAxis dataKey="date" stroke="#ccc" />
+                                    <YAxis stroke="#ccc" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px' }}
+                                    />
+                                    <Area type="monotone" dataKey="profit" stroke="#10b981" fill="#10b981" fillOpacity={0.3} strokeWidth={3} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                )}
+
+                {/* Top Profitable Products */}
+                {(activeTab === 'all' || activeTab === 'profit') && (
+                    <div className="chart-card glass">
+                        <h3>Most Profitable Items</h3>
+                        <div className="chart-wrapper">
+                            <ResponsiveContainer width="100%" height={activeTab === 'all' ? 300 : 500}>
+                                <BarChart data={data.topProfitProducts} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                                    <XAxis type="number" stroke="#ccc" />
+                                    <YAxis dataKey="name" type="category" stroke="#ccc" width={100} tick={{ fontSize: 10 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px' }}
+                                    />
+                                    <Bar dataKey="profit" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                )}
+
                 {/* Payment Status Pie Chart */}
                 {(activeTab === 'all' || activeTab === 'collections') && (
                     <div className="chart-card glass">
@@ -215,7 +259,7 @@ const Analytics = () => {
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
                                     />
                                     <Legend verticalAlign="bottom" height={36} />
                                 </PieChart>
