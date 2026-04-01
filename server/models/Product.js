@@ -34,6 +34,14 @@ const Product = sequelize.define('Product', {
   quantityUnit: {
     type: DataTypes.STRING,
     defaultValue: 'Pcs'
+  },
+  size: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  sizeUnit: {
+    type: DataTypes.STRING,
+    defaultValue: 'mm'
   }
 });
 

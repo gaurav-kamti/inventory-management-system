@@ -27,7 +27,9 @@ function Inventory() {
         stock: 0,
         hsn: '8301',
         gst: 18,
-        quantityUnit: 'Pcs'
+        quantityUnit: 'Pcs',
+        size: '',
+        sizeUnit: 'mm'
     })
 
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, product: null })
@@ -122,7 +124,9 @@ function Inventory() {
             stock: product.stock,
             hsn: product.hsn || '8301',
             gst: product.gst || 18,
-            quantityUnit: product.quantityUnit || 'Pcs'
+            quantityUnit: product.quantityUnit || 'Pcs',
+            size: product.size || '',
+            sizeUnit: product.sizeUnit || 'mm'
         })
         setShowEditModal(true)
     }
@@ -213,6 +217,7 @@ function Inventory() {
                                 <thead>
                                     <tr>
                                         <th>Item Name</th>
+                                        <th>Size</th>
                                         <th>Supplier</th>
                                         <th style={{ textAlign: 'center' }}>Qty</th>
                                         <th>Unit Cost</th>
@@ -223,6 +228,7 @@ function Inventory() {
                                     {products.map(product => (
                                         <tr key={product.id} onContextMenu={(e) => handleContextMenu(e, product)} style={{ cursor: 'context-menu' }}>
                                             <td><strong style={{ color: 'var(--text-primary)' }}>{product.name}</strong></td>
+                                            <td style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{product.size || '--'} {product.size ? product.sizeUnit : ''}</td>
                                             <td>{product.Supplier?.name || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Unlinked</span>}</td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <span style={{
@@ -244,7 +250,7 @@ function Inventory() {
                                 </tbody>
                                 <tfoot>
                                     <tr style={{ background: 'rgba(142,182,155,0.05)' }}>
-                                        <td colSpan="4" style={{ fontWeight: '800', color: 'var(--text-primary)', padding: '25px' }}>Total Inventory Valuation</td>
+                                        <td colSpan="5" style={{ fontWeight: '800', color: 'var(--text-primary)', padding: '25px' }}>Total Inventory Valuation</td>
                                         <td style={{ fontWeight: '900', color: 'var(--accent)', fontSize: '1.4rem', padding: '25px', textAlign: 'right' }}>
                                             ₹{products.reduce((sum, p) => sum + (p.stock * (p.purchasePrice || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </td>
@@ -416,6 +422,25 @@ function Inventory() {
                                         <option value="Set">Set</option>
                                         <option value="Box">Box</option>
                                         <option value="Dzn">Dzn</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Size (Dimensions)</label>
+                                    <input className="input" placeholder="e.g. 50, 4.5, Large" style={{ width: '100%', padding: '15px' }}
+                                        value={editForm.size} onChange={e => setEditForm({ ...editForm, size: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Size Unit</label>
+                                    <select className="input" style={{ width: '100%', padding: '15px' }}
+                                        value={editForm.sizeUnit} onChange={e => setEditForm({ ...editForm, sizeUnit: e.target.value })}>
+                                        <option value="mm">mm</option>
+                                        <option value="cm">cm</option>
+                                        <option value="inches">inches</option>
+                                        <option value="Meter">Meter</option>
+                                        <option value="--">None</option>
                                     </select>
                                 </div>
                             </div>

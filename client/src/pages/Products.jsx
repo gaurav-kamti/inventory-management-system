@@ -8,7 +8,7 @@ function Products() {
     const [isEditing, setIsEditing] = useState(false)
     const [editId, setEditId] = useState(null)
     const [formData, setFormData] = useState({
-        name: '', purchasePrice: '', sellingPrice: '', stock: 0, hsn: '8301', gst: 18, quantityUnit: 'Pcs'
+        name: '', purchasePrice: '', sellingPrice: '', stock: 0, hsn: '8301', gst: 18, quantityUnit: 'Pcs', size: '', sizeUnit: 'mm'
     })
 
     useEffect(() => {
@@ -36,7 +36,7 @@ function Products() {
     const openAddModal = () => {
         setIsEditing(false)
         setEditId(null)
-        setFormData({ name: '', purchasePrice: '', sellingPrice: '', stock: 0, hsn: '8301', gst: 18, quantityUnit: 'Pcs' })
+        setFormData({ name: '', purchasePrice: '', sellingPrice: '', stock: 0, hsn: '8301', gst: 18, quantityUnit: 'Pcs', size: '', sizeUnit: 'mm' })
         setShowModal(true)
     }
 
@@ -50,7 +50,9 @@ function Products() {
             stock: product.stock,
             hsn: product.hsn || '8301',
             gst: product.gst || 18,
-            quantityUnit: product.quantityUnit || 'Pcs'
+            quantityUnit: product.quantityUnit || 'Pcs',
+            size: product.size || '',
+            sizeUnit: product.sizeUnit || 'mm'
         })
         setShowModal(true)
     }
@@ -95,6 +97,7 @@ function Products() {
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Size</th>
                             <th>Stock</th>
                             <th>Purchase Price</th>
                             <th>Selling Price</th>
@@ -105,6 +108,7 @@ function Products() {
                         {products.map(product => (
                             <tr key={product.id} onContextMenu={(e) => handleContextMenu(e, product)} style={{ cursor: 'context-menu' }}>
                                 <td style={{ fontWeight: 700 }}>{product.name}</td>
+                                <td style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{product.size || '--'} {product.size ? product.sizeUnit : ''}</td>
                                 <td>
                                     <span className={`badge ${product.stock <= 10 ? 'badge-warning' : 'badge-success'}`}>
                                         {product.stock} {product.quantityUnit || 'Pcs'}
@@ -185,6 +189,25 @@ function Products() {
                                         <option value="Pcs">Pcs</option>
                                         <option value="Set">Set</option>
                                         <option value="Box">Box</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div className="form-group">
+                                    <label>Size (Dimensions)</label>
+                                    <input className="input" placeholder="50, 4.5, etc." value={formData.size}
+                                        onChange={(e) => setFormData({ ...formData, size: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Size Unit</label>
+                                    <select className="input" value={formData.sizeUnit}
+                                        onChange={(e) => setFormData({ ...formData, sizeUnit: e.target.value })}>
+                                        <option value="mm">mm</option>
+                                        <option value="cm">cm</option>
+                                        <option value="inches">inches</option>
+                                        <option value="Meter">Meter</option>
+                                        <option value="--">None</option>
                                     </select>
                                 </div>
                             </div>

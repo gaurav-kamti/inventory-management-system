@@ -76,6 +76,7 @@ sequelize
       for (let col of sizeCols) {
         try { await sequelize.query(`ALTER TABLE SaleItems ADD COLUMN ${col} TEXT`); } catch (e) {}
         try { await sequelize.query(`ALTER TABLE Purchases ADD COLUMN ${col} TEXT`); } catch (e) {}
+        try { await sequelize.query(`ALTER TABLE Products ADD COLUMN ${col} TEXT`); } catch (e) {}
       }
 
       // Update historical purchase price for existing SaleItems as current product purchasePrice
