@@ -170,14 +170,8 @@ function SellPurchase() {
         }
     }
 
-    const addItemToList = () => {
-        if (!addItemRow.name || !addItemRow.quantity || !addItemRow.rate) {
-            return alert('Please fill required fields')
-        }
-
-        const finalAmount = addItemRow.amount || (parseFloat(addItemRow.quantity) || 0) * (parseFloat(addItemRow.rate) || 0);
-        setAddedItems([...addedItems, { ...addItemRow, amount: finalAmount.toString() }])
-        setAddItemRow({
+    const addNewPurchaseRow = () => {
+        setAddedItems([...addedItems, {
             name: '',
             size: '',
             sizeUnit: 'mm',
@@ -186,8 +180,7 @@ function SellPurchase() {
             rate: '',
             amount: '',
             quantityUnit: 'Pcs'
-        })
-        setTimeout(() => purchaseItemNameRef.current?.focus(), 0)
+        }])
     }
 
     const removeAddedItem = (index) => {
@@ -430,7 +423,7 @@ function SellPurchase() {
                 subtotal: addTaxable,
                 discountPercent: parseFloat(addForm.discountPercent) || 0,
                 discountAmount: addDiscAmt,
-                taxableAmount: addTaxable,
+                taxableAmount: addTaxableAfterDiscount,
                 gstPercent: parseFloat(addForm.gstPercent) || 18,
                 tax: addTax,
                 afterGST: addAfterGST,
@@ -477,7 +470,7 @@ function SellPurchase() {
                 subtotal: addTaxable,
                 discountPercent: parseFloat(addForm.discountPercent) || 0,
                 discountAmount: addDiscAmt,
-                taxableAmount: addTaxable,
+                taxableAmount: addTaxableAfterDiscount,
                 gstPercent: parseFloat(addForm.gstPercent) || 18,
                 tax: addTax,
                 afterGST: addAfterGST,
@@ -543,9 +536,28 @@ function SellPurchase() {
     }
 
     const updateCartItem = (index, field, value) => {
-        setCartItems(cartItems.map((item, idx) => {
-            if (idx === index) {
-                const updated = { ...item, [field]: value };
+        setCartItems(cartItems.map((item, i) => {
+            if (i === index) {
+                let updated = { ...item, [field]: value };
+
+                // If product name is selected from list
+                if (field === 'name') {
+                    const product = products.find(p => p.name === value);
+                    if (product) {
+                        const q = parseFloat(updated.quantity) || 0;
+                        const r = parseFloat(product.sellingPrice) || 0;
+                        updated = {
+                            ...updated,
+                            productId: product.id,
+                            size: product.size || '',
+                            sizeUnit: product.sizeUnit || 'mm',
+                            hsn: product.hsn || '8301',
+                            rate: product.sellingPrice || '',
+                            amount: q && r ? (q * r).toFixed(2) : ''
+                        };
+                    }
+                }
+
                 if (field === 'quantity' || field === 'rate') {
                     const q = parseFloat(updated.quantity) || 0;
                     const r = parseFloat(updated.rate) || 0;
@@ -575,7 +587,25 @@ function SellPurchase() {
     const updateAddedItem = (index, field, value) => {
         setAddedItems(addedItems.map((item, i) => {
             if (i === index) {
-                const updated = { ...item, [field]: value };
+                let updated = { ...item, [field]: value };
+                
+                // If product name is selected from list
+                if (field === 'name') {
+                    const product = products.find(p => p.name === value);
+                    if (product) {
+                        const q = parseFloat(updated.quantity) || 0;
+                        const r = parseFloat(product.purchasePrice) || 0;
+                        updated = {
+                            ...updated,
+                            size: product.size || '',
+                            sizeUnit: product.sizeUnit || 'mm',
+                            hsn: product.hsn || '8301',
+                            rate: product.purchasePrice || '',
+                            amount: q && r ? (q * r).toFixed(2) : ''
+                        };
+                    }
+                }
+
                 if (field === 'quantity' || field === 'rate') {
                     const q = parseFloat(updated.quantity) || 0;
                     const r = parseFloat(updated.rate) || 0;
@@ -600,20 +630,20 @@ function SellPurchase() {
 
     // Calculations
     const sellTaxable = cartItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), 0)
-    const sellTax = sellTaxable * (parseFloat(sellForm.gstPercent) || 0) / 100
-    const sellAfterGST = sellTaxable + sellTax
-    const sellDiscAmt = sellAfterGST * (parseFloat(sellForm.discountPercent) || 0) / 100
-    const sellAmountAfterDiscount = sellAfterGST - sellDiscAmt
-    const sellRoundOff = Math.round(sellAmountAfterDiscount) - sellAmountAfterDiscount
-    const sellTotal = sellAmountAfterDiscount + sellRoundOff
+    const sellDiscAmt = sellTaxable * (parseFloat(sellForm.discountPercent) || 0) / 100
+    const sellTaxableAfterDiscount = sellTaxable - sellDiscAmt
+    const sellTax = sellTaxableAfterDiscount * (parseFloat(sellForm.gstPercent) || 0) / 100
+    const sellAfterGST = sellTaxableAfterDiscount + sellTax
+    const sellRoundOff = Math.round(sellAfterGST) - sellAfterGST
+    const sellTotal = sellAfterGST + sellRoundOff
 
     const addTaxable = addedItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), 0)
-    const addTax = addTaxable * (parseFloat(addForm.gstPercent) || 0) / 100
-    const addAfterGST = addTaxable + addTax
-    const addDiscAmt = addAfterGST * (parseFloat(addForm.discountPercent) || 0) / 100
-    const addAmountAfterDiscount = addAfterGST - addDiscAmt
-    const addRoundOff = Math.round(addAmountAfterDiscount) - addAmountAfterDiscount
-    const addTotal = addAmountAfterDiscount + addRoundOff
+    const addDiscAmt = addTaxable * (parseFloat(addForm.discountPercent) || 0) / 100
+    const addTaxableAfterDiscount = addTaxable - addDiscAmt
+    const addTax = addTaxableAfterDiscount * (parseFloat(addForm.gstPercent) || 0) / 100
+    const addAfterGST = addTaxableAfterDiscount + addTax
+    const addRoundOff = Math.round(addAfterGST) - addAfterGST
+    const addTotal = addAfterGST + addRoundOff
 
     const handleSellItem = async (e) => {
         e.preventDefault()
@@ -640,7 +670,7 @@ function SellPurchase() {
                 subtotal: sellTaxable,
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
                 discountAmount: sellDiscAmt,
-                taxableAmount: sellTaxable,
+                taxableAmount: sellTaxableAfterDiscount,
                 gstPercent: parseFloat(sellForm.gstPercent) || 18,
                 tax: sellTax,
                 afterGST: sellAfterGST,
@@ -679,7 +709,7 @@ function SellPurchase() {
                 subtotal: sellTaxable,
                 discountPercent: parseFloat(sellForm.discountPercent) || 0,
                 discountAmount: sellDiscAmt,
-                taxableAmount: sellTaxable,
+                taxableAmount: sellTaxableAfterDiscount,
                 gstPercent: parseFloat(sellForm.gstPercent) || 18,
                 tax: sellTax,
                 afterGST: sellAfterGST,
@@ -744,20 +774,8 @@ function SellPurchase() {
 
 
 
-    const addItemToSellList = () => {
-        if (!sellItemInput.name || !sellItemInput.quantity || !sellItemInput.rate) {
-            return alert('Please enter item name, quantity and rate')
-        }
-
-        const newItem = {
-            ...sellItemInput,
-            // If productId is empty string, keep it simplified or make sure it's null logic downstream handles it
-            productId: sellItemInput.productId ? parseInt(sellItemInput.productId) : null
-        }
-
-        setCartItems([...cartItems, newItem])
-
-        setSellItemInput({
+    const addNewSaleRow = () => {
+        setCartItems([...cartItems, {
             productId: '',
             name: '',
             size: '',
@@ -767,8 +785,7 @@ function SellPurchase() {
             rate: '',
             amount: '',
             quantityUnit: 'Pcs'
-        })
-        setTimeout(() => sellItemNameRef.current?.focus(), 0)
+        }])
     }
 
     useEffect(() => {
@@ -799,7 +816,16 @@ function SellPurchase() {
             }
             fetchInvoice()
         }
+        if (showSellModal && cartItems.length === 0) {
+            addNewSaleRow()
+        }
     }, [showSellModal])
+
+    useEffect(() => {
+        if (showPurchaseModal && addedItems.length === 0) {
+            addNewPurchaseRow()
+        }
+    }, [showPurchaseModal])
 
     // Shared Datalist for Product Suggestions
     const productDatalist = (
@@ -1047,7 +1073,9 @@ function SellPurchase() {
                                     {addedItems.map((item, index) => (
                                         <tr key={index}>
                                             <td style={{ textAlign: 'center' }}>
-                                                <input className="input" style={{ width: '100%', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: '700' }}
+                                                <input className="input" 
+                                                    style={{ width: '100%', padding: '10px', textAlign: 'center', fontWeight: '700', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px' }}
+                                                    list="product-suggestions"
                                                     value={item.name}
                                                     onChange={e => updateAddedItem(index, 'name', e.target.value)}
                                                 />
@@ -1056,7 +1084,6 @@ function SellPurchase() {
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
                                                     <input
                                                         type="number"
-                                                        min="0"
                                                         style={{ width: '100%', padding: '10px 45px 10px 10px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'center', color: 'var(--text-primary)', outline: 'none' }}
                                                         value={item.size}
                                                         onChange={e => updateAddedItem(index, 'size', e.target.value)}
@@ -1081,12 +1108,8 @@ function SellPurchase() {
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
                                                     <input className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', padding: '8px 5px' }}
                                                         type="number"
-                                                        min="0"
                                                         value={item.quantity}
-                                                        onChange={e => {
-                                                            const q = e.target.value;
-                                                            updateAddedItem(index, 'quantity', q);
-                                                        }}
+                                                        onChange={e => updateAddedItem(index, 'quantity', e.target.value)}
                                                     />
                                                     <select className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.75rem' }}
                                                         value={item.quantityUnit} onChange={e => updateAddedItem(index, 'quantityUnit', e.target.value)}>
@@ -1098,18 +1121,17 @@ function SellPurchase() {
                                                 </div>
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <input type="number" min="0" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateAddedItem(index, 'rate', e.target.value)} />
+                                                <input type="number" className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }} value={item.rate} onChange={e => updateAddedItem(index, 'rate', e.target.value)} />
                                             </td>
                                             <td style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '1.1rem', textAlign: 'center' }}>
                                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7, fontSize: '0.9rem' }}>$</span>
+                                                    <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7, fontSize: '0.9rem' }}>₹</span>
                                                     <input
                                                         className="input"
                                                         type="number"
-                                                        min="0"
                                                         style={{ padding: '8px 5px 8px 20px', width: '100%', textAlign: 'center', color: 'var(--accent)', fontWeight: '800', background: 'rgba(142,182,155,0.05)', border: '1px solid rgba(142,182,155,0.2)', fontSize: '1rem' }}
-                                                        value={item.amount !== undefined ? item.amount : ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)).toString()}
-                                                        onChange={(e) => updateAddedItemAmount(index, e.target.value)}
+                                                        value={item.amount}
+                                                        readOnly
                                                     />
                                                 </div>
                                             </td>
@@ -1118,141 +1140,23 @@ function SellPurchase() {
                                             </td>
                                         </tr>
                                     ))}
-                                    <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '8px 12px', fontSize: '0.9rem', width: '100%' }}
-                                                ref={purchaseItemNameRef}
-                                                list="product-suggestions"
-                                                placeholder="Search"
-                                                value={addItemRow.name}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Tab' && !e.shiftKey) {
-                                                        const val = e.target.value.toLowerCase()
-                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
-                                                        if (val && match) {
-                                                            const q = parseFloat(addItemRow.quantity) || 0;
-                                                            const r = parseFloat(match.purchasePrice) || 0;
-                                                            const amt = (q * r).toString();
-                                                            setAddItemRow(prev => ({ ...prev, name: match.name, size: match.size || '', sizeUnit: match.sizeUnit || 'mm', hsn: match.hsn || '', rate: match.purchasePrice || '', amount: amt }))
-                                                        }
-                                                    }
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault()
-                                                        purchaseQtyRef.current?.focus()
-                                                    }
-                                                }}
-                                                onChange={e => {
-                                                    const val = e.target.value
-                                                    const product = products.find(p => p.name === val)
-                                                    if (product) {
-                                                        const q = parseFloat(addItemRow.quantity) || 0;
-                                                        const r = parseFloat(product.purchasePrice) || 0;
-                                                        const amt = (q * r).toString();
-                                                        setAddItemRow({ ...addItemRow, name: product.name, size: product.size || '', sizeUnit: product.sizeUnit || 'mm', hsn: product.hsn || '', rate: product.purchasePrice || '', amount: amt })
-                                                    } else {
-                                                        setAddItemRow({ ...addItemRow, name: val })
-                                                    }
-                                                }}
-                                            />
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    style={{ width: '100%', padding: '10px 45px 10px 10px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'center', color: 'var(--text-primary)', outline: 'none' }}
-                                                    placeholder="0"
-                                                    value={addItemRow.size}
-                                                    onChange={e => setAddItemRow({ ...addItemRow, size: e.target.value })}
-                                                />
-                                                <select
-                                                    style={{ position: 'absolute', right: '5px', width: 'auto', fontSize: '0.75rem', border: 'none', background: 'transparent', appearance: 'none', cursor: 'pointer', color: 'var(--accent)', fontWeight: 'bold', outline: 'none' }}
-                                                    value={addItemRow.sizeUnit}
-                                                    onChange={e => setAddItemRow({ ...addItemRow, sizeUnit: e.target.value })}
-                                                >
-                                                    <option value="mm">mm</option>
-                                                    <option value="cm">cm</option>
-                                                    <option value="in">in</option>
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <select className="input" style={{ padding: '12px', width: '80px', fontSize: '0.9rem', textAlign: 'center' }} value={addItemRow.hsn}
-                                                onChange={e => setAddItemRow({ ...addItemRow, hsn: e.target.value })}>
-                                                {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
-                                            </select>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden', width: '100%' }}>
-                                                <input className="input" style={{ width: '100%', minWidth: '0', padding: '10px 5px', textAlign: 'center', fontSize: '0.85rem', border: 'none', background: 'transparent', borderRadius: 0 }} placeholder="0" type="number" min="0"
-                                                    ref={purchaseQtyRef}
-                                                    value={addItemRow.quantity}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault()
-                                                            purchaseRateRef.current?.focus()
-                                                        }
-                                                    }}
-                                                    onChange={e => {
-                                                        const q = e.target.value;
-                                                        const r = parseFloat(addItemRow.rate) || 0;
-                                                        const amt = ((parseFloat(q) || 0) * r).toString();
-                                                        setAddItemRow({ ...addItemRow, quantity: q, amount: amt })
-                                                    }}
-                                                />
-                                                <select className="input" style={{ width: '100%', padding: '10px 0', fontSize: '0.75rem', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'center', color: 'var(--text-primary)', borderRadius: 0 }}
-                                                    value={addItemRow.quantityUnit} onChange={e => setAddItemRow({ ...addItemRow, quantityUnit: e.target.value })}>
-                                                    <option value="Pcs" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Pcs</option>
-                                                    <option value="Set" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Set</option>
-                                                    <option value="Box" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Box</option>
-                                                    <option value="Dzn" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Dzn</option>
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '8px', width: '100%', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} placeholder="0.00" type="number" min="0"
-                                                ref={purchaseRateRef}
-                                                value={addItemRow.rate}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault()
-                                                        purchaseAddBtnRef.current?.focus()
-                                                    }
-                                                }}
-                                                onChange={e => {
-                                                    const r = e.target.value;
-                                                    const q = parseFloat(addItemRow.quantity) || 0;
-                                                    const amt = (q * (parseFloat(r) || 0)).toString();
-                                                    setAddItemRow({ ...addItemRow, rate: r, amount: amt })
-                                                }}
-                                            />
-                                        </td>
-
-                                        <td style={{ fontWeight: '800', fontSize: '1.1rem', textAlign: 'center' }}>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7 }}>₹</span>
-                                                <input
-                                                    className="input"
-                                                    type="number"
-                                                    min="0"
-                                                    style={{ padding: '12px 8px 12px 25px', width: '100%', textAlign: 'center', color: 'var(--accent)', fontWeight: '800', background: 'rgba(142,182,155,0.05)', border: '1px solid rgba(142,182,155,0.2)' }}
-                                                    value={addItemRow.amount}
-                                                    onChange={(e) => {
-                                                        const amt = e.target.value;
-                                                        const newTotal = parseFloat(amt) || 0;
-                                                        const qty = parseFloat(addItemRow.quantity) || 1;
-                                                        const newRate = amt ? (newTotal / qty).toString() : '';
-                                                        setAddItemRow({ ...addItemRow, amount: amt, rate: newRate });
-                                                    }}
-                                                />
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <button type="button" ref={purchaseAddBtnRef} className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToList}>+</button>
-                                        </td>
-                                    </tr>
                                 </tbody>
                             </table>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+                                <button type="button" className="btn" 
+                                    style={{ 
+                                        padding: '12px 30px', 
+                                        background: 'var(--accent)', 
+                                        color: 'var(--bg-deep)',
+                                        borderRadius: '12px',
+                                        fontWeight: '800',
+                                        fontSize: '1rem'
+                                    }} 
+                                    onClick={addNewPurchaseRow}
+                                >
+                                    + Add New Row
+                                </button>
+                            </div>
                         </div>
 
                         {/* HSN Summary Section for Purchase */}
@@ -1303,18 +1207,8 @@ function SellPurchase() {
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Value</p>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Base Amount</p>
                                     <p style={{ fontSize: '1.4rem', fontWeight: '800' }}>₹{addTaxable.toFixed(2)}</p>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({addForm.gstPercent}%)</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+₹{addTax.toFixed(2)}</p>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>After GST</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹{addAfterGST.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
@@ -1324,6 +1218,20 @@ function SellPurchase() {
                                         onChange={e => setAddForm(prev => ({ ...prev, discountPercent: e.target.value }))}
                                     />
                                     <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-₹{addDiscAmt.toFixed(2)}</p>
+                                </div>
+
+                                {addDiscAmt > 0 && (
+                                    <>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Value</p>
+                                            <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹{addTaxableAfterDiscount.toFixed(2)}</p>
+                                        </div>
+                                    </>
+                                )}
+
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({addForm.gstPercent}%)</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+₹{addTax.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>
@@ -1503,7 +1411,9 @@ function SellPurchase() {
                                     {cartItems.map((item, index) => (
                                         <tr key={index}>
                                             <td style={{ textAlign: 'center' }}>
-                                                <input className="input" style={{ width: '100%', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: '700' }}
+                                                <input className="input" 
+                                                    style={{ width: '100%', padding: '10px', textAlign: 'center', fontWeight: '700', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px' }}
+                                                    list="product-suggestions"
                                                     value={item.name}
                                                     onChange={e => updateCartItem(index, 'name', e.target.value)}
                                                 />
@@ -1539,10 +1449,7 @@ function SellPurchase() {
                                                         type="number"
                                                         min="0"
                                                         value={item.quantity}
-                                                        onChange={e => {
-                                                            const q = e.target.value;
-                                                            updateCartItem(index, 'quantity', q);
-                                                        }}
+                                                        onChange={e => updateCartItem(index, 'quantity', e.target.value)}
                                                     />
                                                     <select className="input" style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.75rem' }}
                                                         value={item.quantityUnit} onChange={e => updateCartItem(index, 'quantityUnit', e.target.value)}>
@@ -1562,8 +1469,8 @@ function SellPurchase() {
                                                         type="number"
                                                         min="0"
                                                         style={{ padding: '8px 5px 8px 20px', width: '100%', textAlign: 'center', color: 'var(--accent)', fontWeight: '800', background: 'rgba(142,182,155,0.05)', border: '1px solid rgba(142,182,155,0.2)', fontSize: '1rem' }}
-                                                        value={item.amount !== undefined ? item.amount : ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)).toString()}
-                                                        onChange={(e) => updateCartItemAmount(index, e.target.value)}
+                                                        value={item.amount}
+                                                        readOnly
                                                     />
                                                 </div>
                                             </td>
@@ -1572,156 +1479,23 @@ function SellPurchase() {
                                             </td>
                                         </tr>
                                     ))}
-                                    <tr className="input-row" style={{ background: 'rgba(142, 182, 155, 0.03)', borderTop: '2px solid var(--accent)' }}>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', fontSize: '0.9rem', width: '100%' }}
-                                                ref={sellItemNameRef}
-                                                list="product-suggestions"
-                                                placeholder="Search"
-                                                value={sellItemInput.name}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Tab' && !e.shiftKey) {
-                                                        const val = e.target.value.toLowerCase()
-                                                        const match = products.find(p => p.name.toLowerCase().includes(val))
-                                                        if (val && match) {
-                                                            const q = parseFloat(sellItemInput.quantity) || 0;
-                                                            const r = parseFloat(match.sellingPrice) || 0;
-                                                            const amt = (q * r).toString();
-                                                            setSellItemInput(prev => ({
-                                                                ...prev,
-                                                                productId: String(match.id),
-                                                                name: match.name,
-                                                                rate: match.sellingPrice || '',
-                                                                hsn: match.hsn || '8301',
-                                                                amount: amt
-                                                            }))
-                                                        }
-                                                    }
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault()
-                                                        sellQtyRef.current?.focus()
-                                                    }
-                                                }}
-                                                onChange={(e) => {
-                                                    const val = e.target.value
-                                                    const product = products.find(p => p.name === val)
-                                                    if (product) {
-                                                        const q = parseFloat(sellItemInput.quantity) || 0;
-                                                        const r = parseFloat(product.sellingPrice) || 0;
-                                                        const amt = (q * r).toString();
-                                                        setSellItemInput(prev => ({
-                                                            ...prev,
-                                                            productId: String(product.id),
-                                                            name: product.name,
-                                                            rate: product.sellingPrice || '',
-                                                            hsn: product.hsn || '8301',
-                                                            amount: amt
-                                                        }))
-                                                    } else {
-                                                        setSellItemInput(prev => ({ ...prev, name: val, productId: '' }))
-                                                    }
-                                                }}
-                                            />
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden' }}>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    style={{ width: '100%', padding: '12px 45px 12px 10px', fontSize: '0.9rem', border: 'none', background: 'transparent', textAlign: 'center', color: 'var(--text-primary)', outline: 'none' }}
-                                                    placeholder="0"
-                                                    value={sellItemInput.size}
-                                                    onChange={e => setSellItemInput({ ...sellItemInput, size: e.target.value })}
-                                                />
-                                                <select
-                                                    style={{ position: 'absolute', right: '5px', width: 'auto', fontSize: '0.75rem', border: 'none', background: 'transparent', appearance: 'none', cursor: 'pointer', color: 'var(--accent)', fontWeight: 'bold', outline: 'none' }}
-                                                    value={sellItemInput.sizeUnit}
-                                                    onChange={e => setSellItemInput({ ...sellItemInput, sizeUnit: e.target.value })}
-                                                >
-                                                    <option value="mm">mm</option>
-                                                    <option value="cm">cm</option>
-                                                    <option value="in">in</option>
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <select className="input" style={{ padding: '12px', width: '80px', fontSize: '0.9rem', textAlign: 'center' }} value={sellItemInput.hsn}
-                                                onChange={e => setSellItemInput({ ...sellItemInput, hsn: e.target.value })}>
-                                                {hsnCodes.map(code => <option key={code} value={code} style={{ background: 'var(--bg-deep)' }}>{code}</option>)}
-                                            </select>
-                                        </td>
-
-                                        <td style={{ textAlign: 'center' }}>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', overflow: 'hidden', width: '100%' }}>
-                                                <input className="input" style={{ width: '100%', minWidth: '0', padding: '10px 5px', textAlign: 'center', fontSize: '0.85rem', border: 'none', background: 'transparent', borderRadius: 0 }} placeholder="0" type="number" min="0"
-                                                    ref={sellQtyRef}
-                                                    value={sellItemInput.quantity}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault()
-                                                            sellRateRef.current?.focus()
-                                                        }
-                                                    }}
-                                                    onChange={e => {
-                                                        const q = e.target.value;
-                                                        const r = parseFloat(sellItemInput.rate) || 0;
-                                                        const amt = ((parseFloat(q) || 0) * r).toString();
-                                                        setSellItemInput({ ...sellItemInput, quantity: q, amount: amt })
-                                                    }}
-                                                />
-                                                <select className="input" style={{ width: '100%', padding: '10px 0', fontSize: '0.75rem', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'center', color: 'var(--text-primary)', borderRadius: 0 }}
-                                                    value={sellItemInput.quantityUnit} onChange={e => setSellItemInput({ ...sellItemInput, quantityUnit: e.target.value })}>
-                                                    <option value="Pcs" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Pcs</option>
-                                                    <option value="Set" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Set</option>
-                                                    <option value="Box" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Box</option>
-                                                    <option value="Dzn" style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)' }}>Dzn</option>
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <input className="input" style={{ padding: '12px', width: '100%', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} placeholder="0.00" type="number" min="0"
-                                                ref={sellRateRef}
-                                                value={sellItemInput.rate}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault()
-                                                        sellAddBtnRef.current?.focus()
-                                                    }
-                                                }}
-                                                onChange={e => {
-                                                    const r = e.target.value;
-                                                    const q = parseFloat(sellItemInput.quantity) || 0;
-                                                    const amt = (q * (parseFloat(r) || 0)).toString();
-                                                    setSellItemInput({ ...sellItemInput, rate: r, amount: amt })
-                                                }}
-                                            />
-                                        </td>
-
-                                        <td style={{ fontWeight: '800', fontSize: '1.1rem', textAlign: 'center' }}>
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <span style={{ position: 'absolute', left: '10px', color: 'var(--accent)', opacity: 0.7 }}>₹</span>
-                                                <input
-                                                    className="input"
-                                                    type="number"
-                                                    min="0"
-                                                    style={{ padding: '12px 8px 12px 25px', width: '100%', textAlign: 'center', color: 'var(--accent)', fontWeight: '800', background: 'rgba(142,182,155,0.05)', border: '1px solid rgba(142,182,155,0.2)' }}
-                                                    value={sellItemInput.amount}
-                                                    onChange={(e) => {
-                                                        const amt = e.target.value;
-                                                        const newTotal = parseFloat(amt) || 0;
-                                                        const qty = parseFloat(sellItemInput.quantity) || 1;
-                                                        const newRate = (newTotal / qty).toFixed(2);
-                                                        setSellItemInput({ ...sellItemInput, amount: amt, rate: newRate });
-                                                    }}
-                                                />
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <button type="button" ref={sellAddBtnRef} className="btn" style={{ padding: '12px', minWidth: 'auto', background: 'var(--accent)', color: 'var(--bg-deep)' }} onClick={addItemToSellList}>+</button>
-                                        </td>
-                                    </tr>
                                 </tbody>
                             </table>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+                                <button type="button" className="btn" 
+                                    style={{ 
+                                        padding: '12px 30px', 
+                                        background: 'var(--accent)', 
+                                        color: 'var(--bg-deep)',
+                                        borderRadius: '12px',
+                                        fontWeight: '800',
+                                        fontSize: '1rem'
+                                    }} 
+                                    onClick={addNewSaleRow}
+                                >
+                                    + Add New Row
+                                </button>
+                            </div>
                             {/* HSN Summary Section */}
                             {cartItems.length > 0 && (
                                 <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
@@ -1746,16 +1520,16 @@ function SellPurchase() {
                                             {hsnSummary.map((sum, i) => (
                                                 <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                                     <td style={{ padding: '8px' }}>{sum.hsn}</td>
-                                                    <td style={{ textAlign: 'right', padding: '8px' }}>${sum.taxableValue.toFixed(2)}</td>
+                                                    <td style={{ textAlign: 'right', padding: '8px' }}>₹{sum.taxableValue.toFixed(2)}</td>
                                                     {gstSplit.type === 'CGST/SGST' ? (
                                                         <>
-                                                            <td style={{ textAlign: 'right', padding: '8px' }}>${(sum.totalTax / 2).toFixed(2)}</td>
-                                                            <td style={{ textAlign: 'right', padding: '8px' }}>${(sum.totalTax / 2).toFixed(2)}</td>
+                                                            <td style={{ textAlign: 'right', padding: '8px' }}>₹{(sum.totalTax / 2).toFixed(2)}</td>
+                                                            <td style={{ textAlign: 'right', padding: '8px' }}>₹{(sum.totalTax / 2).toFixed(2)}</td>
                                                         </>
                                                     ) : (
-                                                        <td style={{ textAlign: 'right', padding: '8px' }}>${sum.totalTax.toFixed(2)}</td>
+                                                        <td style={{ textAlign: 'right', padding: '8px' }}>₹{sum.totalTax.toFixed(2)}</td>
                                                     )}
-                                                    <td style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>${sum.totalTax.toFixed(2)}</td>
+                                                    <td style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>₹{sum.totalTax.toFixed(2)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -1771,15 +1545,9 @@ function SellPurchase() {
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '40px', flexWrap: 'wrap' }}>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Value</p>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Base Amount</p>
                                     <p style={{ fontSize: '1.4rem', fontWeight: '800' }}>₹{sellTaxable.toFixed(2)}</p>
                                 </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({sellForm.gstPercent}%)</p>
-                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+₹{sellTax.toFixed(2)}</p>
-                                </div>
-
 
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Disc (%)</p>
@@ -1788,6 +1556,20 @@ function SellPurchase() {
                                         onChange={e => setSellForm(prev => ({ ...prev, discountPercent: e.target.value }))}
                                     />
                                     <p style={{ fontSize: '1rem', color: '#ff4757', fontWeight: '700' }}>-₹{sellDiscAmt.toFixed(2)}</p>
+                                </div>
+
+                                {sellDiscAmt > 0 && (
+                                    <>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Taxable Value</p>
+                                            <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>₹{sellTaxableAfterDiscount.toFixed(2)}</p>
+                                        </div>
+                                    </>
+                                )}
+
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>GST ({sellForm.gstPercent}%)</p>
+                                    <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>+₹{sellTax.toFixed(2)}</p>
                                 </div>
 
                                 <div style={{ textAlign: 'right' }}>

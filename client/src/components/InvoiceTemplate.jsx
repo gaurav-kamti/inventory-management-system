@@ -305,19 +305,25 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                     {!isVoucher && (
                         <>
                             <tr className="subtotal-row">
-                                <td colSpan={7} className="subtotal-label">Taxable Value</td>
-                                <td className="r subtotal-val">{fmt2(taxableAmount)}</td>
-                            </tr>
-                            <tr className="subtotal-row tax-row">
-                                <td colSpan={7} className="subtotal-label">GST ({gstPercent}%)</td>
-                                <td className="r subtotal-val">{fmt2(saleTax)}</td>
+                                <td colSpan={7} className="subtotal-label">Base Amount</td>
+                                <td className="r subtotal-val">{fmt2(saleSubtotal || taxableAmount)}</td>
                             </tr>
                             {discountAmount > 0 && (
-                                <tr className="subtotal-row tax-row">
-                                    <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>
-                                    <td className="r subtotal-val">-{fmt2(discountAmount)}</td>
-                                </tr>
+                                <>
+                                    <tr className="subtotal-row tax-row">
+                                        <td colSpan={7} className="subtotal-label">Discount ({discountPercent}%)</td>
+                                        <td className="r subtotal-val">-{fmt2(discountAmount)}</td>
+                                    </tr>
+                                    <tr className="subtotal-row">
+                                        <td colSpan={7} className="subtotal-label">Taxable Value</td>
+                                        <td className="r subtotal-val">{fmt2(taxableAmount)}</td>
+                                    </tr>
+                                </>
                             )}
+                            <tr className="subtotal-row tax-row">
+                                <td colSpan={7} className="subtotal-label">GST ({gstPercent}%)</td>
+                                <td className="r subtotal-val">+{fmt2(saleTax)}</td>
+                            </tr>
                             <tr className="subtotal-row">
                                 <td colSpan={7} className="subtotal-label bold-label">Rounded Off</td>
                                 <td className="r subtotal-val">{roundOff >= 0 ? '+' : '-'}{fmt2(Math.abs(roundOff))}</td>
