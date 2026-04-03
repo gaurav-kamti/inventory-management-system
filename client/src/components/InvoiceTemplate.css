@@ -1,25 +1,71 @@
-/* InvoiceTemplate.css */
+/* InvoiceTemplate.css - REFACTORED for multi-page with repeating headers */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;500;600;700&display=swap');
-/*
-  Professional Invoice Stylesheet — A4 Optimized
-  Fonts: Inter (labels, text) + Roboto Mono (numbers, amounts)
-*/
 
 /* ── Wrapper ───────────────────────────────────────────────────────────────── */
 .inv-wrap {
     background: #ffffff;
     width: 210mm;
     max-width: 100%;
-    padding: 0mm 10mm 8mm 10mm; /* Removed 3mm top padding from here */
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 10.5px;
     color: #000000;
     font-weight: 400;
     line-height: 1.5;
-    /* Removed main border to allow multi-page sections to close themselves */
     margin: 0 auto;
+    padding: 10mm 10mm 12mm 10mm; /* Extra bottom for footer */
     box-sizing: border-box;
     position: relative;
+}
+
+.inv-wrap.inv-draft {
+    position: relative;
+}
+
+.inv-wrap.inv-draft::after {
+    content: 'DRAFT';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 90px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.06);
+    letter-spacing: 20px;
+    pointer-events: none;
+    z-index: 0;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Pages ─────────────────────────────────────────────────────────────────── */
+.inv-page {
+    padding: 0mm 10mm 8mm 10mm;
+    page-break-after: always;
+    break-after: page;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 297mm;
+}
+
+.inv-page-1 {
+    padding-top: 3mm; /* Top margin for page 1 */
+}
+
+.inv-page-continuation {
+    padding-top: 0mm; /* Continuation pages have no top margin */
+}
+
+.inv-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+    min-height: auto;
+}
+
+/* Footer container that anchors to bottom */
+.inv-page-footer {
+    margin-top: auto;
+    flex-shrink: 0;
 }
 
 /* ── Top bar ───────────────────────────────────────────────────────────────── */
@@ -27,9 +73,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2px;
+    margin-bottom: 0;
     font-size: 10px;
 }
+
 .inv-credit-memo {
     font-style: italic;
     color: #000;
@@ -37,6 +84,7 @@
     font-size: 10px;
     min-height: 14px;
 }
+
 .inv-copy-badge {
     font-style: italic;
     color: #000;
@@ -56,6 +104,23 @@
     border: 2px solid #000;
     border-bottom: none;
     margin-bottom: 0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.inv-page-number {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    font-style: italic;
+    color: #000;
+    letter-spacing: 0.02em;
 }
 
 /* ── Header: Seller (left) + Invoice Meta (right) ──────────────────────────── */
@@ -63,13 +128,15 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     border: 2px solid #000;
+    margin-top: -2px;
 }
 
-/* Seller block */
+/* Seller block — appears on every page */
 .inv-seller {
     padding: 8px 10px;
     border-right: 2px solid #000;
 }
+
 .inv-seller-name {
     font-family: 'Inter', sans-serif;
     font-size: 16px;
@@ -78,6 +145,7 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
+
 .inv-seller-sub {
     font-size: 10px;
     color: #000;
@@ -85,27 +153,37 @@
     margin-bottom: 1px;
 }
 
-/* Meta right side */
+/* Meta right side — always shown */
 .inv-meta {
     display: flex;
     flex-direction: column;
 }
+
 .inv-meta-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     border-bottom: 2px solid #000;
     flex: 1;
 }
-.inv-meta-row.no-bottom { border-bottom: none; }
+
+.inv-meta-row.no-bottom {
+    border-bottom: none;
+}
+
 .inv-meta-cell {
     padding: 5px 7px;
     border-right: 2px solid #000;
 }
-.inv-meta-cell.no-right  { border-right: none; }
+
+.inv-meta-cell.no-right {
+    border-right: none;
+}
+
 .inv-meta-cell.full-span {
     grid-column: span 2;
     border-right: none;
 }
+
 .meta-label {
     font-size: 9px;
     text-transform: uppercase;
@@ -115,8 +193,19 @@
     display: block;
     margin-bottom: 2px;
 }
-.meta-val       { font-size: 11px; font-weight: 700; font-family: 'Roboto Mono', monospace; }
-.meta-val.light { font-weight: 500; font-family: 'Inter', sans-serif; }
+
+.meta-val {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.meta-val.light {
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Continuation page marker */
 
 /* ── Buyer section ─────────────────────────────────────────────────────────── */
 .inv-buyer {
@@ -125,10 +214,12 @@
     border: 2px solid #000;
     margin-top: -2px;
 }
+
 .inv-buyer-left {
     padding: 8px 10px;
     border-right: 2px solid #000;
 }
+
 .party-name {
     font-size: 14px;
     font-weight: 900;
@@ -137,16 +228,19 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
 }
+
 .party-line {
     font-size: 10px;
     color: #000;
     font-weight: 600;
     margin-bottom: 2px;
 }
+
 .inv-buyer-right {
     display: flex;
     flex-direction: column;
 }
+
 .buyer-rcell {
     padding: 3px 8px;
     font-size: 10px;
@@ -160,7 +254,11 @@
     min-height: 36px;
     flex: 1;
 }
-.buyer-rcell:last-child  { border-bottom: none; }
+
+.buyer-rcell:last-child {
+    border-bottom: none;
+}
+
 .buyer-rcell--top {
     justify-content: flex-start;
     align-items: flex-start;
@@ -175,8 +273,25 @@
     border-collapse: collapse;
     border: 2px solid #000;
     font-size: 10.5px;
-    margin-top: -2px;
+    margin-top: 2px;
+    table-layout: fixed;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
+
+.inv-table-header-only {
+    border-bottom: none;
+}
+
+.inv-table-header-only th {
+    border-bottom: none;
+}
+
+.inv-table-body-only {
+    border-top: none;
+    margin-top: 0;
+}
+
 .inv-table th {
     background: #ffffff;
     border: 2px solid #000;
@@ -187,70 +302,131 @@
     text-transform: uppercase;
     font-weight: 900;
 }
-.inv-table th.r  { text-align: right; }
-.inv-table th.c  { text-align: center; }
-.inv-table td    { padding: 4px 6px; border: none; border-bottom: 2px solid #000; border-right: 2px solid #000; vertical-align: middle; font-weight: 500; }
-.inv-table td:first-child { border-left: 2px solid #000; }
-.inv-table td.r  { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; font-family: 'Roboto Mono', monospace; font-weight: 600; }
-.inv-table td.c  { text-align: center; }
 
-/* Amount column — right-aligned with consistent padding */
-.inv-table th.r:last-child,
-.inv-table td.r:last-child {
-    padding-right: 12px;
+.inv-table th.r {
+    text-align: right;
 }
 
-/* Spacer row */
-.inv-table tr.spacer-row td { border: none; height: 18px; }
+.inv-table th.c {
+    text-align: center;
+}
 
-/* Only the LAST cell (amount column) gets internal borders to stay connected */
-.inv-table tr.subtotal-row td {
+.inv-table td {
+    padding: 2px 2px;
     border: none;
-    padding: 2px 6px;
-    border-bottom: none;
-}
-.inv-table tr.subtotal-row td:first-child {
-    border-left: 2px solid #000;
-}
-.inv-table tr.subtotal-row td:last-child {
-    border-left: 2px solid #000;
+    border-bottom: 2px solid #000;
     border-right: 2px solid #000;
-    padding-right: 12px;
+    vertical-align: middle;
+    font-weight: 500;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
-/* First subtotal row needs top border if items didn't have one */
-.inv-table tr.subtotal-row:first-of-type td {
-    border-top: 2px solid #000;
-}
-.subtotal-label  { text-align: right; font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: 'Inter', sans-serif; }
-.subtotal-val    { font-size: 10px; font-variant-numeric: tabular-nums; font-weight: 600; font-family: 'Roboto Mono', monospace; }
-.subtotal-rate   { font-size: 10px; text-align: right; color: #000; font-weight: 500; text-transform: uppercase; font-family: 'Roboto Mono', monospace; }
-.bold-label      { font-weight: 700; }
-.italic          { font-style: italic; }
 
-/* ── Tax row highlighting ── */
-.inv-table tr.subtotal-row.tax-row td {
-    background: #f5f5f5;
+.inv-table td:first-child {
+    border-left: 2px solid #000;
 }
+
+.inv-table td.r {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    padding-right: 4px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+}
+
+.inv-table td.c {
+    text-align: center;
+}
+
+/* Subtotal rows — NO BORDERS AT ALL */
+.inv-table tr.subtotal-row td {
+    border: none !important;
+    padding: 2px 6px;
+    background: transparent;
+}
+
+.inv-table tr.subtotal-row td:nth-child(7),
+.inv-table tr.subtotal-row td:last-child {
+    border: none !important;
+    padding-right: 12px;
+    text-align: right;
+}
+
+.inv-table tr.subtotal-row:first-of-type td:nth-child(7),
+.inv-table tr.subtotal-row:first-of-type td:last-child {
+    border: none !important;
+}
+
+.subtotal-label {
+    text-align: right;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+}
+
+.subtotal-val {
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.bold-label {
+    font-weight: 700;
+}
+
+/* Tax row highlighting — only on amount column */
+.inv-table tr.subtotal-row.tax-row td:nth-child(7),
 .inv-table tr.subtotal-row.tax-row td:last-child {
     background: #f5f5f5;
     font-weight: 700;
 }
 
-/* Total Invoice Value row */
+/* Total row — top and bottom borders, gray background */
 .inv-table tr.total-row td {
     border: none;
     border-top: 2px solid #000;
     border-bottom: 2px solid #000;
-    padding: 6px 6px;
-    background: #ffffff;
+    padding: 4px 2px;
+    background: #f0f0f0;
     font-weight: 900;
+    white-space: nowrap;
 }
-.inv-table tr.total-row td:first-child { border-left: 2px solid #000; }
-.inv-table tr.total-row td:last-child { border-left: 2px solid #000; border-right: 2px solid #000; }
 
-.total-label { text-align: right; font-size: 11px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
-.total-rs    { text-align: right; font-size: 11px; width: 30px; font-family: 'Roboto Mono', monospace; }
-.total-val   { text-align: right; font-size: 13px; font-family: 'Roboto Mono', monospace; padding-right: 12px; }
+.inv-table tr.total-row td:nth-child(7),
+.inv-table tr.total-row td:last-child {
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    border-left: none;
+    border-right: none;
+    padding-right: 4px;
+    text-align: right;
+    background: #f0f0f0;
+    white-space: nowrap;
+}
+
+.total-label {
+    text-align: right;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+}
+
+.total-rs {
+    text-align: right;
+    font-size: 11px;
+    width: 30px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.total-val {
+    text-align: right;
+    font-size: 13px;
+    font-family: 'Roboto Mono', monospace;
+    padding-right: 12px;
+}
 
 /* ── Amount in words + E. & O.E ────────────────────────────────────────────── */
 .inv-words-row {
@@ -259,15 +435,20 @@
     align-items: flex-end;
     border: 2px solid #000;
     padding: 6px 10px;
-    margin-top: -2px;
+    margin-top: 2px;
 }
-.inv-words-left { flex: 1; }
+
+.inv-words-left {
+    flex: 1;
+}
+
 .inv-words-text {
     font-size: 11px;
     font-weight: 700;
     font-family: 'Inter', sans-serif;
     margin-top: 2px;
 }
+
 .inv-eoe {
     font-size: 10px;
     font-style: italic;
@@ -283,9 +464,12 @@
     border-collapse: collapse;
     border: 2px solid #000;
     font-size: 10px;
-    margin-top: -2px;
+    margin-top: 2px;
+    margin-bottom: -2px;
     page-break-inside: avoid;
+    break-inside: avoid;
 }
+
 .inv-hsn-table th {
     border: 2px solid #000;
     padding: 4px 6px;
@@ -295,6 +479,7 @@
     text-transform: uppercase;
     background: #ffffff;
 }
+
 .inv-hsn-table td {
     border: 2px solid #000;
     padding: 4px 6px;
@@ -302,8 +487,18 @@
     font-weight: 500;
     font-family: 'Roboto Mono', monospace;
 }
-.inv-hsn-table td.r { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; font-weight: 600; }
-.inv-hsn-table td.c { text-align: center; }
+
+.inv-hsn-table td.r {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    padding-right: 12px;
+    font-weight: 600;
+}
+
+.inv-hsn-table td.c {
+    text-align: center;
+}
+
 .inv-hsn-table tr.hsn-total-row td {
     border-top: 2px solid #000;
     background: #f5f5f5;
@@ -318,28 +513,31 @@
     color: #000;
     font-weight: 600;
     margin-top: -2px;
-    page-break-after: avoid; /* Keep tax words with HSN table that follows */
-}
-
-/* ── Page 2 wrapper (HSN table, footer) ──────────────────────────────────────── */
-.page-2 {
-    page-break-before: always; /* Force new page before this section */
-    margin-top: 3mm; /* Match page 1 top breathing room for consistency */
+    margin-bottom: 0;
+    page-break-after: avoid;
+    break-after: avoid;
 }
 
 /* ── Footer ─────────────────────────────────────────────────────────────────── */
+.inv-repeating-header-before-group4 {
+    display: none; /* Hidden on screen, shown only in print */
+}
+
 .inv-footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     border: 2px solid #000;
     min-height: 100px;
-    margin-top: -2px;
+    margin-top: 2px;
     page-break-inside: avoid;
+    break-inside: avoid;
 }
+
 .footer-left {
     padding: 8px 10px;
     border-right: 2px solid #000;
 }
+
 .footer-right {
     padding: 8px 10px;
     display: flex;
@@ -347,9 +545,30 @@
     align-items: flex-end;
     justify-content: space-between;
 }
-.bank-name   { font-weight: 700; font-size: 12px; margin: 3px 0 2px; font-family: 'Inter', sans-serif; }
-.bank-line   { font-size: 10px; color: #000; font-weight: 500; margin-bottom: 1px; font-family: 'Roboto Mono', monospace; }
-.firm-pan    { font-size: 10px; font-weight: 700; margin-top: 6px; color: #000; font-family: 'Roboto Mono', monospace; }
+
+.bank-name {
+    font-weight: 700;
+    font-size: 12px;
+    margin: 3px 0 2px;
+    font-family: 'Inter', sans-serif;
+}
+
+.bank-line {
+    font-size: 10px;
+    color: #000;
+    font-weight: 500;
+    margin-bottom: 1px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.firm-pan {
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 6px;
+    color: #000;
+    font-family: 'Roboto Mono', monospace;
+}
+
 .inv-decl {
     font-size: 9.5px;
     color: #000;
@@ -359,9 +578,11 @@
     padding-top: 5px;
     line-height: 1.5;
 }
+
 .inv-decl strong {
     font-weight: 700;
 }
+
 .inv-jurisdiction {
     font-size: 9px;
     color: #000;
@@ -369,7 +590,15 @@
     font-weight: 600;
     font-style: italic;
 }
-.sig-for  { font-size: 11px; font-weight: 900; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.sig-for {
+    font-size: 11px;
+    font-weight: 900;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
 .sig-line {
     border-top: 2px solid #000;
     margin-top: 38px;
@@ -392,32 +621,14 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   DRAFT WATERMARK (optional — add class .inv-draft to .inv-wrap)
-   ══════════════════════════════════════════════════════════════════════════════ */
-.inv-wrap.inv-draft::after {
-    content: 'DRAFT';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-35deg);
-    font-size: 90px;
-    font-weight: 900;
-    color: rgba(0, 0, 0, 0.06);
-    letter-spacing: 20px;
-    pointer-events: none;
-    z-index: 0;
-    text-transform: uppercase;
-    font-family: 'Inter', sans-serif;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   PRINT — A4 single-page optimized
+   PRINT MEDIA
    ══════════════════════════════════════════════════════════════════════════════ */
 @media print {
     @page {
         size: A4;
-        margin: 3mm 0 0 0;  /* 3mm top on EVERY page */
+        margin: 10mm; /* Add margins on all sides */
     }
+
     html, body {
         margin: 0 !important;
         padding: 0 !important;
@@ -429,29 +640,69 @@
         box-shadow: none;
         border: none;
         width: 100%;
-        padding: 0mm 8mm 6mm 8mm;
+        padding: 0; /* Remove padding as @page margin handles it */
     }
 
-    /* Page break handling — prevent broken tables */
+    .main-print-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .main-print-table tfoot {
+        display: table-footer-group; /* Forces footer to appear at bottom of each page */
+    }
+
+    .inv-computer {
+        text-align: center;
+        font-size: 9px;
+        color: #000;
+        font-weight: 600;
+        margin-top: 4px;
+        letter-spacing: 0.05em;
+        padding-bottom: 2mm;
+    }
+
+    .inv-page {
+        page-break-after: always;
+        break-after: page;
+    }
+
+    .inv-page:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
+    .inv-page-1 {
+        padding: 3mm 10mm 8mm 10mm;
+    }
+
+    .inv-page-continuation {
+        padding: 0mm 10mm 8mm 10mm;
+    }
+
+    /* Prevent breaks inside critical sections */
     .inv-table,
     .inv-hsn-table,
-    .inv-footer {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-    .inv-table tr,
-    .inv-hsn-table tr {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
+    .inv-footer,
     .inv-words-row,
     .inv-tax-words-row {
         page-break-inside: avoid;
         break-inside: avoid;
     }
 
-    .print-page { page-break-after: always; }
-    .print-page:last-child { page-break-after: auto; }
+    .inv-table tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* REPEATING HEADER: Show on page 2+ before GROUP 4 */
+    .inv-repeating-header-before-group4 {
+        display: block !important;
+        page-break-before: always;
+        page-break-inside: avoid;
+        break-before: page;
+        break-inside: avoid;
+    }
 
     /* Ensure backgrounds print */
     .inv-table tr.subtotal-row.tax-row td,
@@ -459,22 +710,61 @@
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
+
     .inv-wrap.inv-draft::after {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────────── */
+/* ── Responsive (mobile) ───────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-    .inv-wrap           { font-size: 9px; padding: 4mm; }
-    .inv-header         { grid-template-columns: 1fr; }
-    .inv-seller         { border-right: none; border-bottom: 1px solid #000; }
-    .inv-buyer          { grid-template-columns: 1fr; }
-    .inv-buyer-left     { border-right: none; border-bottom: 1px solid #000; }
-    .inv-buyer-right    { border-top: 1px solid #000; }
-    .inv-footer         { grid-template-columns: 1fr; }
-    .footer-left        { border-right: none; border-bottom: 1px solid #000; }
-    .footer-right       { align-items: flex-start; }
-    .inv-wrap.inv-draft::after { font-size: 40px; letter-spacing: 10px; }
+    .inv-wrap {
+        font-size: 9px;
+        width: 100%;
+    }
+
+    .inv-page {
+        padding: 4mm;
+    }
+
+    .inv-header {
+        grid-template-columns: 1fr;
+    }
+
+    .inv-seller {
+        border-right: none;
+        border-bottom: 1px solid #000;
+    }
+
+    .inv-buyer {
+        grid-template-columns: 1fr;
+    }
+
+    .inv-buyer-left {
+        border-right: none;
+        border-bottom: 1px solid #000;
+    }
+
+    .inv-buyer-right {
+        border-top: 1px solid #000;
+    }
+
+    .inv-footer {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-left {
+        border-right: none;
+        border-bottom: 1px solid #000;
+    }
+
+    .footer-right {
+        align-items: flex-start;
+    }
+
+    .inv-wrap.inv-draft::after {
+        font-size: 40px;
+        letter-spacing: 10px;
+    }
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import { printWithTitle } from '../utils/invoiceUtils'
 import DatePicker from '../components/DatePicker'
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
@@ -235,7 +236,7 @@ function Database() {
     }
 
     const handlePrint = () => {
-        window.print();
+        printWithTitle(selectedInvoice?.invoiceNumber)
     }
 
 

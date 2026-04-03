@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import InvoiceTemplate from '../../components/InvoiceTemplate';
+import { printWithTitle } from '../../utils/invoiceUtils';
 import DatePicker from '../../components/DatePicker';
 import '../Inventory.css'; // Import for print styles
 
@@ -114,7 +115,8 @@ function Receipt() {
     };
 
     const handlePrint = () => {
-        window.print();
+        const partyName = successData?.customerName || "Customer";
+        printWithTitle(`Receipt_${partyName}`);
     };
 
     if (successData) {

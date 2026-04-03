@@ -104,3 +104,19 @@ export function generateHSNSummary(items) {
 export function round2(value) {
     return Math.round((parseFloat(value || 0) + Number.EPSILON) * 100) / 100;
 }
+
+// Universal print function to set document title for PDF filename
+export function printWithTitle(invoiceId = "Invoice") {
+    const originalTitle = document.title;
+    // Replace slashes/spaces with underscores to avoid file path issues in PDF name
+    const safeName = (invoiceId || "Invoice").toString().replace(/[\/\s]/g, '_');
+    document.title = safeName;
+
+    // Give browser a moment to register the new title before opening the print dialog
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => { 
+            document.title = originalTitle; 
+        }, 800);
+    }, 150);
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import { numberToWords, calculateGSTSplit, generateHSNSummary, round2 } from '../utils/invoiceUtils'
+import { numberToWords, calculateGSTSplit, generateHSNSummary, round2, printWithTitle } from '../utils/invoiceUtils'
 import { formatDate } from '../utils/formatters'
 import InvoiceTemplate from '../components/InvoiceTemplate'
 import DatePicker from '../components/DatePicker'
@@ -766,17 +766,8 @@ function SellPurchase() {
     }
 
     const handlePrint = () => {
-        const originalTitle = document.title;
-        const invoiceNumber = lastSaleData ? lastSaleData.invoiceNumber : (lastPurchaseData ? lastPurchaseData.invoiceNumber : "Invoice");
-        // Replace slashes with underscores to avoid file path issues in PDF name
-        const safeName = (invoiceNumber || "Invoice").replace(/\//g, '_');
-        document.title = safeName;
-
-        // Give browser a moment to register the new title before opening the print dialog
-        setTimeout(() => {
-            window.print();
-            setTimeout(() => { document.title = originalTitle; }, 500);
-        }, 100);
+        const invoiceNumber = lastSaleData ? lastSaleData.invoiceNumber : (lastPurchaseData ? lastPurchaseData.invoiceNumber : "Invoice")
+        printWithTitle(invoiceNumber)
     }
 
 

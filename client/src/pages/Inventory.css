@@ -285,6 +285,7 @@
 
   /* Ensure no margins interfere */
   @page {
-    margin: 0.5cm;
+    size: A4;
+    margin: 5mm;
   }
 }

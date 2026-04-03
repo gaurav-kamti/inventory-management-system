@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import { printWithTitle } from '../utils/invoiceUtils'
 
 import './POS.css'
 
@@ -163,7 +164,7 @@ function POS() {
     }
 
     const handlePrint = () => {
-        window.print()
+        printWithTitle(lastSale?.invoiceNumber)
     }
 
 

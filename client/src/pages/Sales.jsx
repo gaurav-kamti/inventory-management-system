@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
 import InvoiceTemplate from '../components/InvoiceTemplate'
+import { printWithTitle } from '../utils/invoiceUtils'
 import './Sales.css'
 
 function Sales() {
@@ -24,7 +25,7 @@ function Sales() {
     }
 
     const handlePrint = () => {
-        window.print();
+        printWithTitle(selectedSale?.invoiceNumber)
     }
 
     const closeInvoiceModal = () => {
