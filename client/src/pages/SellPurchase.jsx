@@ -139,7 +139,7 @@ function SellPurchase() {
         name: '',
         phone: '',
         address: '',
-        gstNumber: ''
+        gstin: ''
     })
 
     const handleQuickAdd = async () => {
@@ -188,6 +188,11 @@ function SellPurchase() {
             amount: '',
             quantityUnit: 'Pcs'
         }])
+        // Shift focus to the new row's description field
+        setTimeout(() => {
+            const inputs = document.querySelectorAll('.modal-overlay .table tbody tr input[list="product-suggestions"]');
+            inputs[inputs.length - 1]?.focus();
+        }, 100);
     }
 
     const removeAddedItem = (index) => {
@@ -784,6 +789,11 @@ function SellPurchase() {
             amount: '',
             quantityUnit: 'Pcs'
         }])
+        // Shift focus to the new row's description field
+        setTimeout(() => {
+            const inputs = document.querySelectorAll('.modal-overlay .table tbody tr input[list="product-suggestions"]');
+            inputs[inputs.length - 1]?.focus();
+        }, 100);
     }
 
     useEffect(() => {
@@ -794,9 +804,10 @@ function SellPurchase() {
                     const res = await api.get('/settings/invoice_config')
                     if (res.data) {
                         const { prefix, sequence, fiscalYear } = res.data
+                        const cleanPrefix = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
                         setSellForm(prev => ({
                             ...prev,
-                            invoice: `${prefix}${String(sequence).padStart(3, '0')}/${fiscalYear}`
+                            invoice: `${cleanPrefix}/${String(sequence).padStart(3, '0')}/${fiscalYear}`
                         }))
                     } else {
                         setSellForm(prev => ({ ...prev, invoice: 'Error Gen' }))
@@ -1014,7 +1025,13 @@ function SellPurchase() {
                                             }
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
-                                                purchaseItemNameRef.current?.focus()
+                                                const val = e.target.value.toLowerCase()
+                                                const match = suppliers.find(s => s.name.toLowerCase().includes(val))
+                                                if (val && match && match.name.toLowerCase() !== val) {
+                                                    setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
+                                                }
+                                                // Focus next logical field (e.g. deliveryNote or product table)
+                                                document.querySelector('input[placeholder="Search Product"]')?.focus() || purchaseItemNameRef.current?.focus()
                                             }
                                         }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
@@ -1076,6 +1093,17 @@ function SellPurchase() {
                                                     list="product-suggestions"
                                                     value={item.name}
                                                     onChange={e => updateAddedItem(index, 'name', e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = e.target.value.toLowerCase()
+                                                            const match = products.find(p => p.name.toLowerCase().includes(val))
+                                                            if (match && match.name.toLowerCase() !== val) {
+                                                                updateAddedItem(index, 'name', match.name)
+                                                            }
+                                                            // Move focus to Size input in same row
+                                                            e.target.closest('tr').querySelectorAll('input')[1]?.focus()
+                                                        }
+                                                    }}
                                                 />
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
@@ -1320,12 +1348,31 @@ function SellPurchase() {
                                     <input className="input" placeholder="Search Customer" value={sellForm.customerName}
                                         ref={sellCustomerRef}
                                         list="customer-suggestions"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Tab' && !e.shiftKey) {
+                                                const val = e.target.value.toLowerCase()
+                                                const match = customers.find(c => c.name.toLowerCase().includes(val))
+                                                if (val && match) {
+                                                    setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
+                                                }
+                                            }
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault()
+                                                const val = e.target.value.toLowerCase()
+                                                const match = customers.find(c => c.name.toLowerCase().includes(val))
+                                                if (val && match && match.name.toLowerCase() !== val) {
+                                                    setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
+                                                }
+                                                // Focus next logical field (items table)
+                                                sellItemNameRef.current?.focus() || document.querySelector('table input')?.focus()
+                                            }
+                                        }}
                                         onBlur={() => {
                                             if (sellForm.customerName && !sellForm.customerId) {
                                                 const exists = customers.find(c => c.name.toLowerCase() === sellForm.customerName.toLowerCase())
                                                 if (!exists) {
                                                     setQuickAddType('customer')
-                                                    setQuickAddForm({ name: sellForm.customerName, phone: '', address: '', gstNumber: '' })
+                                                    setQuickAddForm({ name: sellForm.customerName, phone: '', address: '', gstin: '' })
                                                     setShowQuickAddModal(true)
                                                 } else {
                                                     setSellForm(prev => ({ ...prev, customerId: exists.id, customerName: exists.name }))
@@ -1339,19 +1386,6 @@ function SellPurchase() {
                                                 setSellForm(prev => ({ ...prev, customerName: customer.name, customerId: customer.id }))
                                             } else {
                                                 setSellForm(prev => ({ ...prev, customerName: val, customerId: '' }))
-                                            }
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Tab' && !e.shiftKey) {
-                                                const val = e.target.value.toLowerCase()
-                                                const match = customers.find(c => c.name.toLowerCase().includes(val))
-                                                if (val && match) {
-                                                    setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
-                                                }
-                                            }
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault()
-                                                sellItemNameRef.current?.focus()
                                             }
                                         }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
@@ -1414,6 +1448,17 @@ function SellPurchase() {
                                                     list="product-suggestions"
                                                     value={item.name}
                                                     onChange={e => updateCartItem(index, 'name', e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = e.target.value.toLowerCase()
+                                                            const match = products.find(p => p.name.toLowerCase().includes(val))
+                                                            if (match && match.name.toLowerCase() !== val) {
+                                                                updateCartItem(index, 'name', match.name)
+                                                            }
+                                                            // Move focus to Size input
+                                                            e.target.closest('tr').querySelectorAll('input')[1]?.focus()
+                                                        }
+                                                    }}
                                                 />
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
@@ -1645,11 +1690,12 @@ function SellPurchase() {
                                         />
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>GST Number</label>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>GSTIN</label>
                                         <input className="input" style={{ width: '100%', padding: '12px' }}
-                                            value={quickAddForm.gstNumber}
-                                            onChange={e => setQuickAddForm({ ...quickAddForm, gstNumber: e.target.value })}
-                                            placeholder="Optional"
+                                            value={quickAddForm.gstin}
+                                            onChange={e => setQuickAddForm({ ...quickAddForm, gstin: e.target.value.toUpperCase() })}
+                                            placeholder="19ABCDE1234F1Z5"
+                                            maxLength={15}
                                         />
                                     </div>
                                 </div>

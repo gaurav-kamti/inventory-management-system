@@ -164,7 +164,7 @@ const InvoiceHeader = ({ sale, customer, company = {}, copyType = "Buyer's Copy"
                     <div className="meta-label">{otherPartyLabel} Details</div>
                     <div className="party-name">{customer?.name || sale.partyName || 'Cash Sale'}</div>
                     <div className="party-line">Address: {customer?.address || '—'}</div>
-                    <div className="party-line">GSTIN/UIN: {customer?.gstNumber || 'Unregistered'}</div>
+                    <div className="party-line">GSTIN/UIN: {customer?.gstin || customer?.gstNumber || (sale.type === 'SALE' ? sale.partyGst || 'Unregistered' : 'Unregistered')}</div>
                     <div className="party-line">
                         State: {customer?.state || '—'} &nbsp;|&nbsp;
                         Code: {customer?.stateCode || '—'} &nbsp;|&nbsp;

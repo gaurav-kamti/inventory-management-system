@@ -119,7 +119,7 @@ function Settings() {
         currentPassword: '', newPassword: '', confirmPassword: ''
     })
     const [invoiceForm, setInvoiceForm] = useState({
-        prefix: 'RM/', sequence: 1, fiscalYear: '25-26'
+        prefix: 'RM', sequence: 1, fiscalYear: '25-26'
     })
     const [companyForm, setCompanyForm] = useState({
         name: 'R.M.TRADING',
@@ -775,7 +775,7 @@ function Settings() {
                         <div style={{ padding: '8px 16px', background: 'rgba(142, 195, 175, 0.1)', border: '1px solid var(--cp-border)', borderRadius: '4px', textAlign: 'right' }}>
                             <div style={{ fontSize: '9px', color: 'var(--cp-text-muted)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>Invoice Preview</div>
                             <div style={{ fontSize: '18px', color: 'var(--cp-accent)', fontFamily: 'DM Mono, monospace', fontWeight: '500', letterSpacing: '1px' }}>
-                                {invoiceForm.prefix}/{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}
+                                {invoiceForm.prefix.endsWith('/') ? invoiceForm.prefix.slice(0, -1) : invoiceForm.prefix}/{String(invoiceForm.sequence).padStart(3, '0')}/{invoiceForm.fiscalYear}
                             </div>
                         </div>
                     </div>
