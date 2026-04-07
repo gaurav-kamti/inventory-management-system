@@ -596,8 +596,8 @@ function Database() {
                 </div>
             )}
 
-            {/* Hidden Print Template */}
-            <div id="invoice-print-template" style={{ display: 'none' }}>
+            {/* Print Template — positioned off-screen (NOT display:none) so browser lays it out */}
+            <div id="invoice-print-template" className="print-template-container">
                 <div className="print-page">
                     <InvoiceTemplate sale={selectedInvoice} customer={selectedInvoice?.customer} company={companyProfile} copyType="Buyer's Copy" />
                 </div>

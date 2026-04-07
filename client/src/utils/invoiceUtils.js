@@ -108,15 +108,18 @@ export function round2(value) {
 // Universal print function to set document title for PDF filename
 export function printWithTitle(invoiceId = "Invoice") {
     const originalTitle = document.title;
-    // Replace slashes/spaces with underscores to avoid file path issues in PDF name
     const safeName = (invoiceId || "Invoice").toString().replace(/[\/\s]/g, '_');
     document.title = safeName;
 
-    // Give browser a moment to register the new title before opening the print dialog
-    setTimeout(() => {
-        window.print();
-        setTimeout(() => { 
-            document.title = originalTitle; 
-        }, 800);
-    }, 150);
+    // Use requestAnimationFrame + a delay to guarantee React has committed the
+    // re-render and the browser has laid out the off-screen print template
+    // before the print dialog opens (thead height must be measured first).
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }, 400);
+    });
 }

@@ -2,20 +2,57 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;500;600;700&display=swap');
 
 /* ── Wrapper ───────────────────────────────────────────────────────────────── */
+
+/* FIX P1 — visibility:hidden keeps full layout (browser measures thead heights)
+   but hides it from the user. Unlike display:none or off-screen, this is
+   the safest way to pre-render a print template without showing it on screen. */
+.print-template-container {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    width: 210mm;
+    background: #fff;
+    color: #000;
+    pointer-events: none;
+}
+
+@media print {
+    /* Hide entire app UI — only the invoice container stays visible */
+    body * { visibility: hidden; }
+    .print-template-container,
+    .print-template-container * { visibility: visible; }
+
+    /* CRITICAL: position:static + normal height so table flows across pages.
+       thead { display:table-header-group } only works in natural page flow. */
+    .print-template-container {
+        position: static !important;
+        height: auto !important;
+        overflow: visible !important;
+        width: 100% !important;
+        visibility: visible !important;
+    }
+    .print-page {
+        display: block;
+        width: 100%;
+    }
+}
+
+
 .inv-wrap {
     background: #ffffff;
-    width: 210mm;
-    max-width: 100%;
+    width: 100%;
+    max-width: 190mm; /* A4 minus standard margins */
+    margin: 0 auto;
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 10.5px;
     color: #000000;
     font-weight: 400;
-    line-height: 1.5;
-    margin: 0 auto;
-    padding: 10mm 10mm 12mm 10mm; /* Extra bottom for footer */
+    line-height: 1.4;
+    padding: 0;
     box-sizing: border-box;
     position: relative;
 }
+
 
 .inv-wrap.inv-draft {
     position: relative;
@@ -38,34 +75,33 @@
 }
 
 /* ── Pages ─────────────────────────────────────────────────────────────────── */
-.inv-page {
-    padding: 0mm 10mm 8mm 10mm;
-    page-break-after: always;
-    break-after: page;
+.inv-print-page {
+    width: 100%;
+    margin: 0 auto;
     position: relative;
+    background: #fff;
+    min-height: 260mm; /* Conservative height to avoid blank pages */
     display: flex;
     flex-direction: column;
-    min-height: 297mm;
 }
 
-.inv-page-1 {
-    padding-top: 3mm; /* Top margin for page 1 */
+.inv-page-break {
+    page-break-before: always !important;
 }
 
-.inv-page-continuation {
-    padding-top: 0mm; /* Continuation pages have no top margin */
+.force-break {
+    page-break-after: always !important;
+    break-after: page !important;
 }
 
-.inv-page:last-child {
-    page-break-after: auto;
-    break-after: auto;
-    min-height: auto;
+.inv-wrap {
+    padding: 0;
 }
 
-/* Footer container that anchors to bottom */
+/* Footer container */
 .inv-page-footer {
-    margin-top: auto;
-    flex-shrink: 0;
+    display: block;
+    width: 100%;
 }
 
 /* ── Top bar ───────────────────────────────────────────────────────────────── */
@@ -123,139 +159,131 @@
     letter-spacing: 0.02em;
 }
 
-/* ── Header: Seller (left) + Invoice Meta (right) ──────────────────────────── */
-.inv-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border: 2px solid #000;
-    margin-top: -2px;
-}
-
-/* Seller block — appears on every page */
-.inv-seller {
-    padding: 8px 10px;
-    border-right: 2px solid #000;
-}
-
-.inv-seller-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-    font-weight: 900;
-    margin-bottom: 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.inv-seller-sub {
-    font-size: 10px;
-    color: #000;
-    font-weight: 600;
-    margin-bottom: 1px;
-}
-
-/* Meta right side — always shown */
-.inv-meta {
-    display: flex;
-    flex-direction: column;
-}
-
-.inv-meta-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border-bottom: 2px solid #000;
-    flex: 1;
-}
-
-.inv-meta-row.no-bottom {
-    border-bottom: none;
-}
-
+/* ── Flat Meta Cells (replaces inv-internal-meta-table — FIX P2) ────────────── */
+/* All meta fields are now direct <td> siblings in the main table.
+   border-collapse on .main-print-table handles separator merging automatically. */
 .inv-meta-cell {
+    border: 2px solid #000;
+    border-top: none;
+    border-left: none;
+    vertical-align: top;
     padding: 5px 7px;
-    border-right: 2px solid #000;
+    min-height: 38px;
 }
 
-.inv-meta-cell.no-right {
-    border-right: none;
+.inv-tr-meta td {
+    border: 2px solid #000;
+    border-top: none;
+    border-left: none;
+    vertical-align: top;
+    padding: 5px 7px;
+    min-height: 38px;
 }
 
-.inv-meta-cell.full-span {
-    grid-column: span 2;
-    border-right: none;
+/* FIX P3 — Plain block delivery layout (was flex, which blocked thead height measurement) */
+.inv-delivery-top {
+    padding: 6px 8px;
+    border-bottom: 2px solid #000;
+    min-height: 40px;
 }
 
-.meta-label {
-    font-size: 9px;
+.inv-delivery-bottom {
+    padding: 6px 8px;
+    min-height: 40px;
+    font-size: 10px;
+}
+
+
+/* ── New Native Row Header Styles ────────────────────────────────────────── */
+.inv-tr-topbar td {
+    border: 2px solid #000;
+    padding: 2px 10px;
+}
+
+.inv-topbar-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inv-tr-title td {
+    border: 2px solid #000;
+    border-top: none;
+    padding: 6px 10px;
+}
+
+.inv-title-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    text-align: center;
+}
+
+.inv-title-text {
+    font-size: 15px;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #000;
-    font-weight: 700;
-    display: block;
-    margin-bottom: 2px;
+    letter-spacing: 0.12em;
 }
 
-.meta-val {
+.inv-page-number-text {
+    position: absolute;
+    right: 0;
     font-size: 11px;
     font-weight: 700;
     font-family: 'Roboto Mono', monospace;
+    font-style: italic;
 }
 
-.meta-val.light {
-    font-weight: 500;
-    font-family: 'Inter', sans-serif;
-}
-
-/* Continuation page marker */
-
-/* ── Buyer section ─────────────────────────────────────────────────────────── */
-.inv-buyer {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+.inv-tr-header td {
     border: 2px solid #000;
-    margin-top: -2px;
+    border-top: none;
+    vertical-align: top;
 }
 
-.inv-buyer-left {
+.inv-seller-info {
     padding: 8px 10px;
-    border-right: 2px solid #000;
 }
 
-.party-name {
-    font-size: 14px;
-    font-weight: 900;
-    font-family: 'Inter', sans-serif;
-    margin: 3px 0;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
+.inv-td-meta {
+    padding: 0 !important; /* Internal table handles padding */
 }
 
-.party-line {
-    font-size: 10px;
-    color: #000;
-    font-weight: 600;
-    margin-bottom: 2px;
+.inv-tr-buyer td {
+    border: 2px solid #000;
+    border-top: none;
+    vertical-align: top;
 }
 
-.inv-buyer-right {
+.inv-td-buyer-left {
+    padding: 8px 10px;
+}
+
+.inv-td-buyer-right {
+    padding: 0 !important;
+}
+
+.inv-buyer-delivery-info {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
-.buyer-rcell {
+.buyer-rcell-native {
     padding: 3px 8px;
     font-size: 10px;
     font-weight: 600;
     border-bottom: 2px solid #000;
-    line-height: 1.4;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     min-height: 36px;
-    flex: 1;
 }
 
-.buyer-rcell:last-child {
+.buyer-rcell-native:last-child {
     border-bottom: none;
 }
 
@@ -268,16 +296,57 @@
 }
 
 /* ── Items Table ───────────────────────────────────────────────────────────── */
-.inv-table {
+/* ── Main Unified Table ────────────────────────────────────────────────────── */
+.main-print-table {
     width: 100%;
     border-collapse: collapse;
-    border: 2px solid #000;
-    font-size: 10.5px;
+    font-size: 11.5px;
     margin-top: 2px;
     table-layout: fixed;
-    word-break: break-word;
-    overflow-wrap: break-word;
 }
+
+.main-print-table th {
+    background: #ffffff;
+    border: 2px solid #000;
+    padding: 3px 2px; /* Tightened padding for better fit */
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 900;
+}
+
+.sl-col, .inv-td-original-idx {
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: center;
+    width: 35px !important;
+}
+
+.main-print-table th.r { text-align: right; }
+.main-print-table th.c { text-align: center; }
+
+.main-print-table td {
+    padding: 2px 4px;
+    border: 2px solid #000;
+    vertical-align: middle;
+    font-weight: 500;
+}
+
+.main-print-table td.r {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+}
+
+.main-print-table td.c { text-align: center; }
+
+.main-print-table .item-row td {
+    border-top: none;
+    border-bottom: 2px solid #000;
+}
+
 
 .inv-table-header-only {
     border-bottom: none;
@@ -339,23 +408,15 @@
     text-align: center;
 }
 
-/* Subtotal rows — NO BORDERS AT ALL */
-.inv-table tr.subtotal-row td {
-    border: none !important;
+/* Subtotal rows */
+.subtotal-row td {
+    border-top: none !important;
+    border-bottom: 2px solid #000 !important;
     padding: 2px 6px;
-    background: transparent;
 }
 
-.inv-table tr.subtotal-row td:nth-child(7),
-.inv-table tr.subtotal-row td:last-child {
-    border: none !important;
-    padding-right: 12px;
-    text-align: right;
-}
-
-.inv-table tr.subtotal-row:first-of-type td:nth-child(7),
-.inv-table tr.subtotal-row:first-of-type td:last-child {
-    border: none !important;
+.subtotal-row.border-top-thick td {
+    border-top: 2px solid #000 !important;
 }
 
 .subtotal-label {
@@ -363,61 +424,35 @@
     font-size: 10px;
     text-transform: uppercase;
     font-weight: 700;
-    font-family: 'Inter', sans-serif;
 }
 
 .subtotal-val {
     font-size: 10px;
-    font-variant-numeric: tabular-nums;
     font-weight: 600;
-    font-family: 'Roboto Mono', monospace;
 }
 
-.bold-label {
-    font-weight: 700;
-}
-
-/* Tax row highlighting — only on amount column */
-.inv-table tr.subtotal-row.tax-row td:nth-child(7),
-.inv-table tr.subtotal-row.tax-row td:last-child {
+.subtotal-row.tax-row td:last-child {
     background: #f5f5f5;
-    font-weight: 700;
 }
 
-/* Total row — top and bottom borders, gray background */
-.inv-table tr.total-row td {
-    border: none;
-    border-top: 2px solid #000;
-    border-bottom: 2px solid #000;
-    padding: 4px 2px;
+/* Total row */
+.total-row td {
+    border-top: 2px solid #000 !important;
+    border-bottom: 3px solid #000 !important;
+    padding: 4px 6px;
     background: #f0f0f0;
     font-weight: 900;
-    white-space: nowrap;
-}
-
-.inv-table tr.total-row td:nth-child(7),
-.inv-table tr.total-row td:last-child {
-    border-top: 2px solid #000;
-    border-bottom: 2px solid #000;
-    border-left: none;
-    border-right: none;
-    padding-right: 4px;
-    text-align: right;
-    background: #f0f0f0;
-    white-space: nowrap;
 }
 
 .total-label {
     text-align: right;
     font-size: 11px;
     text-transform: uppercase;
-    font-family: 'Inter', sans-serif;
 }
 
 .total-rs {
     text-align: right;
     font-size: 11px;
-    width: 30px;
     font-family: 'Roboto Mono', monospace;
 }
 
@@ -425,18 +460,21 @@
     text-align: right;
     font-size: 13px;
     font-family: 'Roboto Mono', monospace;
-    padding-right: 12px;
 }
 
+
 /* ── Amount in words + E. & O.E ────────────────────────────────────────────── */
-.inv-words-row {
+.words-row td {
+    border-top: none !important;
+}
+
+.inv-words-inner {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    border: 2px solid #000;
     padding: 6px 10px;
-    margin-top: 2px;
 }
+
 
 .inv-words-left {
     flex: 1;
@@ -459,39 +497,55 @@
 }
 
 /* ── HSN/SAC Tax Breakdown Table ───────────────────────────────────────────── */
+.hsn-row td {
+    border-top: none !important;
+}
+
+.hsn-container-inner {
+    padding: 0;
+}
+
+
 .inv-hsn-table {
-    width: 100%;
     border-collapse: collapse;
-    border: 2px solid #000;
-    font-size: 10px;
-    margin-top: 2px;
-    margin-bottom: -2px;
-    page-break-inside: avoid;
-    break-inside: avoid;
+    width: 100%;
+}
+
+.inv-hsn-table th, .inv-hsn-table td {
+    border: 1.5pt solid #000;
+}
+
+/* Remove outer borders to prevent doubling with parent TD */
+.inv-hsn-table th, .inv-hsn-table td {
+    border-top: none !important;
+}
+.inv-hsn-table th:first-child, .inv-hsn-table td:first-child {
+    border-left: none !important;
+}
+.inv-hsn-table th:last-child, .inv-hsn-table td:last-child {
+    border-right: none !important;
 }
 
 .inv-hsn-table th {
-    border: 2px solid #000;
-    padding: 4px 6px;
+    padding: 3px 6px;
     text-align: center;
-    font-size: 9.5px;
+    font-size: 10.5px;
     font-weight: 900;
     text-transform: uppercase;
     background: #ffffff;
 }
 
 .inv-hsn-table td {
-    border: 2px solid #000;
     padding: 4px 6px;
     vertical-align: middle;
     font-weight: 500;
     font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
 }
 
 .inv-hsn-table td.r {
     text-align: right;
     font-variant-numeric: tabular-nums;
-    padding-right: 12px;
     font-weight: 600;
 }
 
@@ -500,38 +554,37 @@
 }
 
 .inv-hsn-table tr.hsn-total-row td {
-    border-top: 2px solid #000;
-    background: #f5f5f5;
+    border-top: 1.5pt solid #000;
+    background: transparent;
     font-weight: 700;
 }
 
 /* ── Tax amount in words ────────────────────────────────────────────────────── */
-.inv-tax-words-row {
-    border: 2px solid #000;
+.hsn-tax-words-row td {
+    border: 1.5pt solid #000;
+    border-top: none !important;
     padding: 5px 10px;
     font-size: 10px;
-    color: #000;
-    font-weight: 600;
-    margin-top: -2px;
-    margin-bottom: 0;
-    page-break-after: avoid;
-    break-after: avoid;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif !important;
 }
 
+
 /* ── Footer ─────────────────────────────────────────────────────────────────── */
-.inv-repeating-header-before-group4 {
-    display: none; /* Hidden on screen, shown only in print */
+
+
+.footer-row td {
+    border-top: none !important;
 }
 
 .inv-footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border: 2px solid #000;
     min-height: 100px;
-    margin-top: 2px;
     page-break-inside: avoid;
-    break-inside: avoid;
 }
+
 
 .footer-left {
     padding: 8px 10px;
@@ -612,12 +665,16 @@
 
 /* ── Computer generated ──────────────────────────────────────────────────────── */
 .inv-computer {
+    position: absolute;
+    bottom: 1mm;
+    left: 0;
+    right: 0;
     text-align: center;
     font-size: 9px;
-    color: #000;
+    color: #444;
     font-weight: 600;
-    margin-top: 8px;
     letter-spacing: 0.05em;
+    pointer-events: none;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -634,88 +691,84 @@
         padding: 0 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        background: #fff !important;
     }
 
     .inv-wrap {
         box-shadow: none;
         border: none;
         width: 100%;
-        padding: 0; /* Remove padding as @page margin handles it */
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
+    .inv-print-page {
+        padding: 0;
+        margin: 0;
+        min-height: 270mm; /* Fits within A4 (297mm) minus margins */
+        page-break-after: always !important;
+        position: relative;
+    }
+
+    .inv-print-page:last-child {
+        page-break-after: auto !important;
+    }
+
+    /* Keep table structure simple */
     .main-print-table {
-        width: 100%;
-        border-collapse: collapse;
+        display: table !important;
+        border-collapse: collapse !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+    }
+
+    .main-print-table thead {
+        display: table-header-group !important;
+    }
+
+    .main-print-table tbody {
+        display: table-row-group !important;
     }
 
     .main-print-table tfoot {
-        display: table-footer-group; /* Forces footer to appear at bottom of each page */
+        display: table-footer-group !important;
     }
 
-    .inv-computer {
-        text-align: center;
-        font-size: 9px;
-        color: #000;
-        font-weight: 600;
-        margin-top: 4px;
-        letter-spacing: 0.05em;
-        padding-bottom: 2mm;
-    }
-
+    /* Force block for print containers */
     .inv-page {
-        page-break-after: always;
-        break-after: page;
-    }
-
-    .inv-page:last-child {
-        page-break-after: auto;
-        break-after: auto;
-    }
-
-    .inv-page-1 {
-        padding: 3mm 10mm 8mm 10mm;
-    }
-
-    .inv-page-continuation {
-        padding: 0mm 10mm 8mm 10mm;
-    }
-
-    /* Prevent breaks inside critical sections */
-    .inv-table,
-    .inv-hsn-table,
-    .inv-footer,
-    .inv-words-row,
-    .inv-tax-words-row {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-
-    .inv-table tr {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-
-    /* REPEATING HEADER: Show on page 2+ before GROUP 4 */
-    .inv-repeating-header-before-group4 {
         display: block !important;
-        page-break-before: always;
-        page-break-inside: avoid;
-        break-before: page;
-        break-inside: avoid;
+        height: auto !important;
+        min-height: 0 !important;
     }
 
-    /* Ensure backgrounds print */
-    .inv-table tr.subtotal-row.tax-row td,
-    .inv-hsn-table tr.hsn-total-row td {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+    /* FIX P4 — Correct selectors (old class names .inv-header/.inv-seller/.inv-meta were dead code) */
+    .inv-tr-header td,
+    .inv-tr-meta td,
+    .inv-tr-buyer td {
+        vertical-align: top;
     }
 
-    .inv-wrap.inv-draft::after {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+    .inv-td-seller,
+    .inv-td-buyer-left,
+    .inv-td-buyer-right,
+    .footer-left,
+    .footer-right {
+        position: static !important;
+    }
+
+    /* FIX P5 — Keep table-layout fixed in print (auto causes column width recalculation
+       which trips the browser's thead-height measurement for repeating headers) */
+    .main-print-table {
+        table-layout: fixed !important;
+    }
+
+    .seller-copy-start {
+        page-break-before: always !important;
+        break-before: page !important;
     }
 }
+
 
 /* ── Responsive (mobile) ───────────────────────────────────────────────────── */
 @media (max-width: 600px) {

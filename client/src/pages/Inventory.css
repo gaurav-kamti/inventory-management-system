@@ -247,45 +247,66 @@
 
 /* Print Styles */
 @media print {
-  /* Global reset for visibility - hides everything by default */
-  body * {
-    visibility: hidden;
+  /* --- Robust Normal-Flow Print Strategy --- */
+
+  /* Hide known root UI elements */
+  .sidebar, .nav-links, .logout-btn, .navbar, .no-print {
+    display: none !important;
   }
 
-  /* Make the print template and its children visible */
-  #invoice-print-template,
-  #invoice-print-template * {
-    visibility: visible;
-  }
-
-  /* Position the template to fill the page and override hidden state */
-  #invoice-print-template {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    display: block !important; /* Override inline display: none */
-    background: white;
-    color: black;
-    z-index: 9999;
-  }
-
-  /* Reset body background */
-  body {
-    background: white !important;
+  /* Clean up layout containers for print */
+  body, html, #root, .layout, .main-content, .inventory-page, .database-page, .pos-page, .sell-purchase-container {
+    background: #fff !important;
+    color: #000 !important;
+    height: auto !important;
+    min-height: auto !important;
     overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    transition: none !important;
+  }
+
+  /* Hide EVERYTHING inside the page EXCEPT the invoice-print-template */
+  /* This ensures that any background elements or UI modals are gone */
+  .inventory-page > *:not(#invoice-print-template),
+  .database-page > *:not(#invoice-print-template),
+  .pos-page > *:not(#invoice-print-template),
+  .sell-purchase-container > *:not(#invoice-print-template) {
+    display: none !important;
+  }
+
+  /* Make print template the ONLY visible container in normal flow */
+  #invoice-print-template {
+    display: block !important;
+    position: static !important; /* CRITICAL: Static for multi-page header repetition */
+    visibility: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: auto !important;
+  }
+
+  /* Ensure no hidden parents accidentally hide the template */
+  #invoice-print-template * {
+    visibility: visible !important;
+    overflow: visible !important;
+  }
+
+  /* Page Setup */
+  @page {
+    size: A4;
+    margin: 10mm;
   }
 
   /* Hide custom scrollbars */
   ::-webkit-scrollbar {
     display: none;
-  }
-
-  /* Ensure no margins interfere */
-  @page {
-    size: A4;
-    margin: 5mm;
   }
 }
