@@ -53,7 +53,7 @@ function App() {
                     <Route path="/" element={<Inventory />} />
                     <Route path="/database" element={<Database />} />
                     <Route path="/dues" element={<Dues />} />
-
+                    <Route path="/analytics" element={<Analytics />} />
                     <Route path="/voucher" element={<Voucher />} />
                     <Route path="/voucher/:type" element={<Voucher />} />
                     <Route path="/sell-purchase" element={<SellPurchase />} />

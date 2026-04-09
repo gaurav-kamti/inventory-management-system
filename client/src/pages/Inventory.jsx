@@ -64,35 +64,33 @@ function Inventory() {
 
     const fetchStats = async () => {
         try {
-            const productsRes = await api.get('/products')
-            const customersRes = await api.get('/customers')
-            const salesRes = await api.get('/sales')
+            const response = await api.get('/dashboard/stats');
+            const s = response.data;
+            
+            // Set basic stats from optimized endpoint
+            setStats(prev => ({
+                ...prev,
+                totalItems: s.totalProducts,
+                totalItemsWorth: s.totalInventoryWorth || 0,
+                totalCustomers: s.totalCustomers,
+                paymentRemaining: s.totalOutstanding
+            }));
 
-            const totalItems = productsRes.data.length
-            const totalItemsWorth = productsRes.data.reduce((sum, p) => sum + (p.stock * (p.purchasePrice || 0)), 0)
-            const totalCustomers = customersRes.data.length
+            // Fetch full sales records for detailed table view and total sales calculation
+            const salesRes = await api.get('/sales');
+            const fullSales = salesRes.data;
+            const totalSold = fullSales.reduce((sum, sale) => sum + parseFloat(sale.total || 0), 0);
+            const totalReceived = fullSales.reduce((sum, sale) => sum + parseFloat(sale.amountPaid || 0), 0);
+            const totalDue = fullSales.reduce((sum, sale) => sum + parseFloat(sale.amountDue || 0), 0);
 
-            let paymentReceived = 0
-            let paymentRemaining = 0
-            let totalSold = 0
-
-            salesRes.data.forEach(sale => {
-                const saleTotal = parseFloat(sale.total || 0)
-                totalSold += saleTotal
-                paymentReceived += parseFloat(sale.amountPaid || 0)
-                paymentRemaining += parseFloat(sale.amountDue || 0)
-            })
-
-            setSales(salesRes.data)
-
-            setStats({
-                totalItems,
-                totalItemsWorth,
+            setSales(fullSales);
+            setStats(prev => ({
+                ...prev,
                 totalSold,
-                totalCustomers,
-                paymentReceived,
-                paymentRemaining
-            })
+                paymentReceived: totalReceived,
+                paymentRemaining: totalDue
+            }));
+
         } catch (error) {
             console.error('Error fetching stats:', error)
         }

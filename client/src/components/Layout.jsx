@@ -42,6 +42,11 @@ function Layout({ children, onLogout }) {
                         </Link>
                     </li>
                     <li>
+                        <Link to="/analytics" className={isActive('/analytics') ? 'active' : ''}>
+                            <span className="nav-icon">📊</span> Analytics
+                        </Link>
+                    </li>
+                    <li>
                         <Link to="/settings" className={isActive('/settings') ? 'active' : ''}>
 
 

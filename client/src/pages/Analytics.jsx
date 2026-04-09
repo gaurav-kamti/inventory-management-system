@@ -64,18 +64,17 @@ const Analytics = () => {
                 
                 // Profit Calculation
                 let saleProfit = 0;
-                if (sale.SaleItems) {
-                    sale.SaleItems.forEach(item => {
-                        const cost = parseFloat(item.purchasePrice || 0);
-                        const price = parseFloat(item.price || 0);
-                        const margin = (price - cost) * parseInt(item.quantity);
-                        saleProfit += margin;
+                const items = sale.items || [];
+                items.forEach(item => {
+                    const cost = parseFloat(item.Product?.purchasePrice || 0);
+                    const price = parseFloat(item.price || 0);
+                    const margin = (price - cost) * (parseFloat(item.quantity) || 0);
+                    saleProfit += margin;
 
-                        // Per product profit
-                        const pName = item.name || 'Unknown Item';
-                        productProfit[pName] = (productProfit[pName] || 0) + margin;
-                    });
-                }
+                    // Per product profit
+                    const pName = item.Product?.name || 'Unknown Item';
+                    productProfit[pName] = (productProfit[pName] || 0) + margin;
+                });
                 profitByDate[date] = (profitByDate[date] || 0) + saleProfit;
             });
 
