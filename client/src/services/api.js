@@ -123,7 +123,16 @@ class SupabaseApiAdapter {
         }
         if (url === '/sales') {
             try {
-                const { items, customerId, paymentMode, amountPaid, advanceAdjustments, ...rest } = payload;
+                const { 
+                    items, 
+                    customerId, 
+                    paymentMode, 
+                    amountPaid, 
+                    advanceAdjustments, 
+                    afterGST, 
+                    salesChannel, 
+                    ...rest 
+                } = payload;
                 const { data: sale, error: saleErr } = await supabase.from('Sales').insert({ ...rest, customerId, paymentMode, amountPaid, createdAt: now, updatedAt: now }).select().single();
                 if (saleErr) throw saleErr;
                 for (const item of items) {
@@ -157,7 +166,16 @@ class SupabaseApiAdapter {
 
         if (resource === '/sales') {
             try {
-                const { items, Customer, SaleItems, advanceAdjustments, customer, ...saleData } = payload;
+                const { 
+                    items, 
+                    Customer, 
+                    SaleItems, 
+                    advanceAdjustments, 
+                    customer, 
+                    afterGST, 
+                    salesChannel, 
+                    ...saleData 
+                } = payload;
                 const { error: saleErr } = await supabase.from('Sales').update({ ...saleData, updatedAt: now }).eq('id', id);
                 if (saleErr) throw saleErr;
 
@@ -205,7 +223,14 @@ class SupabaseApiAdapter {
         }
         if (resource === '/purchases') {
             try {
-                const { items, ...purData } = payload;
+                const { 
+                    items, 
+                    Product, 
+                    Supplier, 
+                    afterGST, 
+                    salesChannel, 
+                    ...purData 
+                } = payload;
                 const inv = id.startsWith('P-') ? id.substring(2) : id;
                 const { data: current } = await supabase.from('Purchases').select('*').eq('invoiceNumber', inv);
                 const payloadIds = items.map(i => i.id).filter(Boolean);
