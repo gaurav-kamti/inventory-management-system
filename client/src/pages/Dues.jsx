@@ -220,7 +220,7 @@ function Dues() {
                     <div>
                         <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Transaction History</h4>
                         <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>
-                            Current Balance: <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>${parseFloat(expandedData.data.outstandingBalance).toFixed(2)}</span>
+                            Current Balance: <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>₹{parseFloat(expandedData.data.outstandingBalance).toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -317,13 +317,13 @@ function Dues() {
                                     {entry.description}
                                 </td>
                                 <td style={{ textAlign: 'right', color: '#ff6b6b' }}>
-                                    {entry.debit > 0 ? `$${entry.debit.toFixed(2)}` : '-'}
+                                    {entry.debit > 0 ? `₹${entry.debit.toFixed(2)}` : '-'}
                                 </td>
                                 <td style={{ textAlign: 'right', color: '#4ecdc4' }}>
-                                    {entry.credit > 0 ? `$${entry.credit.toFixed(2)}` : '-'}
+                                    {entry.credit > 0 ? `₹${entry.credit.toFixed(2)}` : '-'}
                                 </td>
                                 <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                                    ${entry.balance.toFixed(2)}
+                                    ₹{entry.balance.toFixed(2)}
                                 </td>
                             </tr>
                         ))}
@@ -356,7 +356,7 @@ function Dues() {
                     <div className="stat-icon" style={{ background: 'rgba(142, 182, 155, 0.1)', color: 'var(--accent)' }}>📥</div>
                     <div className="stat-info">
                         <h3>Receivables</h3>
-                        <p className="stat-value" style={{ color: 'var(--accent)' }}>${totalDebtorDues.toLocaleString()}</p>
+                        <p className="stat-value" style={{ color: 'var(--accent)' }}>₹{totalDebtorDues.toLocaleString()}</p>
                     </div>
                 </div>
                 <div
@@ -366,7 +366,7 @@ function Dues() {
                     <div className="stat-icon" style={{ background: 'rgba(255, 71, 87, 0.1)', color: '#ff4757' }}>📤</div>
                     <div className="stat-info">
                         <h3>Payables</h3>
-                        <p className="stat-value" style={{ color: '#ff4757' }}>${totalCreditorDues.toLocaleString()}</p>
+                        <p className="stat-value" style={{ color: '#ff4757' }}>₹{totalCreditorDues.toLocaleString()}</p>
                     </div>
                 </div>
             </div>
@@ -416,7 +416,7 @@ function Dues() {
                                                     {formatOverdue(customer.daysOverdue)}
                                                 </span>
                                             </td>
-                                            <td style={{ fontWeight: '800', color: 'var(--accent)' }}>${parseFloat(customer.outstandingBalance).toFixed(2)}</td>
+                                            <td style={{ fontWeight: '800', color: 'var(--accent)' }}>₹{parseFloat(customer.outstandingBalance).toFixed(2)}</td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <button
                                                     className="btn"
@@ -468,7 +468,7 @@ function Dues() {
                                             </td>
                                             <td>{supplier.contactPerson || <span style={{ opacity: 0.5 }}>N/A</span>}</td>
                                             <td style={{ color: 'var(--text-secondary)' }}>{supplier.phone}</td>
-                                            <td style={{ fontWeight: '800', color: '#ff4757' }}>${parseFloat(supplier.outstandingBalance).toFixed(2)}</td>
+                                            <td style={{ fontWeight: '800', color: '#ff4757' }}>₹{parseFloat(supplier.outstandingBalance).toFixed(2)}</td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <button
                                                     className="btn"

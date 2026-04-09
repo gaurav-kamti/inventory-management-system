@@ -10,6 +10,8 @@
     --cp-text: #e2f0eb;
     --cp-text-muted: #7a9c94;
     --cp-error: #ff6b6b;
+    --cp-warning: #ffa502;
+    --cp-success: #2ed573;
 }
 
 .settings-page {
@@ -238,6 +240,17 @@
 
 .cp-input.error {
     border-color: var(--cp-error);
+    background: rgba(255, 107, 107, 0.04);
+}
+
+.cp-input.warning {
+    border-color: var(--cp-warning);
+    background: rgba(255, 165, 2, 0.04);
+}
+
+.cp-input.valid {
+    border-color: var(--cp-success);
+    background: rgba(46, 213, 115, 0.04);
 }
 
 textarea.cp-input {

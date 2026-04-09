@@ -19,7 +19,7 @@ function numWords(n) {
     if (r >= 1000) { w += h(Math.floor(r / 1000)) + 'Thousand '; r %= 1000; }
     if (r >= 100) { w += h(Math.floor(r / 100)) + 'Hundred '; r %= 100; }
     if (r > 0) w += h(r);
-    return 'INR ' + w.trim() + ' Only';
+    return w.trim() + ' Only';
 }
 
 function fmt2(n) {
@@ -195,7 +195,7 @@ const InvoiceHeader = ({ sale, customer, company = {}, copyType = "Buyer's Copy"
                                 <div>VAN / TRANSPORT / SELF</div>
                             </div>
                             <div className="inv-delivery-bottom">
-                                Delivery At :- ______________________________ Do _______________________
+                                Delivery At :- ______________________ Do _______________________
                             </div>
                         </div>
                     )}
@@ -303,7 +303,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                     </tr>
                     <tr className="total-row border-bottom-thick">
                         <td colSpan={6} className="total-label">Total Invoice Value</td>
-                        <td className="r total-rs">Rs.</td>
+                        <td className="r total-rs">₹</td>
                         <td className="r total-val font-mono bold">{fmt2(displayTotal)}</td>
                     </tr>
                 </React.Fragment>
@@ -319,7 +319,7 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
                     <div className="inv-words-inner">
                         <div className="inv-words-left">
                             <div className="meta-label">Amount Chargeable Indian Rupees (in words)</div>
-                            <div className="inv-words-text">(Rupees: {numWords(Math.round(displayTotal))})</div>
+                            <div className="inv-words-text">({numWords(Math.round(displayTotal))})</div>
                         </div>
                         <div className="inv-eoe">E. &amp; O.E</div>
                     </div>

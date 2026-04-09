@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
+import { validateGSTIN, formatGSTIN } from '../utils/gstUtils'
 import './Settings.css'
 
 const INDIAN_STATES = [
@@ -41,7 +42,7 @@ const INDIAN_STATES = [
     { name: 'West Bengal', code: '19' },
 ]
 
-function Field({ label, required, children, className = '' }) {
+function Field({ label, required, children, error, warning, className = '' }) {
     return (
         <div className={`cp-field ${className}`}>
             <label className="cp-label">
@@ -49,17 +50,20 @@ function Field({ label, required, children, className = '' }) {
                 {required && <span className="cp-label-required">·</span>}
             </label>
             {children}
+            {error && <div role="alert" style={{color: 'var(--cp-error)', fontSize: '13px', marginTop: '6px'}}>{error}</div>}
+            {!error && warning && <div role="alert" style={{color: 'var(--cp-warning)', fontSize: '13px', marginTop: '6px'}}>⚠ {warning}</div>}
         </div>
     )
 }
 
-function Input({ value, onChange, placeholder, maxLength, className = '', ...props }) {
+function Input({ value, onChange, placeholder, maxLength, className = '', inputRef, ...props }) {
     const len = value?.length || 0
     const isValid = value && value.length > 0
     const stateClass = isValid ? 'valid' : ''
     return (
         <div className="cp-input-wrap" style={{ width: '100%', position: 'relative' }}>
             <input
+                ref={inputRef}
                 className={`cp-input ${stateClass} ${className}`}
                 value={value || ''}
                 onChange={onChange}
@@ -79,16 +83,17 @@ function Input({ value, onChange, placeholder, maxLength, className = '', ...pro
     )
 }
 
-function PrefixInput({ prefix, value, onChange, placeholder }) {
+function PrefixInput({ prefix, value, onChange, placeholder, maxLength, className = '' }) {
     const isValid = value && value.length > 0
     return (
         <div className="cp-input-prefix">
             <span className="cp-prefix-tag">{prefix}</span>
             <input
-                className={`cp-input ${isValid ? 'valid' : ''}`}
+                className={`cp-input ${className} ${isValid ? 'valid' : ''}`}
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
+                maxLength={maxLength}
             />
         </div>
     )
@@ -114,6 +119,25 @@ function Settings() {
 
     const [customerForm, setCustomerForm] = useState({ name: '', phone: '', email: '', address: '', pincode: '', gstin: '', state: 'West Bengal', stateCode: '19' })
     const [supplierForm, setSupplierForm] = useState({ name: '', contactPerson: '', phone: '', email: '', address: '', pincode: '', gstin: '' })
+    
+    // Auto-focus ref for Customer/Supplier Modals
+    const nameInputRef = useRef(null)
+
+    useEffect(() => {
+        if (showCustomerModal || showSupplierModal) {
+            const focusTarget = () => {
+                if (nameInputRef.current && document.activeElement !== nameInputRef.current) {
+                    nameInputRef.current.focus();
+                }
+            }
+            const timer1 = setTimeout(focusTarget, 150);
+            const timer2 = setTimeout(focusTarget, 450);
+            return () => {
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+            };
+        }
+    }, [showCustomerModal, showSupplierModal])
     const [productForm, setProductForm] = useState({ name: '', purchasePrice: '', sellingPrice: '', stock: '', hsn: '8301', gst: 18, quantityUnit: 'Pcs' })
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '', newPassword: '', confirmPassword: ''
@@ -197,6 +221,15 @@ function Settings() {
 
     const handleCustomerSubmit = async (e) => {
         e.preventDefault()
+        
+        if (customerForm.phone) {
+            if (/\s/.test(customerForm.phone)) return alert('Phone number cannot contain spaces')
+            if (!/^\d+$/.test(customerForm.phone)) return alert('Phone number must contain only numeric characters')
+            if (customerForm.phone.length !== 10) return alert('Phone number must be exactly 10 digits')
+        } else {
+            return alert('Phone is required for customers')
+        }
+        
         try {
             if (editingCustomer) {
                 await api.put(`/customers/${editingCustomer.id}`, customerForm)
@@ -213,6 +246,13 @@ function Settings() {
 
     const handleSupplierSubmit = async (e) => {
         e.preventDefault()
+        
+        if (supplierForm.phone) {
+            if (/\s/.test(supplierForm.phone)) return alert('Phone number cannot contain spaces')
+            if (!/^\d+$/.test(supplierForm.phone)) return alert('Phone number must contain only numeric characters')
+            if (supplierForm.phone.length !== 10) return alert('Phone number must be exactly 10 digits')
+        }
+        
         try {
             if (editingSupplier) {
                 await api.put(`/suppliers/${editingSupplier.id}`, supplierForm)
@@ -345,26 +385,40 @@ function Settings() {
     }
 
     const validateCompany = () => {
-        const errs = {}
-        if (!companyForm.name.trim()) errs.name = 'Company name is required'
-        if (!companyForm.gstin.trim()) errs.gstin = 'GSTIN is required'
-        else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(companyForm.gstin))
-            errs.gstin = 'Invalid GSTIN format'
-        if (!companyForm.pan.trim()) errs.pan = 'PAN is required'
-        else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(companyForm.pan))
-            errs.pan = 'Invalid PAN format'
-        if (!companyForm.phone.trim()) errs.phone = 'Primary phone is required'
-        if (!companyForm.email.trim()) errs.email = 'Email is required'
-        return errs
+        const hardErrors = {}
+        const warnings = {}
+        
+        if (!companyForm.name.trim()) hardErrors.name = 'Company name is required'
+        if (!companyForm.state.trim()) hardErrors.state = 'State is required'
+        if (!companyForm.address.trim()) hardErrors.address = 'Address is required'
+        if (!companyForm.phone.trim()) hardErrors.phone = 'Primary phone is required'
+        if (!companyForm.email.trim()) hardErrors.email = 'Email is required'
+
+        // Formatting issues are warnings
+        const gstinResult = companyForm.gstin ? validateGSTIN(companyForm.gstin) : { isValid: true };
+        if (companyForm.gstin && !gstinResult.isValid)
+            warnings.gstin = gstinResult.errors[0] + ' (Warning Only)'
+        if (companyForm.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(companyForm.pan))
+            warnings.pan = 'Invalid PAN format (Warning Only)'
+        if (companyForm.phone && companyForm.phone.length !== 10)
+            warnings.phone = 'Phone should be 10 digits (Warning Only)'
+        if (companyForm.altPhone && companyForm.altPhone.length !== 10)
+            warnings.altPhone = 'Alternate phone should be 10 digits (Warning Only)'
+            
+        return { hardErrors, warnings }
     }
 
     const handleCompanyProfileSubmit = async (e) => {
         if (e) e.preventDefault()
-        const errs = validateCompany()
-        if (Object.keys(errs).length > 0) {
-            setErrors(errs)
+        const { hardErrors, warnings } = validateCompany()
+        
+        // Merge warnings for inline display, but don't block
+        setErrors({ ...warnings, ...hardErrors })
+        
+        if (Object.keys(hardErrors).length > 0) {
             return
         }
+        
         setErrors({})
         setSaving(true)
         try {
@@ -474,14 +528,36 @@ function Settings() {
                             </Field>
 
                             <div className="cp-grid-3">
-                                <Field label="GSTIN" required error={errors.gstin}>
-                                    <Input
-                                        value={companyForm.gstin}
-                                        onChange={(e) => setCompanyForm({ ...companyForm, gstin: e.target.value.toUpperCase() })}
-                                        placeholder="19ABCDE1234F1Z5"
-                                        maxLength={15}
-                                        className={errors.gstin ? 'error' : ''}
-                                    />
+                                <Field 
+                                    label="GSTIN" 
+                                    required 
+                                    warning={(companyForm.gstin && !validateGSTIN(companyForm.gstin).isValid) ? validateGSTIN(companyForm.gstin).errors[0] : null}
+                                    error={errors.gstin && !companyForm.gstin ? errors.gstin : null}
+                                >
+                                    <div style={{ position: 'relative' }}>
+                                        <Input
+                                            value={companyForm.gstin}
+                                            onChange={(e) => {
+                                                const formatted = formatGSTIN(e.target.value);
+                                                setCompanyForm({ ...companyForm, gstin: formatted });
+                                            }}
+                                            placeholder="19ABCDE1234F1Z5"
+                                            className={(companyForm.gstin && !validateGSTIN(companyForm.gstin).isValid) ? 'warning' : companyForm.gstin ? 'valid' : ''}
+                                            aria-label="GST Identification Number"
+                                        />
+                                        {companyForm.gstin && (
+                                            <div role="alert" style={{ 
+                                                position: 'absolute', 
+                                                right: '12px', 
+                                                top: '50%', 
+                                                transform: 'translateY(-50%)',
+                                                fontSize: '14px',
+                                                color: validateGSTIN(companyForm.gstin).isValid ? 'var(--cp-success, #2ed573)' : 'var(--cp-warning, #ffa502)'
+                                            }}>
+                                                {validateGSTIN(companyForm.gstin).isValid ? '✓' : '⚠'}
+                                            </div>
+                                        )}
+                                    </div>
                                 </Field>
                                 <Field label="PAN" required error={errors.pan}>
                                     <Input
@@ -508,11 +584,39 @@ function Settings() {
                         <div className="cp-fields">
                             <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '24px', alignItems: 'start' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                                    <Field label="Primary Phone" required error={errors.phone}>
-                                        <PrefixInput prefix="+91" value={companyForm.phone} onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })} placeholder="9876543210" />
+                                    <Field 
+                                        label="Primary Phone" 
+                                        required 
+                                        error={errors.phone && !companyForm.phone ? errors.phone : null}
+                                        warning={companyForm.phone && companyForm.phone.length !== 10 ? 'Phone number should be exactly 10 digits (Warning)' : null}
+                                    >
+                                        <PrefixInput 
+                                            prefix="+91" 
+                                            value={companyForm.phone} 
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setCompanyForm({ ...companyForm, phone: val });
+                                            }} 
+                                            placeholder="9876543210" 
+                                            maxLength={10}
+                                            className={(companyForm.phone && companyForm.phone.length !== 10) ? 'warning' : ''}
+                                        />
                                     </Field>
-                                    <Field label="Alternate Phone">
-                                        <PrefixInput prefix="+91" value={companyForm.altPhone} onChange={(e) => setCompanyForm({ ...companyForm, altPhone: e.target.value })} placeholder="9876543210" />
+                                    <Field 
+                                        label="Alternate Phone" 
+                                        warning={(companyForm.altPhone && companyForm.altPhone.length !== 10) ? 'Phone number should be exactly 10 digits (Warning)' : null}
+                                    >
+                                        <PrefixInput 
+                                            prefix="+91" 
+                                            value={companyForm.altPhone} 
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setCompanyForm({ ...companyForm, altPhone: val });
+                                            }} 
+                                            placeholder="9876543210" 
+                                            maxLength={10}
+                                            className={(companyForm.altPhone && companyForm.altPhone.length !== 10) ? 'warning' : ''}
+                                        />
                                     </Field>
                                 </div>
                                 <Field label="Email" required error={errors.email}>
@@ -552,7 +656,11 @@ function Settings() {
                             Changes apply to all future invoices.<br />
                             Existing records remain unaffected.
                         </div>
-                        <button className={`cp-save-btn ${saving ? 'saving' : ''} ${saved ? 'saved' : ''}`} onClick={handleCompanyProfileSubmit} disabled={saving}>
+                        <button 
+                            className={`cp-save-btn ${saving ? 'saving' : ''} ${saved ? 'saved' : ''}`} 
+                            onClick={handleCompanyProfileSubmit} 
+                            disabled={saving}
+                        >
                             <span className="btn-text">{saving ? 'Saving...' : saved ? '✓ Saved' : 'Save Profile'}</span>
                         </button>
                     </div>
@@ -889,16 +997,42 @@ function Settings() {
                             <div className="cp-fields" style={{ padding: 0, gap: '24px' }}>
                                 <Field label="Name" required>
                                     <Input
+                                        inputRef={nameInputRef}
                                         value={(showCustomerModal ? customerForm.name : supplierForm.name) || ''}
                                         onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, name: e.target.value }) : setSupplierForm({ ...supplierForm, name: e.target.value })}
                                         placeholder="Full Name"
                                         required
+                                        autoComplete="off"
                                     />
                                 </Field>
 
                                 <div className="cp-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '24px' }}>
-                                    <Field label="Phone No" required>
-                                        <PrefixInput prefix="+91" value={(showCustomerModal ? customerForm.phone : supplierForm.phone)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, phone: e.target.value }) : setSupplierForm({ ...supplierForm, phone: e.target.value })} placeholder="9876543210" />
+                                    <Field 
+                                        label="Phone No" 
+                                        required={showCustomerModal} 
+                                        error={
+                                            (showCustomerModal ? customerForm.phone : supplierForm.phone) && 
+                                            (showCustomerModal ? customerForm.phone : supplierForm.phone).length !== 10 
+                                            ? 'Phone number must be exactly 10 digits' 
+                                            : null
+                                        }
+                                    >
+                                        <PrefixInput 
+                                            prefix="+91" 
+                                            value={(showCustomerModal ? customerForm.phone : supplierForm.phone)} 
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                showCustomerModal ? setCustomerForm({ ...customerForm, phone: val }) : setSupplierForm({ ...supplierForm, phone: val })
+                                            }} 
+                                            placeholder="9876543210"
+                                            maxLength={10}
+                                            className={
+                                                (showCustomerModal ? customerForm.phone : supplierForm.phone) && 
+                                                (showCustomerModal ? customerForm.phone : supplierForm.phone).length !== 10 
+                                                ? 'error' 
+                                                : ''
+                                            }
+                                        />
                                     </Field>
                                     <Field label="Email">
                                         <Input value={(showCustomerModal ? customerForm.email : supplierForm.email)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, email: e.target.value }) : setSupplierForm({ ...supplierForm, email: e.target.value })} placeholder="email@example.com" />
@@ -916,8 +1050,34 @@ function Settings() {
                                 </Field>
 
                                 <div className="cp-grid-2">
-                                    <Field label="GSTIN">
-                                        <Input value={(showCustomerModal ? customerForm.gstin : supplierForm.gstin)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, gstin: e.target.value.toUpperCase() }) : setSupplierForm({ ...supplierForm, gstin: e.target.value.toUpperCase() })} placeholder="19XXXXX..." />
+                                    <Field 
+                                        label="GSTIN"
+                                        warning={(showCustomerModal ? customerForm.gstin : supplierForm.gstin) && !validateGSTIN(showCustomerModal ? customerForm.gstin : supplierForm.gstin).isValid ? validateGSTIN(showCustomerModal ? customerForm.gstin : supplierForm.gstin).errors[0] : null}
+                                    >
+                                        <div style={{ position: 'relative' }}>
+                                            <Input 
+                                                value={(showCustomerModal ? customerForm.gstin : supplierForm.gstin)} 
+                                                onChange={(e) => {
+                                                    const val = formatGSTIN(e.target.value);
+                                                    showCustomerModal ? setCustomerForm({ ...customerForm, gstin: val }) : setSupplierForm({ ...supplierForm, gstin: val })
+                                                }} 
+                                                placeholder="19XXXXX..." 
+                                                className={(showCustomerModal ? customerForm.gstin : supplierForm.gstin) && !validateGSTIN(showCustomerModal ? customerForm.gstin : supplierForm.gstin).isValid ? 'warning' : (showCustomerModal ? customerForm.gstin : supplierForm.gstin) ? 'valid' : ''}
+                                                aria-label="GST Identification Number"
+                                            />
+                                            {(showCustomerModal ? customerForm.gstin : supplierForm.gstin) && (
+                                                <div style={{ 
+                                                    position: 'absolute', 
+                                                    right: '12px', 
+                                                    top: '50%', 
+                                                    transform: 'translateY(-50%)',
+                                                    fontSize: '14px',
+                                                    color: validateGSTIN(showCustomerModal ? customerForm.gstin : supplierForm.gstin).isValid ? 'var(--cp-success, #2ed573)' : 'var(--cp-warning, #ffa502)'
+                                                }}>
+                                                    {validateGSTIN(showCustomerModal ? customerForm.gstin : supplierForm.gstin).isValid ? '✓' : '⚠'}
+                                                </div>
+                                            )}
+                                        </div>
                                     </Field>
                                     <Field label="PIN Code">
                                         <Input value={(showCustomerModal ? customerForm.pincode : supplierForm.pincode)} onChange={(e) => showCustomerModal ? setCustomerForm({ ...customerForm, pincode: e.target.value }) : setSupplierForm({ ...supplierForm, pincode: e.target.value })} placeholder="711101" />
@@ -950,7 +1110,16 @@ function Settings() {
 
                             <div className="cp-modal-footer">
                                 <button type="button" className="cp-cancel-btn" onClick={() => { setShowCustomerModal(false); setShowSupplierModal(false); }}>Cancel</button>
-                                <button type="submit" className="cp-btn-primary" style={{ padding: '12px 32px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                                <button 
+                                    type="submit" 
+                                    className="cp-btn-primary" 
+                                    style={{ 
+                                        padding: '12px 32px', 
+                                        border: 'none', 
+                                        borderRadius: '4px', 
+                                        cursor: 'pointer'
+                                    }}
+                                >
                                     {showCustomerModal ? (editingCustomer ? 'Update' : 'Create') : (editingSupplier ? 'Update' : 'Create')}
                                 </button>
                             </div>

@@ -169,13 +169,13 @@ function Payment() {
                     </div>
                     <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px' }}>Payment Saved!</h2>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '40px', lineHeight: '1.6' }}>
-                        Successfully paid <strong style={{ color: '#ff4757', fontSize: '1.3rem' }}>${parseFloat(successData.amount).toLocaleString()}</strong><br/>
+                        Successfully paid <strong style={{ color: '#ff4757', fontSize: '1.3rem' }}>₹{parseFloat(successData.amount).toLocaleString()}</strong><br/>
                         to <span style={{ color: 'var(--text-primary)' }}>{successData.supplierName}</span>
                     </p>
 
                     <div style={{ background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '24px', marginBottom: '40px', border: '1px solid var(--glass-border)' }}>
                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '700' }}>New Outstanding Balance</p>
-                        <h3 style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: '900', color: '#ff4757' }}>${parseFloat(successData.newBalance).toLocaleString()}</h3>
+                        <h3 style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: '900', color: '#ff4757' }}>₹{parseFloat(successData.newBalance).toLocaleString()}</h3>
                     </div>
 
                     <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
@@ -333,7 +333,7 @@ function Payment() {
                                 <option value="" style={{ background: 'var(--bg-deep)' }}>-- Select Bill --</option>
                                 {references.map(r => (
                                     <option key={r.id} value={r.id} style={{ background: 'var(--bg-deep)' }}>
-                                        {r.invoiceNumber || r.notes || `Doc ID: ${r.id}`} | Amount: ${parseFloat(r.amountDue).toFixed(2)}
+                                        {r.invoiceNumber || r.notes || `Doc ID: ${r.id}`} | Amount: ₹{parseFloat(r.amountDue).toFixed(2)}
                                     </option>
                                 ))}
                             </select>
@@ -352,7 +352,7 @@ function Payment() {
                         }}>
                             <div>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '5px' }}>Current Balance</p>
-                                <h3 style={{ color: '#ff4757', fontWeight: '900', fontSize: '1.8rem', margin: 0 }}>$ {currentBalance.toLocaleString()}</h3>
+                                <h3 style={{ color: '#ff4757', fontWeight: '900', fontSize: '1.8rem', margin: 0 }}>₹ {currentBalance.toLocaleString()}</h3>
                             </div>
                             <div style={{ textAlign: 'right' }}>
                                 <span style={{ background: '#ff4757', color: 'white', padding: '6px 14px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: '900', textTransform: 'uppercase' }}>Status</span>
@@ -382,7 +382,7 @@ function Payment() {
                         <div className="form-group">
                             <label style={{ display: 'block', marginBottom: '12px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase' }}>Amount Paid</label>
                             <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: '900', fontSize: '1.2rem' }}>$</span>
+                                <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: '900', fontSize: '1.2rem' }}>₹</span>
                                 <input
                                     type="number"
                                     value={amount}

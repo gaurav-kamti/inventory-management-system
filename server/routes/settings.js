@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { Settings } = require('../models');
 
+const { validateGSTIN: serverValidateGSTIN } = require('../utils/gstValidator');
+
 // Get specific setting or all
 router.get('/:key?', async (req, res) => {
     try {
@@ -29,6 +31,14 @@ router.get('/:key?', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         let { key, value } = req.body;
+
+        // Validate company profile GSTIN if present
+        if (key === 'company_profile' && value && value.gstin) {
+            const result = serverValidateGSTIN(value.gstin);
+            if (!result.isValid) {
+                return res.status(400).json({ error: result.error });
+            }
+        }
 
         // Auto-sanitize invoice prefix to remove trailing slashes before saving
         if (key === 'invoice_config' && value && value.prefix) {

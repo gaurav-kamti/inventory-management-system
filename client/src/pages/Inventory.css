@@ -310,3 +310,20 @@
     display: none;
   }
 }
+
+/* Global Validation States */
+.input.valid {
+  border-color: #2ed573 !important;
+  background: rgba(46, 213, 115, 0.03) !important;
+}
+
+.input.warning {
+  border-color: #ffa502 !important;
+  background: rgba(255, 165, 2, 0.03) !important;
+}
+
+.input.error {
+  border-color: #ff4757 !important;
+  background: rgba(255, 71, 87, 0.03) !important;
+}
+

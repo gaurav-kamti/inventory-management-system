@@ -160,7 +160,7 @@ function Inventory() {
                         <h3>Inventory</h3>
                         <p className="stat-value" style={{ fontSize: '1.2rem' }}>{stats.totalItems}</p>
                         <p className="stat-label" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: '600' }}>
-                            Value: <span style={{ color: 'var(--accent)' }}>${stats.totalItemsWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            Value: <span style={{ color: 'var(--accent)' }}>₹{stats.totalItemsWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                         </p>
                     </div>
                 </div>
@@ -185,10 +185,10 @@ function Inventory() {
                     <div className="stat-icon" style={{ background: 'rgba(255, 159, 67, 0.1)', color: '#ff9f43' }}>📈</div>
                     <div className="stat-info">
                         <h3>Total Sales</h3>
-                        <p className="stat-value" style={{ fontSize: '1.2rem' }}>${stats.totalSold.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="stat-value" style={{ fontSize: '1.2rem' }}>₹{stats.totalSold.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                            <span style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700' }}>Received: ${stats.paymentReceived.toFixed(0)}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#fca5a5', fontWeight: '700' }}>Due: ${stats.paymentRemaining.toFixed(0)}</span>
+                            <span style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '700' }}>Received: ₹{stats.paymentReceived.toFixed(0)}</span>
+                            <span style={{ fontSize: '0.65rem', color: '#fca5a5', fontWeight: '700' }}>Due: ₹{stats.paymentRemaining.toFixed(0)}</span>
                         </div>
                     </div>
                 </div>
@@ -241,7 +241,7 @@ function Inventory() {
                                                     {product.stock}
                                                 </span>
                                             </td>
-                                            <td>${parseFloat(product.purchasePrice).toFixed(2)}</td>
+                                            <td>₹{parseFloat(product.purchasePrice).toFixed(2)}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '700', color: 'var(--accent)' }}>
                                                 ₹{(product.stock * product.purchasePrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </td>
@@ -280,7 +280,7 @@ function Inventory() {
                                             <td style={{ fontWeight: '700' }}>{customer.name}</td>
                                             <td style={{ color: 'var(--text-secondary)' }}>{customer.phone}</td>
                                             <td style={{ color: customer.outstandingBalance > 0 ? '#ff4757' : 'var(--accent)', fontWeight: '700' }}>
-                                                ${parseFloat(customer.outstandingBalance || 0).toLocaleString()}
+                                                ₹{parseFloat(customer.outstandingBalance || 0).toLocaleString()}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
                                                 {customer.outstandingBalance > 0 ? (
@@ -319,7 +319,7 @@ function Inventory() {
                                             <td style={{ fontSize: '0.85rem' }}>{new Date(sale.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                             <td style={{ fontWeight: '700', letterSpacing: '0.5px' }}>{sale.invoiceNumber}</td>
                                             <td>{sale.Customer?.name || <span style={{ fontStyle: 'italic', opacity: 0.6 }}>Internal / Counter</span>}</td>
-                                            <td style={{ fontWeight: '800' }}>${parseFloat(sale.total).toLocaleString()}</td>
+                                            <td style={{ fontWeight: '800' }}>₹{parseFloat(sale.total).toLocaleString()}</td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <span className={`badge ${sale.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>
                                                     {sale.status === 'completed' ? 'Verified' : 'Pending Verification'}

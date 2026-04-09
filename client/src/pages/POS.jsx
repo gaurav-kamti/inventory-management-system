@@ -191,7 +191,7 @@ function POS() {
                         {filteredProducts.map(product => (
                             <div key={product.id} className="product-card glass" onClick={() => addToCart(product)}>
                                 <h3>{product.name}</h3>
-                                <p className="product-price">${product.sellingPrice}</p>
+                                <p className="product-price">₹{product.sellingPrice}</p>
                                 <p className="product-stock">Stock: {product.stock}</p>
                             </div>
                         ))}
@@ -219,7 +219,7 @@ function POS() {
                                         <div className="cart-item-header">
                                             <div>
                                                 <p className="cart-item-name">{item.name}</p>
-                                                <p className="cart-item-price">${item.price} × {item.quantity} = ${(item.price * item.quantity).toFixed(2)}</p>
+                                                <p className="cart-item-price">₹{item.price} × {item.quantity} = ₹{(item.price * item.quantity).toFixed(2)}</p>
                                             </div>
                                             <div className="cart-item-controls">
                                                 <button onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
@@ -303,36 +303,36 @@ function POS() {
                         <div className="cart-totals">
                             <div className="total-row">
                                 <span>Subtotal:</span>
-                                <span>${subtotal.toFixed(2)}</span>
+                                <span>₹{subtotal.toFixed(2)}</span>
                             </div>
                             <div className="total-row">
                                 <span>Discount ({discountPercent}%):</span>
-                                <span>-${discountAmount.toFixed(2)}</span>
+                                <span>-₹{discountAmount.toFixed(2)}</span>
                             </div>
                             <div className="total-row">
                                 <span>Tax ({taxPercent}%):</span>
-                                <span>${tax.toFixed(2)}</span>
+                                <span>₹{tax.toFixed(2)}</span>
                             </div>
                             <div className="total-row total-final">
                                 <span>Total:</span>
-                                <span>${total.toFixed(2)}</span>
+                                <span>₹{total.toFixed(2)}</span>
                             </div>
                             {paymentMode === 'partial' && amountPaid && (
                                 <>
                                     <div className="total-row payment-row">
                                         <span>Amount Paid:</span>
-                                        <span>${paidAmount.toFixed(2)}</span>
+                                        <span>₹{paidAmount.toFixed(2)}</span>
                                     </div>
                                     <div className="total-row remaining-row">
                                         <span>Remaining:</span>
-                                        <span>${remainingAmount.toFixed(2)}</span>
+                                        <span>₹{remainingAmount.toFixed(2)}</span>
                                     </div>
                                 </>
                             )}
                             {paymentMode === 'credit' && (
                                 <div className="total-row credit-row">
                                     <span>Credit Amount:</span>
-                                    <span>${total.toFixed(2)}</span>
+                                    <span>₹{total.toFixed(2)}</span>
                                 </div>
                             )}
                         </div>

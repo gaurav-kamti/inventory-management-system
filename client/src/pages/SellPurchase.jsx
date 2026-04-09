@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { numberToWords, calculateGSTSplit, generateHSNSummary, round2, printWithTitle } from '../utils/invoiceUtils'
 import { formatDate } from '../utils/formatters'
+import { validateGSTIN, formatGSTIN } from '../utils/gstUtils'
 import InvoiceTemplate from '../components/InvoiceTemplate'
 import DatePicker from '../components/DatePicker'
 
@@ -36,6 +37,9 @@ function SellPurchase() {
     const [isEditing, setIsEditing] = useState(false)
     const [editId, setEditId] = useState(null)
     const previousLocationRef = useRef(null)
+    const quickAddNameRef = useRef(null)
+
+
 
     // Refs for Focus Management
     const purchaseInvoiceRef = useRef(null)
@@ -130,6 +134,27 @@ function SellPurchase() {
     const [showQuickAddModal, setShowQuickAddModal] = useState(false)
     const [quickAddType, setQuickAddType] = useState('customer') // 'customer' or 'supplier'
 
+    useEffect(() => {
+        if (showQuickAddModal) {
+            const focusTarget = () => {
+                if (quickAddNameRef.current && document.activeElement !== quickAddNameRef.current) {
+                    quickAddNameRef.current.focus();
+                }
+            }
+
+            // Initial focus assertion
+            const timer1 = setTimeout(focusTarget, 150);
+            
+            // Secondary focus assertion after modal animation (300ms) typically completes
+            const timer2 = setTimeout(focusTarget, 450);
+
+            return () => {
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+            };
+        }
+    }, [showQuickAddModal])
+
     // Success Modal State
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showPurchaseSuccessModal, setShowPurchaseSuccessModal] = useState(false)
@@ -144,6 +169,7 @@ function SellPurchase() {
 
     const handleQuickAdd = async () => {
         try {
+            // Removed blocking alerts for non-blocking strategy
             if (!quickAddForm.name) return alert('Name is required')
             if (quickAddType === 'customer' && !quickAddForm.phone) return alert('Phone is required for customers')
 
@@ -170,6 +196,14 @@ function SellPurchase() {
 
             setShowQuickAddModal(false)
             alert(`${quickAddType === 'customer' ? 'Customer' : 'Supplier'} added successfully!`)
+            
+            setTimeout(() => {
+                if (quickAddType === 'customer') {
+                    sellCustomerRef.current?.focus()
+                } else {
+                    purchaseSupplierRef.current?.focus()
+                }
+            }, 100)
 
         } catch (error) {
             console.error('Error adding party:', error)
@@ -177,7 +211,7 @@ function SellPurchase() {
         }
     }
 
-    const addNewPurchaseRow = () => {
+    const addNewPurchaseRow = (shiftFocus = true) => {
         setAddedItems([...addedItems, {
             name: '',
             size: '',
@@ -188,11 +222,14 @@ function SellPurchase() {
             amount: '',
             quantityUnit: 'Pcs'
         }])
-        // Shift focus to the new row's description field
-        setTimeout(() => {
-            const inputs = document.querySelectorAll('.modal-overlay .table tbody tr input[list="product-suggestions"]');
-            inputs[inputs.length - 1]?.focus();
-        }, 100);
+        
+        if (shiftFocus) {
+            // Shift focus to the new row's description field
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('.modal-overlay .table tbody tr input[list="product-suggestions"]');
+                inputs[inputs.length - 1]?.focus();
+            }, 100);
+        }
     }
 
     const removeAddedItem = (index) => {
@@ -777,7 +814,7 @@ function SellPurchase() {
 
 
 
-    const addNewSaleRow = () => {
+    const addNewSaleRow = (shiftFocus = true) => {
         setCartItems([...cartItems, {
             productId: '',
             name: '',
@@ -789,11 +826,14 @@ function SellPurchase() {
             amount: '',
             quantityUnit: 'Pcs'
         }])
-        // Shift focus to the new row's description field
-        setTimeout(() => {
-            const inputs = document.querySelectorAll('.modal-overlay .table tbody tr input[list="product-suggestions"]');
-            inputs[inputs.length - 1]?.focus();
-        }, 100);
+        
+        if (shiftFocus) {
+            // Shift focus to the new row's description field
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('.modal-overlay .table tbody tr input[list="product-suggestions"]');
+                inputs[inputs.length - 1]?.focus();
+            }, 100);
+        }
     }
 
     useEffect(() => {
@@ -826,13 +866,13 @@ function SellPurchase() {
             fetchInvoice()
         }
         if (showSellModal && cartItems.length === 0) {
-            addNewSaleRow()
+            addNewSaleRow(false)
         }
     }, [showSellModal])
 
     useEffect(() => {
         if (showPurchaseModal && addedItems.length === 0) {
-            addNewPurchaseRow()
+            addNewPurchaseRow(false)
         }
     }, [showPurchaseModal])
 
@@ -916,7 +956,7 @@ function SellPurchase() {
                     border: '1px solid var(--glass-border)',
                     borderRadius: '24px'
                 }} onClick={() => setShowSellModal(true)}>
-                    <span style={{ fontSize: '2rem' }}>💰</span> Sales Voucher
+                    <span style={{ fontSize: '2rem' }}>💰</span> Sales Invoice
                 </button>
                 <button className="btn" style={{
                     padding: '40px 60px',
@@ -927,7 +967,7 @@ function SellPurchase() {
                     border: '1px solid var(--glass-border)',
                     borderRadius: '24px'
                 }} onClick={() => setShowPurchaseModal(true)}>
-                    <span style={{ fontSize: '2rem' }}>🛒</span> Purchase Voucher
+                    <span style={{ fontSize: '2rem' }}>🛒</span> Purchase Invoice
                 </button>
             </div>
 
@@ -954,7 +994,7 @@ function SellPurchase() {
                         <div className="invoice-header" style={{ flexShrink: 0, marginBottom: '15px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '15px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px' }}>
                                 <div>
-                                    <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Purchase Bill</h2>
+                                    <h2 style={{ color: 'var(--text-primary)', fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>Purchase Invoice</h2>
                                     <p style={{ color: 'var(--accent)', fontWeight: '600', fontSize: '0.9rem' }}>Entry of inward goods/services</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
@@ -1031,7 +1071,7 @@ function SellPurchase() {
                                                     setAddForm(prev => ({ ...prev, supplierName: match.name, supplierId: match.id }))
                                                 }
                                                 // Focus next logical field (e.g. deliveryNote or product table)
-                                                document.querySelector('input[placeholder="Search Product"]')?.focus() || purchaseItemNameRef.current?.focus()
+                                                document.querySelector('.table tbody tr:last-child input[list="product-suggestions"]')?.focus()
                                             }
                                         }}
                                         style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '14px', padding: '16px' }}
@@ -1281,7 +1321,7 @@ function SellPurchase() {
 
                         <div className="modal-actions" style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '20px' }}>
                             <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '18px 40px', color: 'var(--text-secondary)' }} onClick={() => setShowPurchaseModal(false)}>Discard Action</button>
-                            <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handlePurchaseItem}>Record Purchase Bill</button>
+                            <button type="submit" className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '18px 50px', boxShadow: '0 10px 30px rgba(142, 182, 155, 0.2)' }} onClick={handlePurchaseItem}>Record Purchase Invoice</button>
                         </div>
                     </div>
                 </div>
@@ -1364,7 +1404,7 @@ function SellPurchase() {
                                                     setSellForm(prev => ({ ...prev, customerName: match.name, customerId: match.id }))
                                                 }
                                                 // Focus next logical field (items table)
-                                                sellItemNameRef.current?.focus() || document.querySelector('table input')?.focus()
+                                                document.querySelector('.table tbody tr:last-child input[list="product-suggestions"]')?.focus()
                                             }
                                         }}
                                         onBlur={() => {
@@ -1672,9 +1712,11 @@ function SellPurchase() {
                                 <div>
                                     <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Name *</label>
                                     <input className="input" style={{ width: '100%', padding: '12px' }}
+                                        ref={quickAddNameRef}
                                         value={quickAddForm.name}
                                         onChange={e => setQuickAddForm({ ...quickAddForm, name: e.target.value })}
                                         placeholder="Business or Person Name"
+                                        autoComplete="off"
                                     />
                                 </div>
 
@@ -1683,20 +1725,46 @@ function SellPurchase() {
                                         <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
                                             Phone {quickAddType === 'customer' ? '*' : '(Optional)'}
                                         </label>
-                                        <input className="input" style={{ width: '100%', padding: '12px' }}
+                                        <input className={`input ${quickAddForm.phone && quickAddForm.phone.length !== 10 ? 'error' : ''}`} style={{ width: '100%', padding: '12px', borderColor: quickAddForm.phone && quickAddForm.phone.length !== 10 ? 'var(--danger, #ff4757)' : undefined }}
                                             value={quickAddForm.phone}
-                                            onChange={e => setQuickAddForm({ ...quickAddForm, phone: e.target.value })}
+                                            onChange={e => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setQuickAddForm({ ...quickAddForm, phone: val })
+                                            }}
                                             placeholder="Contact Number"
+                                            maxLength={10}
                                         />
+                                        {quickAddForm.phone && quickAddForm.phone.length !== 10 && (
+                                            <div style={{ color: 'var(--danger, #ff4757)', fontSize: '13px', marginTop: '6px' }}>Phone number must be exactly 10 digits</div>
+                                        )}
                                     </div>
                                     <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>GSTIN</label>
-                                        <input className="input" style={{ width: '100%', padding: '12px' }}
-                                            value={quickAddForm.gstin}
-                                            onChange={e => setQuickAddForm({ ...quickAddForm, gstin: e.target.value.toUpperCase() })}
-                                            placeholder="19ABCDE1234F1Z5"
-                                            maxLength={15}
-                                        />
+                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                                            GSTIN {quickAddForm.gstin && !validateGSTIN(quickAddForm.gstin).isValid && <span role="alert" style={{ color: 'var(--danger, #ff4757)', fontSize: '12px', fontWeight: 'normal', marginLeft: '8px' }}>(⚠ {validateGSTIN(quickAddForm.gstin).errors[0]})</span>}
+                                        </label>
+                                        <div style={{ position: 'relative' }}>
+                                            <input className="input" style={{ width: '100%', padding: '12px', borderColor: quickAddForm.gstin && !validateGSTIN(quickAddForm.gstin).isValid ? 'var(--danger, #ff4757)' : undefined }}
+                                                value={quickAddForm.gstin}
+                                                onChange={e => {
+                                                    const val = formatGSTIN(e.target.value);
+                                                    setQuickAddForm({ ...quickAddForm, gstin: val })
+                                                }}
+                                                placeholder="19ABCDE1234F1Z5"
+                                                aria-label="GST Identification Number"
+                                            />
+                                            {quickAddForm.gstin && (
+                                                <div style={{ 
+                                                    position: 'absolute', 
+                                                    right: '12px', 
+                                                    top: '50%', 
+                                                    transform: 'translateY(-50%)',
+                                                    fontSize: '14px',
+                                                    color: validateGSTIN(quickAddForm.gstin).isValid ? '#2ed573' : '#ffa502'
+                                                }}>
+                                                    {validateGSTIN(quickAddForm.gstin).isValid ? '✓' : '⚠'}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1712,7 +1780,7 @@ function SellPurchase() {
 
                             <div className="modal-actions" style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
                                 <button className="btn" style={{ background: 'rgba(255,255,255,0.05)', padding: '12px 30px' }} onClick={() => setShowQuickAddModal(false)}>Cancel</button>
-                                <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '12px 40px' }} onClick={handleQuickAdd}>Save & Select</button>
+                                <button className="btn" style={{ background: 'var(--accent)', color: 'var(--bg-deep)', padding: '12px 40px', cursor: 'pointer' }} onClick={handleQuickAdd}>Save & Select</button>
                             </div>
                         </div>
                     </div>

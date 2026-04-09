@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { validateGSTIN: serverValidateGSTIN } = require('../utils/gstValidator');
 
 const Customer = sequelize.define('Customer', {
   id: {
@@ -13,7 +14,21 @@ const Customer = sequelize.define('Customer', {
   },
   phone: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: "Phone number is required"
+      },
+      isValidPhone(value) {
+        if (!value) return;
+        if (/[^\d]/.test(value)) {
+          throw new Error("Phone number must contain only numeric characters");
+        }
+        if (value.length !== 10) {
+          throw new Error("Phone number must be exactly 10 digits");
+        }
+      }
+    }
   },
   email: {
     type: DataTypes.STRING
@@ -25,7 +40,15 @@ const Customer = sequelize.define('Customer', {
     type: DataTypes.STRING
   },
   gstin: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    validate: {
+      isValidGSTIN(value) {
+        const result = serverValidateGSTIN(value);
+        if (!result.isValid) {
+          throw new Error(result.error);
+        }
+      }
+    }
   },
   state: {
     type: DataTypes.STRING,
