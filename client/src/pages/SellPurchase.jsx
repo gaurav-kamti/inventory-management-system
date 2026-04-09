@@ -276,6 +276,7 @@ function SellPurchase() {
                     const qty = item.quantity || 0;
                     const amt = item.amount || item.total || (qty * price).toString();
                     return {
+                        id: item.id, // Preserve the DB ID for surgical updates
                         productId: item.productId,
                         name: item.name || item.Product?.name,
                         size: item.size || '',
@@ -314,6 +315,7 @@ function SellPurchase() {
                     const qty = item.quantity || 0;
                     const amt = item.total || item.amount || (qty * price).toString();
                     return {
+                        id: item.id, // Preserve ID
                         productId: item.productId,
                         name: item.name || item.Product?.name,
                         size: item.size || '',

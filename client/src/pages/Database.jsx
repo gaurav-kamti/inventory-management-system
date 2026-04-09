@@ -131,10 +131,18 @@ function Database() {
                 }
                 purchasesMap[inv].total += parseFloat(p.totalCost)
                 purchasesMap[inv].items.push({
+                    id: p.id,
+                    productId: p.productId,
                     Product: { name: p.Product?.name || 'Unknown' },
                     quantity: p.quantityReceived,
                     price: p.unitCost,
-                    total: p.totalCost
+                    total: p.totalCost,
+                    hsn: p.hsn,
+                    size: p.size,
+                    sizeUnit: p.sizeUnit,
+                    quantityUnit: p.quantityUnit,
+                    gst: p.gst,
+                    discount: p.discount
                 })
             })
             setPurchases(Object.values(purchasesMap).sort((a, b) => new Date(b.date) - new Date(a.date)))

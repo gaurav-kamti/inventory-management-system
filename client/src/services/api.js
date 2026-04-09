@@ -305,8 +305,154 @@ class SupabaseApiAdapter {
         else if (resource === '/customers') table = 'Customers';
         else if (resource === '/suppliers') table = 'Suppliers';
         else if (resource === '/sales') {
-            console.warn("PUT /sales logic skipped for brevity, implement using DELETE + POST pattern");
-            return formatRes({});
+            try {
+                const { items, ...saleData } = payload;
+                const saleId = id;
+
+                // 1. Update the parent Sales record
+                const { error: saleErr } = await supabase.from('Sales')
+                    .update({
+                        ...saleData,
+                        updatedAt: now,
+                        createdAt: saleData.date ? new Date(saleData.date).toISOString() : undefined
+                    })
+                    .eq('id', saleId);
+                if (saleErr) throw saleErr;
+
+                // 2. Fetch current SaleItems to handle surgical updates/deletes
+                const { data: currentItems, error: fetchErr } = await supabase.from('SaleItems')
+                    .select('*')
+                    .eq('saleId', saleId);
+                if (fetchErr) throw fetchErr;
+
+                const payloadItemIds = items.filter(i => i.id).map(i => i.id);
+                const itemsToDelete = currentItems.filter(ci => !payloadItemIds.includes(ci.id));
+
+                // 3. Handle Deletions
+                for (const delItem of itemsToDelete) {
+                    // Revert stock
+                    if (delItem.productId) {
+                        const { data: prod } = await supabase.from('Products').select('stock').eq('id', delItem.productId).single();
+                        if (prod) {
+                            await supabase.from('Products').update({ stock: prod.stock + delItem.quantity, updatedAt: now }).eq('id', delItem.productId);
+                        }
+                    }
+                    await supabase.from('SaleItems').delete().eq('id', delItem.id);
+                }
+
+                // 4. Handle Updates and Additions
+                for (const item of items) {
+                    const sQuantity = parseFloat(item.quantity) || 0;
+                    const sPrice = parseFloat(item.price || item.rate) || 0;
+                    const itemPayload = {
+                        saleId,
+                        productId: item.productId || null,
+                        quantity: sQuantity,
+                        price: sPrice,
+                        total: sQuantity * sPrice,
+                        hsn: item.hsn || '',
+                        gst: parseFloat(item.gst) || 18,
+                        discount: parseFloat(item.discount) || 0,
+                        name: item.name || '',
+                        size: item.size || '',
+                        sizeUnit: item.sizeUnit || '',
+                        quantityUnit: item.quantityUnit || 'Pcs',
+                        updatedAt: now
+                    };
+
+                    if (item.id) {
+                        // Update existing item
+                        const oldItem = currentItems.find(ci => ci.id === item.id);
+                        if (oldItem && oldItem.productId) {
+                            // Adjust stock by delta
+                            const delta = sQuantity - oldItem.quantity;
+                            const { data: prod } = await supabase.from('Products').select('stock').eq('id', oldItem.productId).single();
+                            if (prod) {
+                                await supabase.from('Products').update({ stock: prod.stock - delta, updatedAt: now }).eq('id', oldItem.productId);
+                            }
+                        }
+                        await supabase.from('SaleItems').update(itemPayload).eq('id', item.id);
+                    } else {
+                        // Insert new item
+                        if (item.productId) {
+                            const { data: prod } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                            if (prod) {
+                                await supabase.from('Products').update({ stock: prod.stock - sQuantity, updatedAt: now }).eq('id', item.productId);
+                            }
+                        }
+                        await supabase.from('SaleItems').insert({ ...itemPayload, createdAt: now });
+                    }
+                }
+
+                return formatRes({ id: saleId, message: 'Sale updated surgically' });
+            } catch (err) {
+                console.error("PUT /sales error:", err);
+                return formatErr(err);
+            }
+        }
+        else if (resource === '/purchases') {
+            try {
+                const { items, supplierId, ...purchaseData } = payload;
+                const invoiceNumber = id.startsWith('P-') ? id.substring(2) : id;
+
+                const { data: currentRows, error: fetchErr } = await supabase.from('Purchases')
+                    .select('*')
+                    .eq('invoiceNumber', invoiceNumber);
+                if (fetchErr) throw fetchErr;
+
+                const payloadItemIds = items.filter(i => i.id).map(i => i.id);
+                const rowsToDelete = currentRows.filter(cr => !payloadItemIds.includes(cr.id));
+
+                for (const delItem of rowsToDelete) {
+                    const { data: prod } = await supabase.from('Products').select('stock').eq('id', delItem.productId).single();
+                    if (prod) {
+                        await supabase.from('Products').update({ stock: prod.stock - delItem.quantityReceived, updatedAt: now }).eq('id', delItem.productId);
+                    }
+                    await supabase.from('Purchases').delete().eq('id', delItem.id);
+                }
+
+                for (const item of items) {
+                    const quantity = parseFloat(item.quantity) || 0;
+                    const price = parseFloat(item.price || item.rate) || 0;
+                    const rowPayload = {
+                        supplierId,
+                        productId: item.productId,
+                        invoiceNumber,
+                        quantityReceived: quantity,
+                        unitCost: price,
+                        landingCost: price,
+                        totalCost: quantity * price,
+                        receivedDate: payload.date || now,
+                        name: item.name,
+                        size: item.size,
+                        sizeUnit: item.sizeUnit,
+                        quantityUnit: item.quantityUnit,
+                        updatedAt: now
+                    };
+
+                    if (item.id) {
+                        const oldRow = currentRows.find(cr => cr.id === item.id);
+                        if (oldRow) {
+                            const delta = quantity - oldRow.quantityReceived;
+                            const { data: prod } = await supabase.from('Products').select('stock').eq('id', oldRow.productId).single();
+                            if (prod) {
+                                await supabase.from('Products').update({ stock: prod.stock + delta, updatedAt: now }).eq('id', oldRow.productId);
+                            }
+                        }
+                        await supabase.from('Purchases').update(rowPayload).eq('id', item.id);
+                    } else {
+                        const { data: prod } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                        if (prod) {
+                            await supabase.from('Products').update({ stock: prod.stock + quantity, updatedAt: now }).eq('id', item.productId);
+                        }
+                        await supabase.from('Purchases').insert({ ...rowPayload, createdAt: now });
+                    }
+                }
+                return formatRes({ message: 'Purchase updated surgically' });
+            } catch (err) {
+                console.error("PUT /purchases error:", err);
+                return formatErr(err);
+            }
         }
 
         if (table) {
@@ -337,10 +483,21 @@ class SupabaseApiAdapter {
             return formatRes({ message: 'Sale deleted' });
         }
         
-        if (table) {
-            const { error } = await supabase.from(table).delete().eq('id', id);
+        else if (resource === '/purchases') {
+            const invoiceNumber = id.startsWith('P-') ? id.substring(2) : id;
+            const { data: rows } = await supabase.from('Purchases').select('*').eq('invoiceNumber', invoiceNumber);
+            if (rows) {
+                for (const row of rows) {
+                    // Revert stock (Purchases ADDED stock, so deletion SUBTRACTS it)
+                    const { data: prod } = await supabase.from('Products').select('stock').eq('id', row.productId).single();
+                    if (prod) {
+                        await supabase.from('Products').update({ stock: prod.stock - row.quantityReceived }).eq('id', row.productId);
+                    }
+                }
+            }
+            const { error } = await supabase.from('Purchases').delete().eq('invoiceNumber', invoiceNumber);
             if (error) return formatErr(error);
-            return formatRes({ message: 'Deleted successfully' });
+            return formatRes({ message: 'Purchase deleted' });
         }
 
         console.warn(`Unimplemented DELETE route: ${url}`);
