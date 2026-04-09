@@ -69,17 +69,17 @@ class SupabaseApiAdapter {
     async post(url, payload) {
         const now = new Date().toISOString();
         if (url === '/products') {
-            const { data, error } = await supabase.from('Products').insert({...payload, createdAt: now, updatedAt: now}).select().single();
+            const { data, error } = await supabase.from('Products').insert({ ...payload, createdAt: now, updatedAt: now }).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
         if (url === '/customers') {
-            const { data, error } = await supabase.from('Customers').insert({...payload, createdAt: now, updatedAt: now}).select().single();
+            const { data, error } = await supabase.from('Customers').insert({ ...payload, createdAt: now, updatedAt: now }).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
         if (url === '/suppliers') {
-            const { data, error } = await supabase.from('Suppliers').insert({...payload, createdAt: now, updatedAt: now}).select().single();
+            const { data, error } = await supabase.from('Suppliers').insert({ ...payload, createdAt: now, updatedAt: now }).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
@@ -107,7 +107,7 @@ class SupabaseApiAdapter {
                     const { data: product } = await supabase.from('Products').select('*').eq('id', item.productId).single();
                     if (product) {
                         const newStock = product.stock - item.quantity;
-                        await supabase.from('Products').update({ stock: newStock }).eq('id', product.id);
+                        await supabase.from('Products').update({ stock: newStock, updatedAt: now }).eq('id', product.id);
                     }
                     // Insert SaleItem
                     await supabase.from('SaleItems').insert({
@@ -147,7 +147,7 @@ class SupabaseApiAdapter {
                         amount: sale.total,
                         method: 'New Ref',
                         notes: `Credit from sale ${sale.invoiceNumber}`,
-                        createdAt: sale.createdAt,
+                        createdAt: sale.createdAt || now,
                         updatedAt: now
                     });
                 }
@@ -205,7 +205,7 @@ class SupabaseApiAdapter {
                         unitCost: item.rate,
                         landingCost: item.rate,
                         totalCost: item.amount,
-                        receivedDate: payload.date || now,
+                        receivedDate: payload.date || new Date().toISOString(),
                         ...item,
                         createdAt: now,
                         updatedAt: now
@@ -229,7 +229,7 @@ class SupabaseApiAdapter {
                         amountDue: reqTotal,
                         status: 'pending',
                         invoiceNumber: purchasePayload.invoiceNumber,
-                        date: payload.date || now,
+                        date: payload.date || new Date().toISOString(),
                         createdAt: now,
                         updatedAt: now
                     });
@@ -261,6 +261,7 @@ class SupabaseApiAdapter {
         const parts = url.split('/');
         const id = parts[parts.length - 1];
         const resource = '/' + parts[1]; // e.g. /products/1 -> /products
+        const now = new Date().toISOString();
 
         let table = '';
         if (resource === '/products') table = 'Products';
@@ -272,7 +273,6 @@ class SupabaseApiAdapter {
         }
 
         if (table) {
-            const now = new Date().toISOString();
             const { data, error } = await supabase.from(table).update({ ...payload, updatedAt: now }).eq('id', id).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
