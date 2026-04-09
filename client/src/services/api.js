@@ -156,6 +156,26 @@ class SupabaseApiAdapter {
                     });
                 }
 
+                // Auto-increment the invoice configuration sequence
+                try {
+                    let { data: configRecord } = await supabase.from('Settings')
+                        .select('value')
+                        .eq('key', 'invoice_config')
+                        .single();
+                        
+                    let currentConfig = configRecord?.value;
+                    if (!currentConfig || !currentConfig.sequence) {
+                        currentConfig = { prefix: 'INV', sequence: 1, fiscalYear: '2023-24' };
+                    }
+                    
+                    currentConfig.sequence = parseInt(currentConfig.sequence, 10) + 1;
+                    
+                    await supabase.from('Settings')
+                        .upsert({ key: 'invoice_config', value: currentConfig, createdAt: now, updatedAt: now }, { onConflict: 'key' });
+                } catch (seqErr) {
+                    console.error("Failed to automatically increment invoice sequence:", seqErr);
+                }
+
                 return formatRes(sale);
             } catch (err) {
                 return formatErr(err);
