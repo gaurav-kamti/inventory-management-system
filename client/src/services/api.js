@@ -88,7 +88,7 @@ class SupabaseApiAdapter {
             try {
                 const { 
                     items, customerId, paymentMode, amountPaid, 
-                    advanceAdjustments, afterGST, salesChannel, ...rest 
+                    advanceAdjustments, afterGST, salesChannel, date, ...rest 
                 } = payload;
                 const { data: user } = await supabase.auth.getUser();
 
@@ -212,7 +212,10 @@ class SupabaseApiAdapter {
                         landingCost: item.rate,
                         totalCost: item.amount,
                         receivedDate: payload.date || new Date().toISOString(),
-                        ...item,
+                        name: item.name,
+                        size: item.size,
+                        sizeUnit: item.sizeUnit,
+                        quantityUnit: item.quantityUnit,
                         createdAt: now,
                         updatedAt: now
                     }).select().single();
