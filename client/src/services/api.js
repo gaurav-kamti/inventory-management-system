@@ -86,7 +86,10 @@ class SupabaseApiAdapter {
         if (url === '/sales') {
             // Replicate complex sales transaction logic in JS
             try {
-                const { items, customerId, paymentMode, amountPaid, ...rest } = payload;
+                const { 
+                    items, customerId, paymentMode, amountPaid, 
+                    advanceAdjustments, afterGST, salesChannel, ...rest 
+                } = payload;
                 const { data: user } = await supabase.auth.getUser();
 
                 const salePayload = {
@@ -159,7 +162,10 @@ class SupabaseApiAdapter {
         }
         if (url === '/purchases') {
             try {
-                const { items, supplierId, total, roundOff, ...rest } = payload;
+                const { 
+                    items, supplierId, total, roundOff, 
+                    advanceAdjustments, afterGST, salesChannel, ...rest 
+                } = payload;
                 const reqTotal = parseFloat(total);
 
                 const purchasePayload = {
