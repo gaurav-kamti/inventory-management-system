@@ -313,8 +313,8 @@ class SupabaseApiAdapter {
                 const { error: saleErr } = await supabase.from('Sales')
                     .update({
                         ...saleData,
-                        updatedAt: now,
-                        createdAt: saleData.date ? new Date(saleData.date).toISOString() : undefined
+                        updatedAt: now
+                        // Removed createdAt to prevent overwriting original timestamp
                     })
                     .eq('id', saleId);
                 if (saleErr) throw saleErr;
@@ -329,15 +329,20 @@ class SupabaseApiAdapter {
                 const itemsToDelete = currentItems.filter(ci => !payloadItemIds.includes(ci.id));
 
                 // 3. Handle Deletions
-                for (const delItem of itemsToDelete) {
-                    // Revert stock
-                    if (delItem.productId) {
-                        const { data: prod } = await supabase.from('Products').select('stock').eq('id', delItem.productId).single();
-                        if (prod) {
-                            await supabase.from('Products').update({ stock: prod.stock + delItem.quantity, updatedAt: now }).eq('id', delItem.productId);
+                for (const delItem of currentItems) {
+                    if (!payloadItemIds.includes(delItem.id)) {
+                        // Revert stock
+                        if (delItem.productId) {
+                            const { data: prod, error: pErr } = await supabase.from('Products').select('stock').eq('id', delItem.productId).single();
+                            if (pErr) throw pErr;
+                            if (prod) {
+                                const { error: upErr } = await supabase.from('Products').update({ stock: prod.stock + delItem.quantity, updatedAt: now }).eq('id', delItem.productId);
+                                if (upErr) throw upErr;
+                            }
                         }
+                        const { error: dErr } = await supabase.from('SaleItems').delete().eq('id', delItem.id);
+                        if (dErr) throw dErr;
                     }
-                    await supabase.from('SaleItems').delete().eq('id', delItem.id);
                 }
 
                 // 4. Handle Updates and Additions
@@ -363,24 +368,46 @@ class SupabaseApiAdapter {
                     if (item.id) {
                         // Update existing item
                         const oldItem = currentItems.find(ci => ci.id === item.id);
-                        if (oldItem && oldItem.productId) {
-                            // Adjust stock by delta
-                            const delta = sQuantity - oldItem.quantity;
-                            const { data: prod } = await supabase.from('Products').select('stock').eq('id', oldItem.productId).single();
-                            if (prod) {
-                                await supabase.from('Products').update({ stock: prod.stock - delta, updatedAt: now }).eq('id', oldItem.productId);
+                        if (oldItem) {
+                            // CASE: Product changed during edit
+                            if (oldItem.productId !== item.productId) {
+                                // Revert old product stock
+                                if (oldItem.productId) {
+                                    const { data: oldProd, error: opErr } = await supabase.from('Products').select('stock').eq('id', oldItem.productId).single();
+                                    if (opErr) throw opErr;
+                                    await supabase.from('Products').update({ stock: oldProd.stock + oldItem.quantity, updatedAt: now }).eq('id', oldItem.productId);
+                                }
+                                // Subtract new product stock
+                                if (item.productId) {
+                                    const { data: newProd, error: npErr } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                                    if (npErr) throw npErr;
+                                    await supabase.from('Products').update({ stock: newProd.stock - sQuantity, updatedAt: now }).eq('id', item.productId);
+                                }
+                            } else if (oldItem.productId) {
+                                // Adjust stock by delta for SAME product
+                                const delta = sQuantity - oldItem.quantity;
+                                const { data: prod, error: prodErr } = await supabase.from('Products').select('stock').eq('id', oldItem.productId).single();
+                                if (prodErr) throw prodErr;
+                                if (prod) {
+                                    const { error: upErr } = await supabase.from('Products').update({ stock: prod.stock - delta, updatedAt: now }).eq('id', oldItem.productId);
+                                    if (upErr) throw upErr;
+                                }
                             }
                         }
-                        await supabase.from('SaleItems').update(itemPayload).eq('id', item.id);
+                        const { error: upItemErr } = await supabase.from('SaleItems').update(itemPayload).eq('id', item.id);
+                        if (upItemErr) throw upItemErr;
                     } else {
                         // Insert new item
                         if (item.productId) {
-                            const { data: prod } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                            const { data: prod, error: prodErr } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                            if (prodErr) throw prodErr;
                             if (prod) {
-                                await supabase.from('Products').update({ stock: prod.stock - sQuantity, updatedAt: now }).eq('id', item.productId);
+                                const { error: upErr } = await supabase.from('Products').update({ stock: prod.stock - sQuantity, updatedAt: now }).eq('id', item.productId);
+                                if (upErr) throw upErr;
                             }
                         }
-                        await supabase.from('SaleItems').insert({ ...itemPayload, createdAt: now });
+                        const { error: insErr } = await supabase.from('SaleItems').insert({ ...itemPayload, createdAt: now });
+                        if (insErr) throw insErr;
                     }
                 }
 
@@ -401,19 +428,27 @@ class SupabaseApiAdapter {
                 if (fetchErr) throw fetchErr;
 
                 const payloadItemIds = items.filter(i => i.id).map(i => i.id);
-                const rowsToDelete = currentRows.filter(cr => !payloadItemIds.includes(cr.id));
 
-                for (const delItem of rowsToDelete) {
-                    const { data: prod } = await supabase.from('Products').select('stock').eq('id', delItem.productId).single();
-                    if (prod) {
-                        await supabase.from('Products').update({ stock: prod.stock - delItem.quantityReceived, updatedAt: now }).eq('id', delItem.productId);
+                // 1. Handle Deletions
+                for (const delItem of currentRows) {
+                    if (!payloadItemIds.includes(delItem.id)) {
+                        // Revert stock (Purchases ADDED stock, so deletion SUBTRACTS it)
+                        const { data: prod, error: pErr } = await supabase.from('Products').select('stock').eq('id', delItem.productId).single();
+                        if (pErr) throw pErr;
+                        if (prod) {
+                            const { error: upErr } = await supabase.from('Products').update({ stock: prod.stock - delItem.quantityReceived, updatedAt: now }).eq('id', delItem.productId);
+                            if (upErr) throw upErr;
+                        }
+                        const { error: dErr } = await supabase.from('Purchases').delete().eq('id', delItem.id);
+                        if (dErr) throw dErr;
                     }
-                    await supabase.from('Purchases').delete().eq('id', delItem.id);
                 }
 
+                // 2. Handle Updates and Additions
                 for (const item of items) {
                     const quantity = parseFloat(item.quantity) || 0;
                     const price = parseFloat(item.price || item.rate) || 0;
+                    
                     const rowPayload = {
                         supplierId,
                         productId: item.productId,
@@ -433,21 +468,48 @@ class SupabaseApiAdapter {
                     if (item.id) {
                         const oldRow = currentRows.find(cr => cr.id === item.id);
                         if (oldRow) {
-                            const delta = quantity - oldRow.quantityReceived;
-                            const { data: prod } = await supabase.from('Products').select('stock').eq('id', oldRow.productId).single();
-                            if (prod) {
-                                await supabase.from('Products').update({ stock: prod.stock + delta, updatedAt: now }).eq('id', oldRow.productId);
+                            // CASE: Product changed during edit
+                            if (oldRow.productId !== item.productId) {
+                                // Revert old product stock (Subtract what was added before)
+                                if (oldRow.productId) {
+                                    const { data: oldProd, error: opErr } = await supabase.from('Products').select('stock').eq('id', oldRow.productId).single();
+                                    if (opErr) throw opErr;
+                                    await supabase.from('Products').update({ stock: oldProd.stock - oldRow.quantityReceived, updatedAt: now }).eq('id', oldRow.productId);
+                                }
+                                // Add new product stock
+                                if (item.productId) {
+                                    const { data: newProd, error: npErr } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                                    if (npErr) throw npErr;
+                                    await supabase.from('Products').update({ stock: newProd.stock + quantity, updatedAt: now }).eq('id', item.productId);
+                                }
+                            } else if (oldRow.productId) {
+                                // Adjust stock by delta for SAME product
+                                const delta = quantity - oldRow.quantityReceived;
+                                const { data: prod, error: prodErr } = await supabase.from('Products').select('stock').eq('id', oldRow.productId).single();
+                                if (prodErr) throw prodErr;
+                                if (prod) {
+                                    const { error: upErr } = await supabase.from('Products').update({ stock: prod.stock + delta, updatedAt: now }).eq('id', oldRow.productId);
+                                    if (upErr) throw upErr;
+                                }
                             }
                         }
-                        await supabase.from('Purchases').update(rowPayload).eq('id', item.id);
+                        const { error: upRowErr } = await supabase.from('Purchases').update(rowPayload).eq('id', item.id);
+                        if (upRowErr) throw upRowErr;
                     } else {
-                        const { data: prod } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
-                        if (prod) {
-                            await supabase.from('Products').update({ stock: prod.stock + quantity, updatedAt: now }).eq('id', item.productId);
+                        // Insert new row
+                        if (item.productId) {
+                            const { data: prod, error: prodErr } = await supabase.from('Products').select('stock').eq('id', item.productId).single();
+                            if (prodErr) throw prodErr;
+                            if (prod) {
+                                const { error: upErr } = await supabase.from('Products').update({ stock: prod.stock + quantity, updatedAt: now }).eq('id', item.productId);
+                                if (upErr) throw upErr;
+                            }
                         }
-                        await supabase.from('Purchases').insert({ ...rowPayload, createdAt: now });
+                        const { error: insErr } = await supabase.from('Purchases').insert({ ...rowPayload, createdAt: now });
+                        if (insErr) throw insErr;
                     }
                 }
+
                 return formatRes({ message: 'Purchase updated surgically' });
             } catch (err) {
                 console.error("PUT /purchases error:", err);
