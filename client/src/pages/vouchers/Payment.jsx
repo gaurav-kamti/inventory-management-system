@@ -49,18 +49,20 @@ function Payment() {
     const fetchSuppliers = async () => {
         try {
             const res = await api.get('/suppliers');
-            setSuppliers(res.data);
+            setSuppliers(res.data || []);
         } catch (error) {
             console.error('Error fetching suppliers:', error);
+            setSuppliers([]);
         }
     };
 
     const fetchReferences = async () => {
         try {
             const res = await api.get(`/vouchers/unpaid-purchases/${selectedSupplier}`);
-            setReferences(res.data);
+            setReferences(res.data || []);
         } catch (error) {
             console.error('Error fetching references:', error);
+            setReferences([]);
         }
     };
 

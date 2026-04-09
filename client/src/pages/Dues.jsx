@@ -30,11 +30,13 @@ function Dues() {
                 api.get('/customers'),
                 api.get('/suppliers')
             ])
-            setCustomers(custRes.data)
-            setSuppliers(suppRes.data)
+            setCustomers(custRes.data || [])
+            setSuppliers(suppRes.data || [])
             setLoading(false)
         } catch (error) {
             console.error('Error fetching dues:', error)
+            setCustomers([])
+            setSuppliers([])
             setLoading(false)
         }
     }
@@ -79,15 +81,15 @@ function Dues() {
         try {
             const endpoint = type === 'customer' ? `/customers/${id}/history` : `/suppliers/${id}/history`
             const res = await api.get(endpoint)
-            const history = res.data.history
+            const history = res.data?.history || []
             setExpandedData({
                 type,
-                data: type === 'customer' ? res.data.customer : res.data.supplier,
+                data: type === 'customer' ? res.data?.customer : res.data?.supplier,
                 ledger: history
             })
 
             // Set default date range to first and last transaction
-            if (history && history.length > 0) {
+            if (history.length > 0) {
                 const dates = history.map(h => new Date(h.date)).filter(d => !isNaN(d));
                 if (dates.length > 0) {
                     const earliest = new Date(Math.min(...dates));
@@ -118,7 +120,7 @@ function Dues() {
     const getFilteredLedger = () => {
         if (!expandedData || !expandedData.ledger) return []
 
-        let filtered = expandedData.ledger
+        let filtered = expandedData.ledger || []
 
         if (dateRange.start) {
             const startDate = new Date(dateRange.start)

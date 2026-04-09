@@ -49,18 +49,20 @@ function Receipt() {
     const fetchCustomers = async () => {
         try {
             const res = await api.get('/customers');
-            setCustomers(res.data);
+            setCustomers(res.data || []);
         } catch (error) {
             console.error('Error fetching customers:', error);
+            setCustomers([]);
         }
     };
 
     const fetchReferences = async () => {
         try {
             const res = await api.get(`/vouchers/unpaid-sales/${selectedCustomer}`);
-            setReferences(res.data);
+            setReferences(res.data || []);
         } catch (error) {
             console.error('Error fetching references:', error);
+            setReferences([]);
         }
     };
 

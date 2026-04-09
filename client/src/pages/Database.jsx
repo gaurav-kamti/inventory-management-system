@@ -67,7 +67,7 @@ function Database() {
     const fetchSales = async () => {
         try {
             const res = await api.get('/sales')
-            const salesData = res.data.map(s => ({
+            const salesData = (res.data || []).map(s => ({
                 id: s.id,
                 date: s.createdAt,
                 invoiceNumber: s.invoiceNumber,
@@ -83,7 +83,7 @@ function Database() {
                 discountPercent: s.discountPercent || 0,
                 discountAmount: s.discountAmount || s.discount || 0,
                 amountDue: s.amountDue || 0,
-                items: s.SaleItems,
+                items: s.SaleItems || [],
                 customer: s.Customer,
                 deliveryNote: s.deliveryNote,
                 paymentTerms: s.paymentTerms,
@@ -96,6 +96,7 @@ function Database() {
             setSales(salesData)
         } catch (error) {
             console.error('Error fetching sales:', error)
+            setSales([])
         }
     }
 
@@ -103,8 +104,9 @@ function Database() {
         try {
             const res = await api.get('/purchases')
             const purchasesMap = {}
-            res.data.forEach(p => {
+            ;(res.data || []).forEach(p => {
                 const inv = p.invoiceNumber
+                if (!inv) return;
                 if (!purchasesMap[inv]) {
                     purchasesMap[inv] = {
                         id: `P-${inv}`,
@@ -129,7 +131,7 @@ function Database() {
                         items: []
                     }
                 }
-                purchasesMap[inv].total += parseFloat(p.totalCost)
+                purchasesMap[inv].total += parseFloat(p.totalCost || 0)
                 purchasesMap[inv].items.push({
                     id: p.id,
                     productId: p.productId,
@@ -148,6 +150,7 @@ function Database() {
             setPurchases(Object.values(purchasesMap).sort((a, b) => new Date(b.date) - new Date(a.date)))
         } catch (error) {
             console.error('Error fetching purchases:', error)
+            setPurchases([])
         }
     }
 
@@ -155,7 +158,7 @@ function Database() {
         try {
             const res = await api.get('/vouchers/history')
             // Normalize voucher data for template
-            const vouchersData = res.data.map(v => ({
+            const vouchersData = (res.data || []).map(v => ({
                 ...v,
                 total: v.amount,
                 invoiceNumber: v.id,
@@ -166,6 +169,7 @@ function Database() {
             setVouchers(vouchersData)
         } catch (error) {
             console.error('Error fetching vouchers:', error)
+            setVouchers([])
         }
     }
 
