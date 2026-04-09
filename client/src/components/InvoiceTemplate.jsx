@@ -210,7 +210,6 @@ const MAX_PAGE_UNITS = 28;
 const WEIGHTS = {
     ITEM: 1,
     SUBTOTAL: 3,
-    HSN: 4,
     BANK: 5
 };
 
@@ -465,13 +464,16 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
 
     // 2. Distribute Groups
     if (!isVoucher) {
+        // HSN weight is dynamic: 2 header rows + 1 per HSN row + 1 total + 1 words = (hsnGroups.length + 4)
+        const hsnWeight = hsnGroups.length > 0 ? hsnGroups.length + 4 : 0;
         const groupsToProcess = [
             { id: 'subtotal', weight: WEIGHTS.SUBTOTAL },
-            { id: 'hsn', weight: WEIGHTS.HSN },
+            { id: 'hsn', weight: hsnWeight },
             { id: 'bank', weight: WEIGHTS.BANK }
         ];
 
         groupsToProcess.forEach(group => {
+            if (group.weight === 0) return; // skip empty HSN
             if (currentPage.weight + group.weight > MAX_PAGE_UNITS) {
                 pushPage();
             }

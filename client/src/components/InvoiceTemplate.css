@@ -497,12 +497,19 @@
 }
 
 /* ── HSN/SAC Tax Breakdown Table ───────────────────────────────────────────── */
+.hsn-row {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+
 .hsn-row td {
     border-top: none !important;
 }
 
 .hsn-container-inner {
     padding: 0;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
 }
 
 
@@ -665,15 +672,14 @@
 
 /* ── Computer generated ──────────────────────────────────────────────────────── */
 .inv-computer {
-    position: absolute;
-    bottom: 1mm;
-    left: 0;
-    right: 0;
+    display: block;
+    width: 100%;
     text-align: center;
     font-size: 9px;
     color: #444;
     font-weight: 600;
     letter-spacing: 0.05em;
+    padding: 4px 0 2px;
     pointer-events: none;
 }
 
