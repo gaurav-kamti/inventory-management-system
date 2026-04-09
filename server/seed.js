@@ -52,7 +52,7 @@ async function seed() {
     // Create customers
     const john = await Customer.create({
       name: "John Doe",
-      phone: "555-0101",
+      phone: "9876543210",
       email: "john@example.com",
       address: "123 Main St",
       outstandingBalance: 0,
@@ -60,7 +60,7 @@ async function seed() {
 
     await Customer.create({
       name: "Jane Smith",
-      phone: "555-0102",
+      phone: "9876543211",
       email: "jane@example.com",
       address: "456 Oak Ave",
       outstandingBalance: 0,
@@ -71,7 +71,7 @@ async function seed() {
     await Supplier.create({
       name: "Tech Distributors Inc.",
       contactPerson: "Mike Johnson",
-      phone: "555-1001",
+      phone: "9876541001",
       email: "mike@techdist.com",
       address: "789 Industrial Blvd",
     });
@@ -79,7 +79,7 @@ async function seed() {
     await Supplier.create({
       name: "Global Imports Ltd.",
       contactPerson: "Sarah Lee",
-      phone: "555-1002",
+      phone: "9876541002",
       email: "sarah@globalimports.com",
       address: "321 Trade Center",
     });
@@ -87,7 +87,7 @@ async function seed() {
     const LocalWholesale = await Supplier.create({
       name: "Local Wholesale Co.",
       contactPerson: "Tom Brown",
-      phone: "555-1003",
+      phone: "9876541003",
       email: "tom@localwholesale.com",
       address: "654 Commerce St",
     });
@@ -129,7 +129,7 @@ async function seed() {
       landingCost: 500,
       totalCost: 5000,
       receivedDate: new Date(),
-      unitOfMeasure: "pcs",
+      quantityUnit: "pcs",
       amountPaid: 5000,
       amountDue: 0,
     });
