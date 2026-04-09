@@ -97,7 +97,7 @@ class SupabaseApiAdapter {
                     customerId,
                     paymentMode,
                     amountPaid,
-                    userId: user?.user?.id || null,
+                    userId: null,
                     createdAt: payload.date ? new Date(payload.date).toISOString() : now,
                     updatedAt: now
                 };
