@@ -67,18 +67,19 @@ class SupabaseApiAdapter {
     }
 
     async post(url, payload) {
+        const now = new Date().toISOString();
         if (url === '/products') {
-            const { data, error } = await supabase.from('Products').insert(payload).select().single();
+            const { data, error } = await supabase.from('Products').insert({...payload, createdAt: now, updatedAt: now}).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
         if (url === '/customers') {
-            const { data, error } = await supabase.from('Customers').insert(payload).select().single();
+            const { data, error } = await supabase.from('Customers').insert({...payload, createdAt: now, updatedAt: now}).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
         if (url === '/suppliers') {
-            const { data, error } = await supabase.from('Suppliers').insert(payload).select().single();
+            const { data, error } = await supabase.from('Suppliers').insert({...payload, createdAt: now, updatedAt: now}).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
@@ -94,7 +95,8 @@ class SupabaseApiAdapter {
                     paymentMode,
                     amountPaid,
                     userId: user?.user?.id || null,
-                    createdAt: payload.date ? new Date(payload.date).toISOString() : new Date().toISOString()
+                    createdAt: payload.date ? new Date(payload.date).toISOString() : now,
+                    updatedAt: now
                 };
 
                 const { data: sale, error } = await supabase.from('Sales').insert(salePayload).select().single();
@@ -121,7 +123,9 @@ class SupabaseApiAdapter {
                         size: item.size,
                         sizeUnit: item.sizeUnit,
                         quantityUnit: item.quantityUnit,
-                        purchasePrice: product?.purchasePrice || 0
+                        purchasePrice: product?.purchasePrice || 0,
+                        createdAt: now,
+                        updatedAt: now
                     });
                 }
                 
@@ -131,7 +135,8 @@ class SupabaseApiAdapter {
                     const { data: customer } = await supabase.from('Customers').select('*').eq('id', customerId).single();
                     if (customer) {
                         await supabase.from('Customers').update({ 
-                            outstandingBalance: parseFloat(customer.outstandingBalance || 0) + due 
+                            outstandingBalance: parseFloat(customer.outstandingBalance || 0) + due,
+                            updatedAt: now
                         }).eq('id', customerId);
                     }
 
@@ -142,7 +147,8 @@ class SupabaseApiAdapter {
                         amount: sale.total,
                         method: 'New Ref',
                         notes: `Credit from sale ${sale.invoiceNumber}`,
-                        createdAt: sale.createdAt
+                        createdAt: sale.createdAt,
+                        updatedAt: now
                     });
                 }
 
@@ -173,7 +179,8 @@ class SupabaseApiAdapter {
                     if (product) {
                         await supabase.from('Products').update({
                             stock: product.stock + parseInt(item.quantity),
-                            purchasePrice: item.rate
+                            purchasePrice: item.rate,
+                            updatedAt: now
                         }).eq('id', product.id);
                     } else {
                         const { data: newProd } = await supabase.from('Products').insert({
@@ -183,7 +190,9 @@ class SupabaseApiAdapter {
                             purchasePrice: item.rate,
                             supplierId,
                             hsn: item.hsn || '8301',
-                            gst: item.gst || 18
+                            gst: item.gst || 18,
+                            createdAt: now,
+                            updatedAt: now
                         }).select().single();
                         product = newProd;
                     }
@@ -196,8 +205,10 @@ class SupabaseApiAdapter {
                         unitCost: item.rate,
                         landingCost: item.rate,
                         totalCost: item.amount,
-                        receivedDate: payload.date || new Date().toISOString(),
-                        ...item
+                        receivedDate: payload.date || now,
+                        ...item,
+                        createdAt: now,
+                        updatedAt: now
                     }).select().single();
                     newPurchases.push(purchase);
                 }
@@ -207,7 +218,8 @@ class SupabaseApiAdapter {
                     const { data: supplier } = await supabase.from('Suppliers').select('*').eq('id', supplierId).single();
                     if (supplier) {
                         await supabase.from('Suppliers').update({
-                            outstandingBalance: parseFloat(supplier.outstandingBalance || 0) + reqTotal
+                            outstandingBalance: parseFloat(supplier.outstandingBalance || 0) + reqTotal,
+                            updatedAt: now
                         }).eq('id', supplierId);
                     }
                     await supabase.from('SupplierTransactions').insert({
@@ -217,7 +229,9 @@ class SupabaseApiAdapter {
                         amountDue: reqTotal,
                         status: 'pending',
                         invoiceNumber: purchasePayload.invoiceNumber,
-                        date: payload.date || new Date().toISOString()
+                        date: payload.date || now,
+                        createdAt: now,
+                        updatedAt: now
                     });
                 }
                 return formatRes({ message: 'Purchase processed', items: newPurchases });
@@ -258,7 +272,8 @@ class SupabaseApiAdapter {
         }
 
         if (table) {
-            const { data, error } = await supabase.from(table).update(payload).eq('id', id).select().single();
+            const now = new Date().toISOString();
+            const { data, error } = await supabase.from(table).update({ ...payload, updatedAt: now }).eq('id', id).select().single();
             if (error) return formatErr(error);
             return formatRes(data);
         }
