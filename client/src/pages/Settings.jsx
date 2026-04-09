@@ -183,9 +183,9 @@ function Settings() {
                 api.get('/suppliers'),
                 api.get('/products')
             ])
-            setCustomers(custRes.data)
-            setSuppliers(suppRes.data)
-            setProducts(prodRes.data)
+            setCustomers(custRes.data || [])
+            setSuppliers(suppRes.data || [])
+            setProducts(prodRes.data || [])
         } catch (error) {
             console.error('Error fetching data:', error)
         }
@@ -210,13 +210,21 @@ function Settings() {
     }
 
     const fetchCustomers = async () => {
-        const response = await api.get('/customers')
-        setCustomers(response.data)
+        try {
+            const response = await api.get('/customers')
+            setCustomers(response.data || [])
+        } catch (error) {
+            console.error('Error fetching customers:', error)
+        }
     }
 
     const fetchSuppliers = async () => {
-        const response = await api.get('/suppliers')
-        setSuppliers(response.data)
+        try {
+            const response = await api.get('/suppliers')
+            setSuppliers(response.data || [])
+        } catch (error) {
+            console.error('Error fetching suppliers:', error)
+        }
     }
 
     const handleCustomerSubmit = async (e) => {

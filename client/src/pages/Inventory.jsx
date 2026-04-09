@@ -58,8 +58,12 @@ function Inventory() {
     }, [])
 
     const fetchProducts = async () => {
-        const response = await api.get('/products')
-        setProducts(response.data)
+        try {
+            const response = await api.get('/products')
+            setProducts(response.data || [])
+        } catch (error) {
+            console.error('Error fetching products:', error)
+        }
     }
 
     const fetchStats = async () => {
@@ -70,15 +74,14 @@ function Inventory() {
             // Set basic stats from optimized endpoint
             setStats(prev => ({
                 ...prev,
-                totalItems: s.totalProducts,
-                totalItemsWorth: s.totalInventoryWorth || 0,
-                totalCustomers: s.totalCustomers,
-                paymentRemaining: s.totalOutstanding
+                totalItems: s?.totalProducts || 0,
+                totalItemsWorth: s?.totalInventoryWorth || 0,
+                totalCustomers: s?.totalCustomers || 0,
+                paymentRemaining: s?.totalOutstanding || 0
             }));
 
-            // Fetch full sales records for detailed table view and total sales calculation
             const salesRes = await api.get('/sales');
-            const fullSales = salesRes.data;
+            const fullSales = salesRes.data || [];
             const totalSold = fullSales.reduce((sum, sale) => sum + parseFloat(sale.total || 0), 0);
             const totalReceived = fullSales.reduce((sum, sale) => sum + parseFloat(sale.amountPaid || 0), 0);
             const totalDue = fullSales.reduce((sum, sale) => sum + parseFloat(sale.amountDue || 0), 0);
@@ -87,8 +90,7 @@ function Inventory() {
             setStats(prev => ({
                 ...prev,
                 totalSold,
-                paymentReceived: totalReceived,
-                paymentRemaining: totalDue
+                paymentReceived: totalReceived
             }));
 
         } catch (error) {
@@ -97,8 +99,12 @@ function Inventory() {
     }
 
     const fetchCustomers = async () => {
-        const response = await api.get('/customers')
-        setCustomers(response.data)
+        try {
+            const response = await api.get('/customers')
+            setCustomers(response.data || [])
+        } catch (error) {
+            console.error('Error fetching customers:', error)
+        }
     }
 
     const handleDeleteProduct = async (id) => {
@@ -348,8 +354,8 @@ function Inventory() {
                         className="context-item"
                         style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s' }}
                         onClick={() => openEditModal(contextMenu.product)}
-                        onMouseEnter={(e) => e.target.style.background = '#334155'}
-                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
                         <span>✏️</span> Edit
                     </div>
@@ -357,8 +363,8 @@ function Inventory() {
                         className="context-item"
                         style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', borderTop: '1px solid #334155', color: '#fca5a5' }}
                         onClick={() => handleDeleteProduct(contextMenu.product.id)}
-                        onMouseEnter={(e) => e.target.style.background = '#334155'}
-                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
                         <span>🗑️</span> Delete
                     </div>

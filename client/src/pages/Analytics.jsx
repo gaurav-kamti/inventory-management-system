@@ -42,13 +42,17 @@ const Analytics = () => {
                 api.get('/purchases')
             ]);
 
+            const productsRaw = productsRes.data || [];
+            const salesRaw = salesRes.data || [];
+            const purchasesRaw = purchasesRes.data || [];
+
             // 1. Stock Data
-            const stockData = productsRes.data
-                .sort((a, b) => b.stock - a.stock)
+            const stockData = productsRaw
+                .sort((a, b) => (b.stock || 0) - (a.stock || 0))
                 .slice(0, 10)
                 .map(p => ({
                     name: (p.name || '').length > 15 ? (p.name || '').substring(0, 12) + '...' : (p.name || 'Unknown'),
-                    stock: p.stock
+                    stock: p.stock || 0
                 }));
 
             // 2. Sales & Profit Trends
@@ -56,11 +60,11 @@ const Analytics = () => {
             const profitByDate = {};
             const productProfit = {};
 
-            salesRes.data.forEach(sale => {
+            salesRaw.forEach(sale => {
                 const date = new Date(sale.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
                 
                 // Revenue
-                salesByDate[date] = (salesByDate[date] || 0) + parseFloat(sale.total);
+                salesByDate[date] = (salesByDate[date] || 0) + parseFloat(sale.total || 0);
                 
                 // Profit Calculation
                 let saleProfit = 0;
@@ -96,7 +100,7 @@ const Analytics = () => {
             // 3. Payment Status
             let totalPaid = 0;
             let totalDue = 0;
-            salesRes.data.forEach(sale => {
+            salesRaw.forEach(sale => {
                 totalPaid += parseFloat(sale.amountPaid || 0);
                 totalDue += parseFloat(sale.amountDue || 0);
             });
@@ -107,15 +111,15 @@ const Analytics = () => {
 
             // 4. Purchase vs Sales
             const comparison = {};
-            salesRes.data.forEach(sale => {
+            salesRaw.forEach(sale => {
                 const date = new Date(sale.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
                 if (!comparison[date]) comparison[date] = { date, sales: 0, purchases: 0 };
-                comparison[date].sales += parseFloat(sale.total);
+                comparison[date].sales += parseFloat(sale.total || 0);
             });
-            purchasesRes.data.forEach(purchase => {
+            purchasesRaw.forEach(purchase => {
                 const date = new Date(purchase.receivedDate).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
                 if (!comparison[date]) comparison[date] = { date, sales: 0, purchases: 0 };
-                comparison[date].purchases += parseFloat(purchase.totalCost);
+                comparison[date].purchases += parseFloat(purchase.totalCost || 0);
             });
             const purchaseVsSales = Object.values(comparison).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-6);
 
