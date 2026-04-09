@@ -114,23 +114,30 @@ class SupabaseApiAdapter {
                         await supabase.from('Products').update({ stock: newStock, updatedAt: now }).eq('id', product.id);
                     }
                     // Insert SaleItem
-                    await supabase.from('SaleItems').insert({
+                    const sQuantity = parseFloat(item.quantity) || 0;
+                    const sPrice = parseFloat(item.price) || 0;
+                    const { error: itemErr } = await supabase.from('SaleItems').insert({
                         saleId: sale.id,
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        price: item.price,
-                        total: item.total,
-                        hsn: item.hsn,
-                        gst: item.gst,
-                        discount: item.discount,
-                        name: item.name,
-                        size: item.size,
-                        sizeUnit: item.sizeUnit,
-                        quantityUnit: item.quantityUnit,
+                        productId: item.productId || null,
+                        quantity: sQuantity,
+                        price: sPrice,
+                        total: sQuantity * sPrice,
+                        hsn: item.hsn || '',
+                        gst: parseFloat(item.gst) || 18,
+                        discount: parseFloat(item.discount) || 0,
+                        name: item.name || '',
+                        size: item.size || '',
+                        sizeUnit: item.sizeUnit || '',
+                        quantityUnit: item.quantityUnit || 'Pcs',
                         purchasePrice: product?.purchasePrice || 0,
                         createdAt: now,
                         updatedAt: now
                     });
+                    
+                    if (itemErr) {
+                        console.error("Critical error saving item:", itemErr);
+                        throw itemErr; 
+                    }
                 }
                 
                 // Track dues
