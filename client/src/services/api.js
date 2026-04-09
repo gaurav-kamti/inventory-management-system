@@ -47,12 +47,16 @@ class SupabaseApiAdapter {
             }
             case '/settings/invoice_config': {
                 const { data, error } = await supabase.from('Settings').select('*').eq('key', 'invoice_config').single();
-                if (error) return formatRes(null);
+                if (error || !data) {
+                    return formatRes({ prefix: 'INV', sequence: 1, fiscalYear: '2023-24' });
+                }
                 return formatRes(data.value);
             }
             case '/settings/company_profile': {
                 const { data, error } = await supabase.from('Settings').select('*').eq('key', 'company_profile').single();
-                if (error) return formatRes(null);
+                if (error || !data) {
+                    return formatRes({ name: '', address: '', phone: '', email: '', gstin: '' });
+                }
                 return formatRes(data.value);
             }
             // Add more GET routes...
@@ -224,10 +228,14 @@ class SupabaseApiAdapter {
         if (url === '/settings') {
             // Upsert setting
             const { key, value } = payload;
+            const now = new Date().toISOString();
             const { data, error } = await supabase.from('Settings')
-                .upsert({ key, value }, { onConflict: 'key' })
+                .upsert({ key, value, createdAt: now, updatedAt: now }, { onConflict: 'key' })
                 .select().single();
-            if (error) return formatErr(error);
+            if (error) {
+                console.error("Settings Upsert Error:", error);
+                return formatErr(error);
+            }
             return formatRes(data);
         }
         
