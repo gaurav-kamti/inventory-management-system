@@ -696,15 +696,15 @@ function SellPurchase() {
 
     const handleSellItem = async (e) => {
         e.preventDefault()
-        const selectedCustomer = customers.find(c => c.id === sellForm.customerId)
+        const selectedCustomer = customers.find(c => c.id.toString() === (sellForm.customerId || '').toString())
 
         if (cartItems.length === 0) return alert('Please add items to sell')
 
         try {
             const saleData = {
-                customerId: sellForm.customerId || null,
+                customerId: sellForm.customerId ? parseInt(sellForm.customerId) : null,
                 items: cartItems.map(item => ({
-                    productId: item.productId || null,
+                    productId: item.productId ? parseInt(item.productId) : null,
                     name: item.name,
                     size: item.size || '',
                     sizeUnit: item.sizeUnit || '',
