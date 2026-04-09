@@ -1,11 +1,13 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const crypto = require('crypto');
+
 const SaleItem = sequelize.define('SaleItem', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => crypto.randomUUID()
   },
   purchasePrice: {
     type: DataTypes.DECIMAL(10, 2),
@@ -13,11 +15,11 @@ const SaleItem = sequelize.define('SaleItem', {
     defaultValue: 0
   },
   saleId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Sales', key: 'id' }
   },
   productId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Products', key: 'id' }
   },
   quantity: {

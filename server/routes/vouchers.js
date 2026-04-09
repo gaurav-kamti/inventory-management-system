@@ -298,7 +298,7 @@ router.delete("/:id", auth, async (req, res) => {
     const { id } = req.params;
     if (id.startsWith('R-')) {
       // Receipt (CreditTransaction)
-      const ctId = id.split('-')[1];
+      const ctId = id.substring(2);
       const ct = await CreditTransaction.findByPk(ctId, { transaction: t });
       if (!ct) return res.status(404).json({ error: "Receipt not found" });
       
@@ -309,7 +309,7 @@ router.delete("/:id", auth, async (req, res) => {
       await ct.destroy({ transaction: t });
     } else if (id.startsWith('P-')) {
       // Payment (SupplierTransaction)
-      const stId = id.split('-')[1];
+      const stId = id.substring(2);
       const st = await SupplierTransaction.findByPk(stId, { transaction: t });
       if (!st) return res.status(404).json({ error: "Payment not found" });
 

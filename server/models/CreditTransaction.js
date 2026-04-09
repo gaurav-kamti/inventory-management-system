@@ -1,18 +1,20 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const crypto = require('crypto');
+
 const CreditTransaction = sequelize.define('CreditTransaction', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => crypto.randomUUID()
   },
   customerId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Customers', key: 'id' }
   },
   saleId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Sales', key: 'id' }
   },
   type: {

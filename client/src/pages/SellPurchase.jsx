@@ -906,7 +906,7 @@ function SellPurchase() {
 
     // Get company and customer state codes for GST split
     const companyStateCode = '19'; // Default: West Bengal - should come from settings
-    const selectedCustomer = customers.find(c => c.id === sellForm.customerId);
+    const selectedCustomer = customers.find(c => String(c.id) === String(sellForm.customerId));
     const customerStateCode = selectedCustomer?.stateCode || companyStateCode;
 
     // Calculate GST split and HSN summary using global GST/Discount
@@ -920,7 +920,7 @@ function SellPurchase() {
     const hsnSummary = generateHSNSummary(mappedSellingItems);
 
     // Get supplier state code for purchase GST split
-    const selectedSupplier = suppliers.find(s => s.id === addForm.supplierId);
+    const selectedSupplier = suppliers.find(s => String(s.id) === String(addForm.supplierId));
     const supplierStateCode = selectedSupplier?.stateCode || companyStateCode;
     const mappedPurchaseItems = addedItems.map(item => ({ ...item, gst: addForm.gstPercent, discount: 0 }));
     const purchaseGstSplit = calculateGSTSplit(mappedPurchaseItems, companyStateCode, supplierStateCode);

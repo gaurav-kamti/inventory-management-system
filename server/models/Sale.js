@@ -1,11 +1,13 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const crypto = require('crypto');
+
 const Sale = sequelize.define('Sale', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => crypto.randomUUID()
   },
   invoiceNumber: {
     type: DataTypes.STRING,
@@ -13,11 +15,11 @@ const Sale = sequelize.define('Sale', {
     allowNull: false
   },
   customerId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Customers', key: 'id' }
   },
   userId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Users', key: 'id' }
   },
   subtotal: {

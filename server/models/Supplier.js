@@ -2,11 +2,13 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const { validateGSTIN: serverValidateGSTIN } = require('../utils/gstValidator');
 
+const crypto = require('crypto');
+
 const Supplier = sequelize.define('Supplier', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => crypto.randomUUID()
   },
   name: {
     type: DataTypes.STRING,

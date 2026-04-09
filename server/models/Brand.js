@@ -1,11 +1,13 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const crypto = require('crypto');
+
 const Brand = sequelize.define('Brand', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => crypto.randomUUID()
   },
   name: {
     type: DataTypes.STRING,

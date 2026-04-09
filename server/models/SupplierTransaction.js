@@ -1,18 +1,20 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const crypto = require('crypto');
+
 const SupplierTransaction = sequelize.define('SupplierTransaction', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => crypto.randomUUID()
   },
   supplierId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Suppliers', key: 'id' }
   },
   purchaseId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     references: { model: 'Purchases', key: 'id' },
     allowNull: true // Null for direct payments
   },

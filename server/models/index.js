@@ -1,6 +1,8 @@
 const sequelize = require('../config/database');
 const User = require('./User');
 const Product = require('./Product');
+const Brand = require('./Brand');
+const Category = require('./Category');
 const Customer = require('./Customer');
 const Sale = require('./Sale');
 const SaleItem = require('./SaleItem');
@@ -9,6 +11,7 @@ const Supplier = require('./Supplier');
 const Purchase = require('./Purchase');
 const Settings = require('./Settings');
 const SupplierTransaction = require('./SupplierTransaction');
+const StockMovement = require('./StockMovement');
 
 // Associations
 Sale.belongsTo(Customer, { foreignKey: 'customerId' });
@@ -33,6 +36,10 @@ SupplierTransaction.belongsTo(Supplier, { foreignKey: 'supplierId' });
 Purchase.hasOne(SupplierTransaction, { foreignKey: 'purchaseId' });
 SupplierTransaction.belongsTo(Purchase, { foreignKey: 'purchaseId' });
 
+StockMovement.belongsTo(Product, { foreignKey: 'productId' });
+StockMovement.belongsTo(User, { foreignKey: 'userId' });
+Product.hasMany(StockMovement, { foreignKey: 'productId' });
+
 module.exports = {
   sequelize,
   User,
@@ -44,7 +51,10 @@ module.exports = {
   Supplier,
   Purchase,
   Settings,
-  SupplierTransaction
+  SupplierTransaction,
+  StockMovement,
+  Brand,
+  Category
 };
 
 

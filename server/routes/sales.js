@@ -385,7 +385,7 @@ router.put('/:id', auth, async (req, res) => {
 
     const paymentAdjustments = await CreditTransaction.findAll({ where: { saleId: sale.id, type: 'payment', method: 'Agst Ref' }, transaction: t });
     for (const payment of paymentAdjustments) {
-        const match = payment.notes && payment.notes.match(/Advance id: (\d+)/);
+        const match = payment.notes && payment.notes.match(/Advance id: ([a-zA-Z0-9-]+)/);
         if (match && match[1]) {
             const advTrans = await CreditTransaction.findByPk(match[1], { transaction: t });
             if (advTrans) await advTrans.update({ remainingAdvance: round2(parseFloat(advTrans.remainingAdvance) + parseFloat(payment.amount)) }, { transaction: t });

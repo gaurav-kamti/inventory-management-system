@@ -311,7 +311,7 @@ router.put('/:invoiceNumber', auth, async (req, res) => {
       // Revert payments/advances that were linked to this billing mapping
       const paymentAdjustments = await SupplierTransaction.findAll({ where: { purchaseId: supplierTx.id, type: 'payment', method: 'Agst Ref' }, transaction: t });
       for (const payment of paymentAdjustments) {
-        const match = payment.notes && payment.notes.match(/Advance id: (\d+)/);
+        const match = payment.notes && payment.notes.match(/Advance id: ([a-zA-Z0-9-]+)/);
         if (match && match[1]) {
             const advTrans = await SupplierTransaction.findByPk(match[1], { transaction: t });
             if (advTrans) {
