@@ -94,6 +94,7 @@ class SupabaseApiAdapter {
 
                 const salePayload = {
                     ...rest,
+                    buyerOrderDate: rest.buyerOrderDate || null,
                     customerId,
                     paymentMode,
                     amountPaid,
