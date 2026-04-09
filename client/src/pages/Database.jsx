@@ -533,15 +533,15 @@ function Database() {
                                 <tbody>
                                     {selectedInvoice.items?.map((item, idx) => (
                                         <tr key={idx}>
-                                            <td style={{ fontWeight: '700' }}>{item.Product?.name || 'Unknown Item'}</td>
+                                            <td style={{ fontWeight: '700' }}>{item.name || item.Product?.name || 'Unknown Item'}</td>
                                             <td>{item.hsn || '--'}</td>
-                                            <td>{item.Product?.size || item.size || '--'}</td>
+                                            <td>{item.size || item.Product?.size || '--'}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                                                {item.quantity} {item.unit || item.quantityUnit || 'Pcs'}
+                                                {item.quantity} {item.quantityUnit || item.unit || 'Pcs'}
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>₹{parseFloat(item.price).toFixed(2)}</td>
+                                            <td style={{ textAlign: 'right' }}>₹{parseFloat(item.price || item.rate || 0).toFixed(2)}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '800', color: 'var(--accent)' }}>
-                                                ₹{parseFloat(item.total).toFixed(2)}
+                                                ₹{parseFloat(item.total || item.amount || 0).toFixed(2)}
                                             </td>
                                         </tr>
                                     ))}

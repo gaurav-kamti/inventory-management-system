@@ -26,21 +26,21 @@ class SupabaseApiAdapter {
             }
             case '/sales': {
                 const { data, error } = await supabase.from('Sales')
-                    .select('*, Customers(*), SaleItems(*, Products(*))')
+                    .select('*, Customer:Customers(*), SaleItems(*, Product:Products(*))')
                     .order('createdAt', { ascending: false });
                 if (error) return formatErr(error);
                 return formatRes(data);
             }
             case '/purchases': {
                 const { data, error } = await supabase.from('Purchases')
-                    .select('*, Products(*), Suppliers(*)')
+                    .select('*, Product:Products(*), Supplier:Suppliers(*)')
                     .order('receivedDate', { ascending: false });
                 if (error) return formatErr(error);
                 return formatRes(data);
             }
             case '/credits': {
                 const { data, error } = await supabase.from('CreditTransactions')
-                    .select('*, Customers(*), Sales(*)')
+                    .select('*, Customer:Customers(*), Sales(*)')
                     .order('createdAt', { ascending: false });
                 if (error) return formatErr(error);
                 return formatRes(data);
@@ -115,7 +115,7 @@ class SupabaseApiAdapter {
                     }
                     // Insert SaleItem
                     const sQuantity = parseFloat(item.quantity) || 0;
-                    const sPrice = parseFloat(item.price) || 0;
+                    const sPrice = parseFloat(item.price || item.rate) || 0;
                     const { error: itemErr } = await supabase.from('SaleItems').insert({
                         saleId: sale.id,
                         productId: item.productId || null,
@@ -234,11 +234,11 @@ class SupabaseApiAdapter {
                     const { data: purchase } = await supabase.from('Purchases').insert({
                         productId: product.id,
                         supplierId,
-                        invoiceNumber: purchasePayload.invoiceNumber,
-                        quantityReceived: parseInt(item.quantity),
-                        unitCost: item.rate,
-                        landingCost: item.rate,
-                        totalCost: item.amount,
+                        productId: item.productId,
+                        quantityReceived: parseFloat(item.quantity) || 0,
+                        unitCost: parseFloat(item.price || item.rate) || 0,
+                        landingCost: parseFloat(item.price || item.rate) || 0,
+                        totalCost: parseFloat(item.amount) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.price || item.rate) || 0)),
                         receivedDate: payload.date || new Date().toISOString(),
                         name: item.name,
                         size: item.size,
