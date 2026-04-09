@@ -49,17 +49,19 @@ function groupByHSN(items, gstPercent, discountFactor = 1) {
         map[hsn].taxable += taxable;
     });
 
-    return Object.values(map).map(row => {
-        const cgstRate = gstPercent / 2;
-        const sgstRate = gstPercent / 2;
-        return {
-            ...row,
-            cgstRate,
-            cgstAmt: parseFloat((row.taxable * cgstRate / 100).toFixed(2)),
-            sgstRate,
-            sgstAmt: parseFloat((row.taxable * sgstRate / 100).toFixed(2)),
-        };
-    });
+    return Object.values(map)
+        .filter(row => row.taxable > 0.001) // Skip zero-value HSN rows
+        .map(row => {
+            const cgstRate = gstPercent / 2;
+            const sgstRate = gstPercent / 2;
+            return {
+                ...row,
+                cgstRate,
+                cgstAmt: parseFloat((row.taxable * cgstRate / 100).toFixed(2)),
+                sgstRate,
+                sgstAmt: parseFloat((row.taxable * sgstRate / 100).toFixed(2)),
+            };
+        });
 }
 
 // ── Reusable Header Component ──
@@ -462,24 +464,29 @@ const InvoiceTemplate = ({ sale, customer, company = {}, copyType = "Buyer's Cop
         currentPage.weight += WEIGHTS.ITEM;
     });
 
-    // 2. Distribute Groups
+    // 2. Distribute Groups — treat subtotal + hsn + bank as ONE atomic block.
+    // If they don't all fit on the current page, push a new page first so
+    // the bank footer is never orphaned alone on its own page.
     if (!isVoucher) {
-        // HSN weight is dynamic: 2 header rows + 1 per HSN row + 1 total + 1 words = (hsnGroups.length + 4)
+        // HSN weight is dynamic: 2 header rows + 1 per HSN row + 1 total + 1 words
         const hsnWeight = hsnGroups.length > 0 ? hsnGroups.length + 4 : 0;
-        const groupsToProcess = [
-            { id: 'subtotal', weight: WEIGHTS.SUBTOTAL },
-            { id: 'hsn', weight: hsnWeight },
-            { id: 'bank', weight: WEIGHTS.BANK }
-        ];
+        const totalFooterWeight = WEIGHTS.SUBTOTAL + hsnWeight + WEIGHTS.BANK;
 
-        groupsToProcess.forEach(group => {
-            if (group.weight === 0) return; // skip empty HSN
-            if (currentPage.weight + group.weight > MAX_PAGE_UNITS) {
-                pushPage();
-            }
-            currentPage.groups.push(group.id);
-            currentPage.weight += group.weight;
-        });
+        // If the entire footer block doesn't fit, start a fresh page
+        if (currentPage.weight + totalFooterWeight > MAX_PAGE_UNITS) {
+            pushPage();
+        }
+
+        currentPage.groups.push('subtotal');
+        currentPage.weight += WEIGHTS.SUBTOTAL;
+
+        if (hsnWeight > 0) {
+            currentPage.groups.push('hsn');
+            currentPage.weight += hsnWeight;
+        }
+
+        currentPage.groups.push('bank');
+        currentPage.weight += WEIGHTS.BANK;
     } else {
         // Vouchers put everything on the same page
         currentPage.groups.push('subtotal', 'bank');

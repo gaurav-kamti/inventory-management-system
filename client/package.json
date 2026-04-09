@@ -12,6 +12,7 @@
         "test:ui": "vitest --ui"
     },
     "dependencies": {
+        "@supabase/supabase-js": "^2.103.0",
         "axios": "^1.6.2",
         "flatpickr": "^4.6.13",
         "html2canvas": "^1.4.1",

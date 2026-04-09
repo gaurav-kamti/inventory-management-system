@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import api from '../services/api'
+import { supabase } from '../lib/supabase'
 import './Login.css'
 
-function Login({ onLogin }) {
+function Login() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -14,10 +14,20 @@ function Login({ onLogin }) {
         setLoading(true)
 
         try {
-            const response = await api.post('/auth/login', { username, password })
-            onLogin(response.data.token)
+            // Secretly format username into an email to maintain the old UX
+            const email = username.includes('@') ? username : `${username.toLowerCase().trim()}@example.com`
+            
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+
+            if (signInError) throw signInError
+            
+            // Note: We don't need to call onLogin because App.jsx uses onAuthStateChange
         } catch (err) {
-            setError(err.response?.data?.error || 'Login failed')
+            console.error("Login attempt failed:", err);
+            setError(err.message || 'Login failed')
         } finally {
             setLoading(false)
         }

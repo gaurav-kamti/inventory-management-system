@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from './lib/supabase'
 import Login from './pages/Login'
 import Inventory from './pages/Inventory'
 import Database from './pages/Database'
@@ -12,22 +13,37 @@ import Payment from './pages/vouchers/Payment'
 import SellPurchase from './pages/SellPurchase'
 import Analytics from './pages/Analytics'
 
-
 function App() {
-    const [token, setToken] = useState(localStorage.getItem('token'))
+    const [session, setSession] = useState(null)
+    const [loading, setLoading] = useState(true)
 
-    const handleLogin = (newToken) => {
-        localStorage.setItem('token', newToken)
-        setToken(newToken)
+    useEffect(() => {
+        // Initial session check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session)
+            setLoading(false)
+        })
+
+        // Listen for auth changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session)
+        })
+
+        return () => subscription.unsubscribe()
+    }, [])
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
     }
 
-    const handleLogout = () => {
-        localStorage.removeItem('token')
-        setToken(null)
+    if (loading) {
+        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem', color: 'gray' }}>Loading...</div>
     }
 
-    if (!token) {
-        return <Login onLogin={handleLogin} />
+    if (!session) {
+        return <Login />
     }
 
     return (
